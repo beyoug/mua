@@ -51,34 +51,50 @@ pnpm install
 ### 开发模式
 
 ```bash
-pnpm tauri dev
+pnpm tauri:dev
 ```
 
 ### 构建生产版本
 
 ```bash
-pnpm tauri build
+pnpm tauri:build
+```
+
+### 其他命令
+
+```bash
+pnpm check        # TypeScript 类型检查
+pnpm build        # 仅构建前端
+pnpm preview      # 预览前端构建
 ```
 
 ## 📁 项目结构
 
 ```
 Mua/
-├── src/                      # 前端源码
-│   ├── routes/               # SvelteKit 路由
-│   │   ├── +layout.svelte    # 根布局 (TanStack Query Provider)
-│   │   ├── +layout.ts        # SPA 模式配置
-│   │   └── +page.svelte      # 首页
+├── src/                        # 前端源码
+│   ├── routes/                 # SvelteKit 路由
+│   │   ├── +layout.svelte      # 根布局 (QueryClientProvider)
+│   │   ├── +layout.ts          # SPA 模式配置
+│   │   ├── +page.svelte        # 首页
+│   │   └── layout.css          # 全局样式 (shadcn 主题)
 │   └── lib/
-│       ├── components/ui/    # shadcn-svelte 组件
-│       └── utils.ts          # 工具函数
-├── src-tauri/                # Rust 后端
-│   ├── src/lib.rs            # Tauri 入口
-│   ├── tauri.conf.json       # Tauri 配置
-│   └── Cargo.toml            # Rust 依赖
-├── build/                    # 前端构建输出
-├── components.json           # shadcn-svelte 配置
-└── svelte.config.js          # SvelteKit 配置
+│       ├── api/aria2/          # aria2 JSON-RPC 通信层
+│       │   ├── client.ts       # WebSocket 客户端
+│       │   ├── methods.ts      # RPC 方法封装
+│       │   └── types.ts        # 类型定义
+│       ├── config/             # 配置
+│       │   ├── query.ts        # TanStack Query 配置
+│       │   └── constants.ts    # 应用常量
+│       ├── types/              # 共享类型
+│       └── utils.ts            # 工具函数
+├── src-tauri/                  # Rust 后端
+│   ├── src/lib.rs              # Tauri 入口
+│   ├── tauri.conf.json         # Tauri 配置
+│   └── Cargo.toml              # Rust 依赖
+├── build/                      # 前端构建输出
+├── components.json             # shadcn-svelte 配置
+└── svelte.config.js            # SvelteKit 配置
 ```
 
 ## 🎨 添加 UI 组件
@@ -86,9 +102,7 @@ Mua/
 使用 shadcn-svelte CLI 添加组件：
 
 ```bash
-pnpm dlx shadcn-svelte@latest add button
-pnpm dlx shadcn-svelte@latest add card
-pnpm dlx shadcn-svelte@latest add progress
+pnpm dlx shadcn-svelte@latest add button card progress
 ```
 
 ## 📄 许可证
