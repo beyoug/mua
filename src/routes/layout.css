@@ -76,7 +76,19 @@
   * {
     @apply border-border outline-ring/50;
   }
+  html {
+    color-scheme: dark;
+    overscroll-behavior: none;
+  }
   body {
-    @apply bg-background text-foreground;
+    background-color: #09090b;
+    color: #fafafa;
+    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
+    overscroll-behavior: none;
+    user-select: none;
+    -webkit-user-select: none;
   }
 }
