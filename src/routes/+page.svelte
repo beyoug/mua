@@ -302,7 +302,18 @@
 		selectedIds = new Set();
 	}
 
-	function handleAddTask(urls: string[], savePath: string) {
+	interface DownloadConfig {
+		urls: string[];
+		savePath: string;
+		filename: string;
+		userAgent: string;
+		referer: string;
+		headers: string;
+		proxy: string;
+		maxDownloadLimit: string;
+	}
+
+	function handleAddTask(config: DownloadConfig) {
 		const now = new Date();
 		const timeString = new Intl.DateTimeFormat('zh-CN', {
 			year: 'numeric',
@@ -313,16 +324,19 @@
 			hour12: false
 		}).format(now).replace(/\//g, '-');
 		
-		for (const url of urls) {
+		for (const url of config.urls) {
 			const newTask: DownloadTask = {
 				id: crypto.randomUUID(),
-				filename: url.split('/').pop() || 'new-download',
+				// 优先使用用户指定的文件名，否则从 URL 提取
+				filename: config.filename || url.split('/').pop() || 'new-download',
 				progress: 0,
 				state: 'waiting',
 				addedAt: timeString
 			};
 			downloads.push(newTask);
 		}
+		// TODO: 将 config 中的高级设置传递给 aria2
+		console.log('Download config:', config);
 	}
 
 	// 单个任务操作处理
