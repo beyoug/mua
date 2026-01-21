@@ -117,10 +117,25 @@
 	.dialog {
 		width: 560px;
 		max-width: 90vw;
-		background: #18181b;
-		border: 1px solid rgba(255, 255, 255, 0.1);
-		border-radius: 16px;
+		background: var(--bg-secondary);
+		backdrop-filter: blur(24px) saturate(180%);
+		-webkit-backdrop-filter: blur(24px) saturate(180%);
+		border: 1px solid var(--border-color);
+		border-radius: 20px;
 		overflow: hidden;
+		box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+		animation: dialog-appear 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+	}
+
+	@keyframes dialog-appear {
+		from {
+			opacity: 0;
+			transform: scale(0.95) translateY(10px);
+		}
+		to {
+			opacity: 1;
+			transform: scale(1) translateY(0);
+		}
 	}
 
 	.dialog-header {
@@ -128,13 +143,13 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 16px 24px;
-		border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+		border-bottom: 1px solid var(--border-color);
 	}
 
 	.dialog-header h2 {
 		font-size: 17px;
 		font-weight: 600;
-		color: rgba(255, 255, 255, 0.95);
+		color: var(--text-primary);
 		margin: 0;
 	}
 
@@ -147,14 +162,14 @@
 		background: transparent;
 		border: none;
 		border-radius: 6px;
-		color: rgba(255, 255, 255, 0.5);
+		color: var(--text-muted);
 		cursor: pointer;
 		transition: all 0.15s ease;
 	}
 
 	.close-btn:hover {
-		background: rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.9);
+		background: var(--border-light);
+		color: var(--text-primary);
 	}
 
 	.dialog-body {
@@ -175,21 +190,15 @@
 		align-items: center;
 		gap: 6px;
 		font-size: 13px;
-		color: rgba(255, 255, 255, 0.6);
-	}
-
-	.form-group label .hint {
-		margin-left: auto;
-		font-size: 12px;
-		color: rgba(255, 255, 255, 0.35);
+		color: var(--text-secondary);
 	}
 
 	.form-group textarea {
 		padding: 12px 14px;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--border-light);
+		border: 1px solid var(--border-color);
 		border-radius: 10px;
-		color: rgba(255, 255, 255, 0.95);
+		color: var(--text-primary);
 		font-size: 14px;
 		font-family: inherit;
 		outline: none;
@@ -199,12 +208,12 @@
 	}
 
 	.form-group textarea:focus {
-		border-color: rgb(16, 185, 129);
-		background: rgba(255, 255, 255, 0.08);
+		border-color: var(--accent-primary);
+		box-shadow: 0 0 0 3px var(--accent-active-bg);
 	}
 
 	.form-group textarea::placeholder {
-		color: rgba(255, 255, 255, 0.3);
+		color: var(--text-muted);
 	}
 
 	.path-selector {
@@ -212,18 +221,17 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 14px;
-		background: rgba(255, 255, 255, 0.05);
-		border: 1px solid rgba(255, 255, 255, 0.1);
+		background: var(--border-light);
+		border: 1px solid var(--border-color);
 		border-radius: 10px;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--text-secondary);
 		font-size: 14px;
 		cursor: pointer;
 		transition: all 0.15s ease;
 	}
 
 	.path-selector:hover {
-		border-color: rgba(255, 255, 255, 0.2);
-		background: rgba(255, 255, 255, 0.08);
+		border-color: var(--accent-primary);
 	}
 
 	.path-text {
@@ -237,7 +245,7 @@
 		justify-content: flex-end;
 		gap: 10px;
 		padding: 16px 24px;
-		border-top: 1px solid rgba(255, 255, 255, 0.08);
+		border-top: 1px solid var(--border-color);
 	}
 
 	.btn {
@@ -254,22 +262,24 @@
 	}
 
 	.btn-secondary {
-		background: rgba(255, 255, 255, 0.1);
-		color: rgba(255, 255, 255, 0.7);
+		background: var(--border-light);
+		color: var(--text-secondary);
 	}
 
 	.btn-secondary:hover {
-		background: rgba(255, 255, 255, 0.15);
-		color: rgba(255, 255, 255, 0.9);
+		background: var(--border-color);
+		color: var(--text-primary);
 	}
 
 	.btn-primary {
-		background: linear-gradient(135deg, rgb(16, 185, 129), rgb(20, 184, 166));
+		background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
 		color: white;
+		box-shadow: 0 2px 8px var(--accent-glow);
 	}
 
 	.btn-primary:hover:not(:disabled) {
-		background: linear-gradient(135deg, rgb(5, 150, 105), rgb(13, 148, 136));
+		transform: translateY(-1px);
+		box-shadow: 0 4px 12px var(--accent-glow);
 	}
 
 	.btn-primary:disabled {

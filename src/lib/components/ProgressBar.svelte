@@ -1,6 +1,6 @@
 <!--
   ProgressBar.svelte
-  进度条组件 - 渐变 + 条纹动画
+  进度条组件 - 使用主题 CSS 变量 + 光晕效果
 -->
 <script lang="ts">
 	type ProgressState = 'downloading' | 'paused' | 'completed' | 'error' | 'waiting';
@@ -31,6 +31,7 @@
 		>
 			{#if state === 'downloading'}
 				<div class="stripes"></div>
+				<div class="glow"></div>
 			{/if}
 		</div>
 	</div>
@@ -49,9 +50,10 @@
 	.progress-track {
 		flex: 1;
 		height: 6px;
-		background: rgba(255, 255, 255, 0.1);
+		background: rgba(255, 255, 255, 0.08);
 		border-radius: 3px;
 		overflow: hidden;
+		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.progress-fill {
@@ -63,7 +65,7 @@
 	}
 
 	.progress-fill.downloading {
-		background: linear-gradient(90deg, rgb(16, 185, 129), rgb(20, 184, 166));
+		background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
 	}
 
 	.progress-fill.paused {
@@ -81,10 +83,20 @@
 			-45deg,
 			transparent,
 			transparent 8px,
-			rgba(255, 255, 255, 0.15) 8px,
-			rgba(255, 255, 255, 0.15) 16px
+			rgba(255, 255, 255, 0.12) 8px,
+			rgba(255, 255, 255, 0.12) 16px
 		);
 		animation: stripe-move 0.8s linear infinite;
+	}
+
+	.glow {
+		position: absolute;
+		right: 0;
+		top: -4px;
+		bottom: -4px;
+		width: 20px;
+		background: linear-gradient(90deg, transparent, var(--accent-glow));
+		filter: blur(4px);
 	}
 
 	@keyframes stripe-move {
@@ -92,14 +104,14 @@
 			transform: translateX(0);
 		}
 		to {
-			transform: translateX(22.627px); /* 16px * sqrt(2) */
+			transform: translateX(22.627px);
 		}
 	}
 
 	.progress-percent {
 		font-size: 12px;
 		font-weight: 500;
-		color: rgba(255, 255, 255, 0.7);
+		color: var(--accent-text);
 		min-width: 36px;
 		text-align: right;
 	}

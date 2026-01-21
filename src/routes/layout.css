@@ -81,8 +81,9 @@
     overscroll-behavior: none;
   }
   body {
-    background-color: #09090b;
-    color: #fafafa;
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, var(--bg-gradient), transparent),
+                var(--bg-primary);
+    color: var(--text-primary);
     font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
@@ -90,5 +91,118 @@
     overscroll-behavior: none;
     user-select: none;
     -webkit-user-select: none;
+    transition: background 0.3s ease, color 0.3s ease;
   }
+}
+
+/* ============================================
+   基础变量系统 - Base System
+   ============================================ */
+
+/* 深色模式 (默认) */
+:root {
+  /* 布局背景 */
+  --bg-primary: #09090b;
+  --bg-secondary: rgba(24, 24, 27, 0.85);
+  --bg-card: rgba(25, 25, 35, 0.5);
+  --bg-sidebar: rgba(15, 15, 20, 0.5);
+  
+  /* 文本与边框 */
+  --text-primary: rgba(255, 255, 255, 0.95);
+  --text-secondary: rgba(255, 255, 255, 0.7);
+  --text-muted: rgba(255, 255, 255, 0.5);
+  --border-color: rgba(255, 255, 255, 0.1);
+  --border-light: rgba(255, 255, 255, 0.05);
+
+  /* 默认主题变量 (电光蓝 - 深色) */
+  --accent-primary: #3B82F6;
+  --accent-secondary: #60A5FA;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --accent-active-bg: rgba(59, 130, 246, 0.15);
+  --accent-text: #60A5FA;
+  --bg-gradient: rgba(59, 130, 246, 0.15);
+}
+
+/* 浅色模式 */
+html.light {
+  color-scheme: light;
+  
+  /* 布局背景 */
+  --bg-primary: #f8fafc;
+  --bg-secondary: rgba(255, 255, 255, 0.9);
+  --bg-card: rgba(255, 255, 255, 0.7);
+  --bg-sidebar: rgba(255, 255, 255, 0.6);
+  
+  /* 文本与边框 */
+  --text-primary: #0f172a;
+  --text-secondary: #475569;
+  --text-muted: #94a3b8;
+  --border-color: rgba(0, 0, 0, 0.08);
+  --border-light: rgba(0, 0, 0, 0.04);
+  
+  /* 默认主题变量 (电光蓝 - 浅色) */
+  --accent-primary: #2563EB; /* Darker Blue */
+  --accent-secondary: #3B82F6;
+  --accent-glow: rgba(37, 99, 235, 0.25);
+  --accent-active-bg: rgba(37, 99, 235, 0.1);
+  --accent-text: #2563EB;
+  --bg-gradient: rgba(37, 99, 235, 0.08);
+}
+
+/* ============================================
+   主题配色方案 - Color Themes
+   ============================================ */
+
+/* 1. 电光蓝 Electric Blue (Default) */
+html.theme-electric-blue {
+  --accent-primary: #3B82F6;
+  --accent-secondary: #60A5FA;
+  --accent-glow: rgba(59, 130, 246, 0.4);
+  --accent-active-bg: rgba(59, 130, 246, 0.15);
+  --accent-text: #60A5FA;
+  --bg-gradient: rgba(59, 130, 246, 0.15);
+}
+html.light.theme-electric-blue {
+  --accent-primary: #2563EB;
+  --accent-secondary: #3B82F6;
+  --accent-glow: rgba(37, 99, 235, 0.25);
+  --accent-active-bg: rgba(37, 99, 235, 0.1);
+  --accent-text: #2563EB;
+  --bg-gradient: rgba(37, 99, 235, 0.08);
+}
+
+/* 2. 赛博紫 Cyber Purple */
+html.theme-cyber-purple {
+  --accent-primary: #8B5CF6;
+  --accent-secondary: #A855F7;
+  --accent-glow: rgba(139, 92, 246, 0.4);
+  --accent-active-bg: rgba(139, 92, 246, 0.15);
+  --accent-text: #A855F7;
+  --bg-gradient: rgba(139, 92, 246, 0.15);
+}
+html.light.theme-cyber-purple {
+  --accent-primary: #7C3AED;
+  --accent-secondary: #9333EA;
+  --accent-glow: rgba(124, 58, 237, 0.25);
+  --accent-active-bg: rgba(124, 58, 237, 0.1);
+  --accent-text: #7C3AED;
+  --bg-gradient: rgba(124, 58, 237, 0.08);
+}
+
+/* 3. 霓虹青 Neon Cyan */
+html.theme-neon-cyan {
+  --accent-primary: #06B6D4;
+  --accent-secondary: #22D3EE;
+  --accent-glow: rgba(6, 182, 212, 0.4);
+  --accent-active-bg: rgba(6, 182, 212, 0.15);
+  --accent-text: #22D3EE;
+  --bg-gradient: rgba(6, 182, 212, 0.15);
+}
+html.light.theme-neon-cyan {
+  --accent-primary: #0891B2;
+  --accent-secondary: #06B6D4;
+  --accent-glow: rgba(8, 145, 178, 0.25);
+  --accent-active-bg: rgba(8, 145, 178, 0.1);
+  --accent-text: #0891B2;
+  --bg-gradient: rgba(8, 145, 178, 0.08);
 }
