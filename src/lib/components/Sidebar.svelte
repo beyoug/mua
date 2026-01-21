@@ -171,12 +171,6 @@
 		color: var(--accent-text);
 	}
 
-	.logo-text {
-		font-size: 20px;
-		font-weight: 600;
-		color: var(--text-primary);
-	}
-
 	.nav-menu {
 		display: flex;
 		flex-direction: column;

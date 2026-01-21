@@ -6,8 +6,7 @@
 	import { Pause, Play, X, MoreVertical, File, CheckCircle, AlertCircle, Check } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import ProgressBar from './ProgressBar.svelte';
-
-	type DownloadState = 'downloading' | 'paused' | 'completed' | 'error' | 'waiting' | 'cancelled';
+	import type { DownloadState } from '$lib/types/download';
 
 	interface Props {
 		filename: string;

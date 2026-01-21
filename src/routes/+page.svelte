@@ -7,6 +7,7 @@
 	import { Download, Play, Pause, Trash2 } from '@lucide/svelte';
 	import { flip } from 'svelte/animate';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
+	import type { DownloadTask } from '$lib/types/download';
 
 	let activeNav: 'active' | 'completed' | 'history' = $state('active');
 	let showAddDialog = $state(false);
@@ -20,7 +21,7 @@
 		description: '确定要清空这些任务吗？此操作无法撤销。',
 		confirmText: '清空'
 	});
-	const downloads = $state([
+	const downloads = $state<DownloadTask[]>([
 		{
 			id: '1',
 			filename: 'macOS-Tahoe-26.0.dmg',
@@ -29,7 +30,7 @@
 			downloaded: '3.2 GB',
 			total: '4.3 GB',
 			remaining: '1:28',
-			state: 'downloading' as 'downloading' | 'paused' | 'completed' | 'waiting' | 'cancelled' | 'error',
+			state: 'downloading',
 			addedAt: '2024-05-20 14:30'
 		},
 		{
@@ -40,7 +41,7 @@
 			downloaded: '2.1 GB',
 			total: '4.7 GB',
 			remaining: '5:12',
-			state: 'downloading' as const,
+			state: 'downloading',
 			addedAt: '2024-05-20 15:10'
 		},
 		{
@@ -49,7 +50,7 @@
 			progress: 100,
 			downloaded: '156 MB',
 			total: '156 MB',
-			state: 'completed' as const,
+			state: 'completed',
 			addedAt: '2024-05-19 09:20'
 		},
 		{
@@ -58,14 +59,14 @@
 			progress: 30,
 			downloaded: '24 MB',
 			total: '80 MB',
-			state: 'paused' as const,
+			state: 'paused',
 			addedAt: '2024-05-18 18:45'
 		},
 		{
 			id: '5',
 			filename: 'docker-desktop.dmg',
 			progress: 0,
-			state: 'waiting' as const,
+			state: 'waiting',
 			addedAt: '2024-05-21 10:00'
 		}
 	]);
@@ -283,7 +284,6 @@
 
 			if (activeNav === 'active') {
 				// 进行中页面：软删除（取消）
-				// @ts-ignore
 				d.state = 'cancelled';
 			} else {
 				// 历史/已完成页面：硬删除（仅删除非活跃任务，双重保险）
@@ -304,14 +304,21 @@
 
 	function handleAddTask(urls: string[], savePath: string) {
 		const now = new Date();
-		const timeString = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+		const timeString = new Intl.DateTimeFormat('zh-CN', {
+			year: 'numeric',
+			month: '2-digit',
+			day: '2-digit',
+			hour: '2-digit',
+			minute: '2-digit',
+			hour12: false
+		}).format(now).replace(/\//g, '-');
 		
 		for (const url of urls) {
-			const newTask = {
-				id: String(downloads.length + 1),
+			const newTask: DownloadTask = {
+				id: crypto.randomUUID(),
 				filename: url.split('/').pop() || 'new-download',
 				progress: 0,
-				state: 'waiting' as const,
+				state: 'waiting',
 				addedAt: timeString
 			};
 			downloads.push(newTask);
@@ -336,7 +343,6 @@
 
 		if (activeNav === 'active') {
 			// 进行中（含暂停）：软删除（取消），不弹窗
-			// @ts-ignore
 			task.state = 'cancelled';
 		} else {
 			// 历史记录：点击 X 代表物理删除一条记录

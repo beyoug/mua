@@ -3,7 +3,9 @@
   进度条组件 - 使用主题 CSS 变量 + 光晕效果
 -->
 <script lang="ts">
-	type ProgressState = 'downloading' | 'paused' | 'completed' | 'error' | 'waiting';
+	import type { DownloadState } from '$lib/types/download';
+
+	type ProgressState = DownloadState;
 
 	interface Props {
 		progress: number;
@@ -50,7 +52,7 @@
 	.progress-track {
 		flex: 1;
 		height: 6px;
-		background: rgba(255, 255, 255, 0.08);
+		background: var(--border-light);
 		border-radius: 3px;
 		overflow: hidden;
 		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
