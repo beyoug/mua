@@ -239,7 +239,7 @@
 	}
 
 	.stat-count {
-		color: var(--text-secondary);
+		color: var(--accent-text);
 		font-weight: 500;
 	}
 

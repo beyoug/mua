@@ -73,7 +73,7 @@
 
 	// 计算统计数据
 	const stats = $derived(() => {
-		const activeDownloads = downloads.filter(d => d.state === 'downloading');
+		const activeDownloads = downloads.filter(d => ['downloading', 'waiting'].includes(d.state));
 		const completedDownloads = downloads.filter(d => d.state === 'completed');
 		
 		// 计算总速度（简单模拟）

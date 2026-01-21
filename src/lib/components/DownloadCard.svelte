@@ -149,7 +149,10 @@
 		border-top-color: var(--border-light);
 		border-radius: 16px;
 		padding: 16px 18px;
-		transition: all 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		transition: 
+			transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+			box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
+			border-color 0s;
 		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
 		transform-style: preserve-3d;
 		perspective: 1000px;
