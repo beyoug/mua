@@ -501,8 +501,8 @@
 	/* 主内容区调整 */
 	.main-content {
 		flex: 1;
-		margin-left: 232px;
-		padding: 0 32px 32px; /* 移除顶部 padding，由 header margin 控制 */
+		margin-left: 224px;
+		padding: 0 20px 20px; /* 移除顶部 padding，由 header margin 控制 */
 		min-height: 100vh;
 		box-sizing: border-box;
 		display: flex;

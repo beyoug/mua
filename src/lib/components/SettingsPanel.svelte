@@ -56,6 +56,19 @@
 		'light': Sun,
 		'auto': Monitor
 	};
+	$effect(() => {
+		if (open) {
+			document.body.classList.add('no-scroll');
+			document.documentElement.classList.add('no-scroll');
+		} else {
+			document.body.classList.remove('no-scroll');
+			document.documentElement.classList.remove('no-scroll');
+		}
+		return () => {
+			document.body.classList.remove('no-scroll');
+			document.documentElement.classList.remove('no-scroll');
+		};
+	});
 </script>
 
 {#if open}
