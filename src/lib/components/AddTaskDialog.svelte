@@ -117,13 +117,15 @@
 	.dialog {
 		width: 560px;
 		max-width: 90vw;
-		background: var(--bg-secondary);
+		background: var(--bg-sidebar);
 		backdrop-filter: blur(24px) saturate(180%);
 		-webkit-backdrop-filter: blur(24px) saturate(180%);
 		border: 1px solid var(--border-color);
 		border-radius: 20px;
 		overflow: hidden;
-		box-shadow: 0 24px 48px rgba(0, 0, 0, 0.2);
+		box-shadow: 
+			0 24px 48px rgba(0, 0, 0, 0.2),
+			0 1px 2px rgba(255, 255, 255, 0.1) inset;
 		animation: dialog-appear 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 	}
 

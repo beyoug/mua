@@ -102,7 +102,9 @@
 		-webkit-backdrop-filter: blur(24px) saturate(180%);
 		border: 1px solid var(--border-color);
 		border-radius: 16px;
-		box-shadow: 0 20px 48px rgba(0, 0, 0, 0.2);
+		box-shadow: 
+			0 20px 48px rgba(0, 0, 0, 0.2),
+			0 1px 2px rgba(255, 255, 255, 0.1) inset;
 		padding: 24px;
 		animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	}

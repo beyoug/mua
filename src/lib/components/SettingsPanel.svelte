@@ -187,11 +187,13 @@
 	.panel {
 		width: 320px;
 		height: 100%;
-		background: var(--bg-secondary);
+		background: var(--bg-sidebar);
 		backdrop-filter: blur(24px) saturate(180%);
 		-webkit-backdrop-filter: blur(24px) saturate(180%);
 		border-left: 1px solid var(--border-color);
-		box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+		box-shadow: 
+			-4px 0 24px rgba(0, 0, 0, 0.15),
+			0 1px 2px rgba(255, 255, 255, 0.1) inset;
 		display: flex;
 		flex-direction: column;
 		animation: slide-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
