@@ -193,7 +193,7 @@
 	.panel {
 		width: 320px;
 		height: 100%;
-		background: var(--glass-bg);
+		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border-left: 1px solid var(--glass-border);

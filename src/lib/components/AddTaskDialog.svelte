@@ -406,7 +406,7 @@
 	.dialog {
 		width: 560px;
 		max-width: 90vw;
-		background: var(--glass-bg);
+		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border: 1px solid var(--glass-border);
@@ -640,8 +640,7 @@
 	.advanced-overlay {
 		position: absolute;
 		inset: 0;
-		/* 使用与主界面一致的背景色 */
-		background: var(--glass-bg);
+		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border-radius: 20px;

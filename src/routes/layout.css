@@ -75,6 +75,9 @@
   --glass-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.12),
     0 1px 2px rgba(255, 255, 255, 0.1) inset;
+  
+  /* 弹窗专用背景（比玻璃形态更不透明，确保内容清晰） */
+  --dialog-bg: rgba(15, 15, 20, 0.7);
 
   /* ===== 语义化颜色 ===== */
   --semantic-danger: #ef4444;
@@ -154,6 +157,9 @@ html.light {
   --glass-shadow: 
     0 8px 32px rgba(0, 0, 0, 0.08),
     0 1px 2px rgba(255, 255, 255, 0.8) inset;
+  
+  /* 弹窗专用背景（比玻璃形态更不透明，确保内容清晰） */
+  --dialog-bg: rgba(255, 255, 255, 0.75);
 
   /* ===== 语义化颜色 - 浅色模式优化 ===== */
   --semantic-danger: #dc2626;
