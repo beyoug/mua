@@ -71,11 +71,11 @@
 	}
 
 	.progress-fill.paused {
-		background: rgb(234, 179, 8);
+		background: var(--warning-color);
 	}
 
 	.progress-fill.error {
-		background: rgb(239, 68, 68);
+		background: var(--danger-color);
 	}
 
 	.stripes {

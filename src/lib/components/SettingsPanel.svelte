@@ -6,6 +6,7 @@
 	import { X, Palette, Check, Sun, Moon, Monitor, Zap, Sparkles } from '@lucide/svelte';
 	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode, particlesEnabled } from '$lib/stores/theme';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
+	import { createScrollLockEffect } from '$lib';
 
 	// 计算调试显示信息
 	function getEmitRate(speedMbps: number): number {
@@ -56,18 +57,10 @@
 		'light': Sun,
 		'auto': Monitor
 	};
+
+	// 使用统一的滚动锁定工具
 	$effect(() => {
-		if (open) {
-			document.body.classList.add('no-scroll');
-			document.documentElement.classList.add('no-scroll');
-		} else {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
-		}
-		return () => {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
-		};
+		return createScrollLockEffect(open);
 	});
 </script>
 
@@ -200,13 +193,11 @@
 	.panel {
 		width: 320px;
 		height: 100%;
-		background: var(--bg-sidebar);
-		backdrop-filter: blur(24px) saturate(180%);
-		-webkit-backdrop-filter: blur(24px) saturate(180%);
-		border-left: 1px solid var(--border-color);
-		box-shadow: 
-			-4px 0 24px rgba(0, 0, 0, 0.15),
-			0 1px 2px rgba(255, 255, 255, 0.1) inset;
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border-left: 1px solid var(--glass-border);
+		box-shadow: var(--glass-shadow);
 		display: flex;
 		flex-direction: column;
 		animation: slide-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);

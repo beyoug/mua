@@ -19,6 +19,9 @@
 			classes.push('light');
 		}
 		document.documentElement.className = classes.join(' ');
+		
+		// 动态设置 color-scheme
+		document.documentElement.style.colorScheme = mode;
 	});
 
 	onMount(async () => {

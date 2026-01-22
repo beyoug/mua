@@ -209,7 +209,7 @@
 
 	.icon-wrapper.error {
 		background: rgba(239, 68, 68, 0.15);
-		color: rgb(248, 113, 113);
+		color: #f87171;
 	}
 
 	.icon-wrapper.cancelled {
@@ -263,7 +263,7 @@
 
 	.action-btn.cancel:hover {
 		background: rgba(239, 68, 68, 0.2);
-		color: rgb(248, 113, 113);
+		color: #f87171;
 	}
 
 	.card-footer {
@@ -285,7 +285,7 @@
 	}
 
 	.status.paused {
-		color: rgb(234, 179, 8);
+		color: var(--warning-color);
 	}
 
 	.status.waiting {
@@ -293,7 +293,7 @@
 	}
 
 	.status.error {
-		color: rgb(248, 113, 113);
+		color: #f87171;
 	}
 
 	.status.cancelled {

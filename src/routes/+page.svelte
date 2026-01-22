@@ -7,7 +7,18 @@
 	import { Download, Play, Pause, Trash2 } from '@lucide/svelte';
 	import { flip } from 'svelte/animate';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
-	import type { DownloadTask } from '$lib/types/download';
+	import type { DownloadTask, DownloadConfig } from '$lib/types/download';
+	import { 
+		parseSpeedToBytes, 
+		formatSpeed, 
+		formatAddedAt, 
+		extractFilenameFromUrl,
+		isActiveTask,
+		isCompletedTask,
+		isDownloading,
+		isRemovableTask,
+		getStateScore
+	} from '$lib';
 
 	let activeNav: 'active' | 'completed' | 'history' = $state('active');
 	let showAddDialog = $state(false);
@@ -73,23 +84,18 @@
 
 	// 计算统计数据
 	const stats = $derived(() => {
-		const activeDownloads = downloads.filter(d => ['downloading', 'waiting'].includes(d.state));
-		const completedDownloads = downloads.filter(d => d.state === 'completed');
+		const activeDownloads = downloads.filter(d => 
+			['downloading', 'waiting'].includes(d.state)
+		);
+		const completedDownloads = downloads.filter(d => isCompletedTask(d.state));
 		
-		// 计算总速度（简单模拟）
-		let totalSpeed = '0 B/s';
-		let totalSpeedBytes = 0;
-		if (activeDownloads.length > 0) {
-			const speeds = activeDownloads
-				.map(d => d.speed || '0')
-				.map(s => parseFloat(s.replace(' MB/s', '')) || 0);
-			const total = speeds.reduce((a, b) => a + b, 0);
-			totalSpeed = `${total.toFixed(1)} MB/s`;
-			totalSpeedBytes = total * 1024 * 1024;
-		}
+		// 计算总速度
+		const totalSpeedBytes = activeDownloads
+			.map(d => parseSpeedToBytes(d.speed || ''))
+			.reduce((a, b) => a + b, 0);
 
 		return {
-			totalSpeed,
+			totalSpeed: formatSpeed(totalSpeedBytes),
 			totalSpeedBytes,
 			activeCount: activeDownloads.length,
 			completedCount: completedDownloads.length
@@ -135,10 +141,10 @@
 		let list: typeof downloads = [];
 		switch (activeNav) {
 			case 'active':
-				list = downloads.filter(d => ['downloading', 'waiting', 'paused'].includes(d.state));
+				list = downloads.filter(d => isActiveTask(d.state));
 				break;
 			case 'completed':
-				list = downloads.filter(d => d.state === 'completed');
+				list = downloads.filter(d => isCompletedTask(d.state));
 				break;
 			case 'history':
 				list = [...downloads];
@@ -150,14 +156,9 @@
 		// 1. 状态优先级：进行中(2) > 已暂停(1) > 其他(0)
 		// 2. 添加时间：倒序（最新的在前）
 		return list.sort((a, b) => {
-			const getScore = (s: string) => {
-				if (['downloading', 'waiting'].includes(s)) return 2;
-				if (s === 'paused') return 1;
-				return 0;
-			};
-			const scoreA = getScore(a.state);
-			const scoreB = getScore(b.state);
-			if (scoreA !== scoreB) return scoreB - scoreA; // 分数高在前
+			const scoreA = getStateScore(a.state);
+			const scoreB = getStateScore(b.state);
+			if (scoreA !== scoreB) return scoreB - scoreA;
 
 			const timeA = a.addedAt || '';
 			const timeB = b.addedAt || '';
@@ -175,6 +176,32 @@
 		}
 	});
 
+	// 获取空状态提示文案
+	const emptyStateText = $derived(() => {
+		switch (activeNav) {
+			case 'active': 
+				return {
+					title: '暂无进行中的任务',
+					hint: '点击左侧「添加任务」按钮开始下载'
+				};
+			case 'completed': 
+				return {
+					title: '暂无已完成的任务',
+					hint: '完成的下载任务会显示在这里'
+				};
+			case 'history': 
+				return {
+					title: '暂无历史记录',
+					hint: '所有下载任务的历史会显示在这里'
+				};
+			default: 
+				return {
+					title: '暂无任务',
+					hint: '点击左侧「添加任务」按钮开始下载'
+				};
+		}
+	});
+
 	const trashTooltip = $derived(() => {
 		if (isSelectionMode) {
 			return selectedIds.size === 0 ? '全选本次显示的任务' : `删除选中 (${selectedIds.size})`;
@@ -183,38 +210,20 @@
 	});
 	// 全局控制：暂停/开始
 	function handleGlobalAction() {
-		// 针对不同 Tab 的特定行为
-		if (activeNav === 'active') {
-			// 智能判断：如果有下载中 -> 全部暂停；否则 -> 全部开始
-			const hasActive = downloads.some(d => d.state === 'downloading');
-			
-			if (hasActive) {
-				downloads.forEach(d => {
-					if (d.state === 'downloading') d.state = 'paused';
-				});
-			} else {
-				downloads.forEach(d => {
-					if (d.state === 'paused') d.state = 'downloading';
-				});
+		// 已完成页面不需要此功能
+		if (activeNav === 'completed') return;
+		
+		// 智能判断：如果有下载中 -> 全部暂停；否则 -> 全部开始
+		const hasActive = downloads.some(d => isDownloading(d.state));
+		const targetStates = hasActive ? 
+			{ from: 'downloading' as const, to: 'paused' as const } : 
+			{ from: 'paused' as const, to: 'downloading' as const };
+		
+		downloads.forEach(d => {
+			if (d.state === targetStates.from) {
+				d.state = targetStates.to;
 			}
-			return;
-		}
-
-		// "历史"页面的智能判断
-		if (activeNav === 'history') {
-			const hasActive = downloads.some(d => d.state === 'downloading');
-			if (hasActive) {
-				// 有下载中 -> 全部暂停
-				downloads.forEach(d => {
-					if (d.state === 'downloading') d.state = 'paused';
-				});
-			} else {
-				// 无下载中 -> 恢复暂停
-				downloads.forEach(d => {
-					if (d.state === 'paused') d.state = 'downloading';
-				});
-			}
-		}
+		});
 	}
 
 	function toggleSelection(id: string) {
@@ -286,11 +295,11 @@
 				// 进行中页面：软删除（取消）
 				d.state = 'cancelled';
 			} else {
-				// 历史/已完成页面：硬删除（仅删除非活跃任务，双重保险）
-				if (['completed', 'cancelled', 'error'].includes(d.state)) {
+				// 历史/已完成页面：硬删除（仅删除非活跃任务）
+				if (isRemovableTask(d.state)) {
 					downloads.splice(i, 1);
 					if (deleteFile) {
-						// Delete logic here
+						// TODO: 调用 Tauri API 删除文件
 					}
 				}
 			}
@@ -302,36 +311,15 @@
 		selectedIds = new Set();
 	}
 
-	interface DownloadConfig {
-		urls: string[];
-		savePath: string;
-		filename: string;
-		userAgent: string;
-		referer: string;
-		headers: string;
-		proxy: string;
-		maxDownloadLimit: string;
-	}
-
 	function handleAddTask(config: DownloadConfig) {
-		const now = new Date();
-		const timeString = new Intl.DateTimeFormat('zh-CN', {
-			year: 'numeric',
-			month: '2-digit',
-			day: '2-digit',
-			hour: '2-digit',
-			minute: '2-digit',
-			hour12: false
-		}).format(now).replace(/\//g, '-');
-		
 		for (const url of config.urls) {
 			const newTask: DownloadTask = {
 				id: crypto.randomUUID(),
 				// 优先使用用户指定的文件名，否则从 URL 提取
-				filename: config.filename || url.split('/').pop() || 'new-download',
+				filename: config.filename || extractFilenameFromUrl(url),
 				progress: 0,
 				state: 'waiting',
-				addedAt: timeString
+				addedAt: formatAddedAt()
 			};
 			downloads.push(newTask);
 		}
@@ -467,8 +455,8 @@
 				<div class="ripple delay"></div>
 				<Download size={48} strokeWidth={1.5} />
 			</div>
-			<p class="empty-title">暂无下载任务</p>
-			<p class="empty-hint">点击左侧「添加任务」按钮开始下载</p>
+			<p class="empty-title">{emptyStateText().title}</p>
+			<p class="empty-hint">{emptyStateText().hint}</p>
 		</div>
 	{/if}
 </main>
@@ -516,14 +504,12 @@
 		justify-content: space-between;
 		padding: 16px 24px;
 		margin: 12px 0 24px; /* Top 12px 对齐侧边栏 */
-		background: var(--bg-sidebar);
-		backdrop-filter: blur(24px) saturate(180%);
-		-webkit-backdrop-filter: blur(24px) saturate(180%);
-		border: 1px solid var(--border-color);
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: 1px solid var(--glass-border);
 		border-radius: 20px;
-		box-shadow: 
-			0 8px 32px rgba(0, 0, 0, 0.12),
-			0 1px 2px rgba(255, 255, 255, 0.1) inset;
+		box-shadow: var(--glass-shadow);
 		position: sticky;
 		top: 12px;
 		z-index: 10;

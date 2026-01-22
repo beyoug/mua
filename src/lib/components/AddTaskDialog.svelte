@@ -3,25 +3,16 @@
   添加下载任务对话框 - 支持高级设置覆盖层
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, fly } from 'svelte/transition';
+	import type { DownloadConfig } from '$lib/types/download';
+	import { createScrollLockEffect } from '$lib';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
 		onSubmit?: (config: DownloadConfig) => void;
-	}
-
-	interface DownloadConfig {
-		urls: string[];
-		savePath: string;
-		filename: string;
-		userAgent: string;
-		referer: string;
-		headers: string;
-		proxy: string;
-		maxDownloadLimit: string;
 	}
 
 	// 预设 User Agent
@@ -50,30 +41,76 @@
 	let maxDownloadLimitValue = $state('');
 	let maxDownloadLimitUnit = $state('M');
 
+	// URL 验证
+	let validationError = $state<string>('');
+	let validationTimer: ReturnType<typeof setTimeout> | null = null;
+
 	// 计算实际 User Agent
 	const effectiveUserAgent = $derived(() => {
 		if (selectedUaId === 'custom') return customUserAgent;
 		return userAgents.find(ua => ua.id === selectedUaId)?.value || '';
 	});
 
-	function handleSubmit() {
-		const urlList = urls.split('\n').map(u => u.trim()).filter(u => u.length > 0);
-		if (urlList.length > 0) {
-			const limit = maxDownloadLimitValue.trim() ? `${maxDownloadLimitValue}${maxDownloadLimitUnit}` : '';
-			
-			onSubmit?.({
-				urls: urlList,
-				savePath,
-				filename,
-				userAgent: effectiveUserAgent(),
-				referer,
-				headers,
-				proxy,
-				maxDownloadLimit: limit
-			});
-			resetForm();
-			onClose();
+	// URL 验证函数
+	function isValidUrl(urlString: string): boolean {
+		if (!urlString || urlString.trim() === '') return false;
+		
+		try {
+			const url = new URL(urlString);
+			// 支持的协议：http, https, ftp, ftps
+			const validProtocols = ['http:', 'https:', 'ftp:', 'ftps:'];
+			return validProtocols.includes(url.protocol);
+		} catch {
+			return false;
 		}
+	}
+
+	// 验证单个 URL
+	function validateUrl(urlText: string): string {
+		const trimmed = urlText.trim();
+		
+		if (!trimmed) {
+			return '请输入下载链接';
+		}
+		
+		if (!isValidUrl(trimmed)) {
+			return '无效的URL格式，请使用 http/https/ftp 协议';
+		}
+		
+		return '';
+	}
+
+	// 计算是否可以提交
+	const canSubmit = $derived(() => {
+		const trimmed = urls.trim();
+		if (!trimmed) return false;
+		return isValidUrl(trimmed);
+	});
+
+	function handleSubmit() {
+		// 执行验证
+		const error = validateUrl(urls);
+		validationError = error;
+		
+		if (error) {
+			return; // 阻止提交
+		}
+		
+		const trimmedUrl = urls.trim();
+		const limit = maxDownloadLimitValue.trim() ? `${maxDownloadLimitValue}${maxDownloadLimitUnit}` : '';
+		
+		onSubmit?.({
+			urls: [trimmedUrl],
+			savePath,
+			filename,
+			userAgent: effectiveUserAgent(),
+			referer,
+			headers,
+			proxy,
+			maxDownloadLimit: limit
+		});
+		resetForm();
+		onClose();
 	}
 
 	function resetForm() {
@@ -87,6 +124,7 @@
 		maxDownloadLimitValue = '';
 		maxDownloadLimitUnit = 'M';
 		showAdvanced = false;
+		validationError = '';
 	}
 
 	async function selectFolder() {
@@ -114,19 +152,55 @@
 		}
 	}
 
+	// 使用统一的滚动锁定工具
 	$effect(() => {
-		if (open) {
-			document.body.classList.add('no-scroll');
-			document.documentElement.classList.add('no-scroll');
-		} else {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
-		}
+		return createScrollLockEffect(open);
+	});
+
+	// 清理定时器（组件卸载时）
+	$effect(() => {
 		return () => {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
+			if (validationTimer) {
+				clearTimeout(validationTimer);
+			}
 		};
 	});
+
+	// 当URL输入框失去焦点时立即验证
+	function handleUrlBlur() {
+		// 取消防抖定时器
+		if (validationTimer) {
+			clearTimeout(validationTimer);
+			validationTimer = null;
+		}
+		
+		// 立即验证
+		if (urls.trim()) {
+			const error = validateUrl(urls);
+			validationError = error;
+		} else {
+			// 如果输入为空，清除错误提示
+			validationError = '';
+		}
+	}
+
+	// 当用户输入时防抖验证
+	function handleUrlInput() {
+		// 清除之前的定时器
+		if (validationTimer) {
+			clearTimeout(validationTimer);
+		}
+		
+		// 设置新的防抖定时器 (500ms)
+		validationTimer = setTimeout(() => {
+			if (urls.trim()) {
+				const error = validateUrl(urls);
+				validationError = error;
+			} else {
+				validationError = '';
+			}
+		}, 500);
+	}
 </script>
 
 {#if open}
@@ -149,11 +223,20 @@
 					<label for="urls">
 						<Link size={14} />
 						<span>下载链接</span>
+						{#if validationError}
+							<span class="error-inline">
+								<AlertCircle size={12} />
+								{validationError}
+							</span>
+						{/if}
 					</label>
 					<textarea
 						id="urls"
-						placeholder="输入下载 URL，每行一个..."
+						placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
 						bind:value={urls}
+						oninput={handleUrlInput}
+						onblur={handleUrlBlur}
+						class:error={!!validationError}
 					></textarea>
 				</div>
 
@@ -194,7 +277,7 @@
 					<button 
 						class="btn btn-primary" 
 						onclick={handleSubmit}
-						disabled={!urls.trim()}
+						disabled={!canSubmit()}
 					>
 						<Download size={14} />
 						<span>开始下载</span>
@@ -323,15 +406,13 @@
 	.dialog {
 		width: 560px;
 		max-width: 90vw;
-		background: var(--bg-sidebar);
-		backdrop-filter: blur(24px) saturate(180%);
-		-webkit-backdrop-filter: blur(24px) saturate(180%);
-		border: 1px solid var(--border-color);
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: 1px solid var(--glass-border);
 		border-radius: 20px;
 		overflow: hidden;
-		box-shadow: 
-			0 24px 48px rgba(0, 0, 0, 0.2),
-			0 1px 2px rgba(255, 255, 255, 0.1) inset;
+		box-shadow: var(--glass-shadow);
 		animation: dialog-appear 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
 		position: relative;
 	}
@@ -402,6 +483,17 @@
 		color: var(--text-secondary);
 	}
 
+	/* Inline 错误提示 */
+	.error-inline {
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		margin-left: auto;
+		font-size: 12px;
+		color: var(--danger-color);
+		font-weight: 400;
+	}
+
 	.form-group textarea {
 		padding: 12px 14px;
 		background: var(--border-light);
@@ -423,6 +515,16 @@
 
 	.form-group textarea::placeholder {
 		color: var(--text-muted);
+	}
+
+	/* 错误状态 */
+	.form-group textarea.error {
+		border-color: var(--danger-color);
+	}
+
+	.form-group textarea.error:focus {
+		border-color: var(--danger-color);
+		box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
 	}
 
 	.path-selector {
@@ -538,16 +640,14 @@
 	.advanced-overlay {
 		position: absolute;
 		inset: 0;
-		/* 使用不透明背景确保完全遮挡 */
-		background: #0f0f14;
+		/* 使用与主界面一致的背景色 */
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border-radius: 20px;
 		display: flex;
 		flex-direction: column;
 		z-index: 10;
-	}
-
-	:global(html.light) .advanced-overlay {
-		background: #f8fafc;
 	}
 
 	.advanced-panel {

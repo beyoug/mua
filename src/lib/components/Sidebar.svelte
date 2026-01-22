@@ -97,14 +97,12 @@
 	.sidebar {
 		width: 200px;
 		height: calc(100vh - 24px);
-		background: var(--bg-sidebar);
-		backdrop-filter: blur(24px) saturate(180%);
-		-webkit-backdrop-filter: blur(24px) saturate(180%);
-		border: 1px solid var(--border-color);
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: 1px solid var(--glass-border);
 		border-radius: 20px;
-		box-shadow: 
-			0 8px 32px rgba(0, 0, 0, 0.12),
-			0 1px 2px rgba(255, 255, 255, 0.1) inset;
+		box-shadow: var(--glass-shadow);
 		display: flex;
 		flex-direction: column;
 		padding: 20px 0;

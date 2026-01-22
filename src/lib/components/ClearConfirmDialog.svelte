@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { Trash2 } from '@lucide/svelte';
+	import { createScrollLockEffect } from '$lib';
 
 	interface Props {
 		open: boolean;
@@ -34,18 +35,10 @@
 			deleteFile = false;
 		}
 	});
+
+	// 使用统一的滚动锁定工具
 	$effect(() => {
-		if (open) {
-			document.body.classList.add('no-scroll');
-			document.documentElement.classList.add('no-scroll');
-		} else {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
-		}
-		return () => {
-			document.body.classList.remove('no-scroll');
-			document.documentElement.classList.remove('no-scroll');
-		};
+		return createScrollLockEffect(open);
 	});
 </script>
 
@@ -110,14 +103,12 @@
 
 	.dialog {
 		width: 400px;
-		background: var(--bg-sidebar);
-		backdrop-filter: blur(24px) saturate(180%);
-		-webkit-backdrop-filter: blur(24px) saturate(180%);
-		border: 1px solid var(--border-color);
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: 1px solid var(--glass-border);
 		border-radius: 16px;
-		box-shadow: 
-			0 20px 48px rgba(0, 0, 0, 0.2),
-			0 1px 2px rgba(255, 255, 255, 0.1) inset;
+		box-shadow: var(--glass-shadow);
 		padding: 24px;
 		animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	}
@@ -204,7 +195,7 @@
 	}
 
 	.btn.confirm {
-		background: var(--danger-color, #ef4444);
+		background: var(--danger-color);
 		color: white;
 		box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
 	}

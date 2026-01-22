@@ -27,3 +27,17 @@ export interface DownloadTask {
 	state: DownloadState;
 	addedAt?: string;
 }
+
+/**
+ * 下载配置接口 - 用于创建新任务
+ */
+export interface DownloadConfig {
+	urls: string[];
+	savePath: string;
+	filename: string;
+	userAgent: string;
+	referer: string;
+	headers: string;
+	proxy: string;
+	maxDownloadLimit: string;
+}
