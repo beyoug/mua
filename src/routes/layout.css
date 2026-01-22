@@ -36,11 +36,11 @@
 /* 深色模式 (默认) */
 :root {
   /* ===== 基础色板 ===== */
-  /* 背景层级 (深→浅) */
+  /* 背景层级 (深→浅) - 降低不透明度使背景更透明 */
   --bg-base: #09090b;
-  --bg-elevated: rgba(24, 24, 27, 0.95);
-  --bg-surface: rgba(25, 25, 35, 0.85);
-  --bg-overlay: rgba(15, 15, 20, 0.75);
+  --bg-elevated: rgba(24, 24, 27, 0.6);
+  --bg-surface: rgba(25, 25, 35, 0.45);
+  --bg-overlay: rgba(15, 15, 20, 0.35);
   
   /* 兼容旧变量 */
   --bg-primary: var(--bg-base);
@@ -68,7 +68,7 @@
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 ===== */
-  --glass-bg: rgba(15, 15, 20, 0.5);
+  --glass-bg: rgba(15, 15, 20, 0.25); /* 进一步降低不透明度，使背景更透明 */
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(24px);
   --glass-saturate: saturate(180%);
@@ -115,11 +115,11 @@
 /* 浅色模式 */
 html.light {
   /* ===== 基础色板 ===== */
-  /* 背景层级 - 使用更深的灰色增强对比 */
+  /* 背景层级 - 降低不透明度使背景更透明 */
   --bg-base: #fafbfc;
-  --bg-elevated: #ffffff;
-  --bg-surface: rgba(255, 255, 255, 0.95);
-  --bg-overlay: rgba(248, 249, 250, 0.90);
+  --bg-elevated: rgba(255, 255, 255, 0.65);
+  --bg-surface: rgba(255, 255, 255, 0.5);
+  --bg-overlay: rgba(248, 249, 250, 0.45);
   
   /* 兼容旧变量 */
   --bg-primary: var(--bg-base);
@@ -147,7 +147,7 @@ html.light {
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-bg: rgba(255, 255, 255, 0.35); /* 进一步降低不透明度，使背景更透明 */
   --glass-border: rgba(0, 0, 0, 0.08);
   --glass-blur: blur(32px);
   --glass-saturate: saturate(120%);

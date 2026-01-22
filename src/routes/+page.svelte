@@ -495,6 +495,8 @@
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
+		position: relative; /* 为 z-index 提供定位上下文 */
+		z-index: 1; /* 确保显示在粒子背景(z-index: 0)上方 */
 	}
 
 	/* 悬浮玻璃 Header */
