@@ -6,6 +6,7 @@
 export { cn } from './utils';
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
 export { parseSpeedToBytes, formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
+export { isValidDownloadUrl, validateUrl, validateDownloadConfig } from './utils/validators';
 export {
     DownloadStateGroups,
     isActiveTask,
@@ -19,5 +20,24 @@ export {
 // Config
 export { queryClient } from './config/query';
 
+// Stores
+export {
+    activeTasks,
+    completedTasks,
+    allTasks,
+    downloadStats,
+    addDownloadTask,
+    pauseTask,
+    resumeTask,
+    cancelTask,
+    removeTask,
+    removeTasks,
+    cancelTasks,
+    pauseAll,
+    resumeAll,
+    hasDownloadingTasks,
+    hasPausedTasks
+} from './stores/downloadStore';
+
 // Types
-export type { DownloadTask, DownloadConfig, DownloadState } from './types/download';
+export type { DownloadTask, DownloadConfig, DownloadState, DownloadStats, TaskOperations } from './types/download';

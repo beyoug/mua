@@ -7,7 +7,7 @@
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, fly } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { createScrollLockEffect } from '$lib';
+	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
 
 	interface Props {
 		open: boolean;
@@ -51,40 +51,13 @@
 		return userAgents.find(ua => ua.id === selectedUaId)?.value || '';
 	});
 
-	// URL 验证函数
-	function isValidUrl(urlString: string): boolean {
-		if (!urlString || urlString.trim() === '') return false;
-		
-		try {
-			const url = new URL(urlString);
-			// 支持的协议：http, https, ftp, ftps
-			const validProtocols = ['http:', 'https:', 'ftp:', 'ftps:'];
-			return validProtocols.includes(url.protocol);
-		} catch {
-			return false;
-		}
-	}
-
-	// 验证单个 URL
-	function validateUrl(urlText: string): string {
-		const trimmed = urlText.trim();
-		
-		if (!trimmed) {
-			return '请输入下载链接';
-		}
-		
-		if (!isValidUrl(trimmed)) {
-			return '无效的URL格式，请使用 http/https/ftp 协议';
-		}
-		
-		return '';
-	}
+	// 注：URL 验证函数已迁移至 utils/validators.ts
 
 	// 计算是否可以提交
 	const canSubmit = $derived(() => {
 		const trimmed = urls.trim();
 		if (!trimmed) return false;
-		return isValidUrl(trimmed);
+		return isValidDownloadUrl(trimmed);
 	});
 
 	function handleSubmit() {

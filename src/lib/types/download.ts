@@ -41,3 +41,23 @@ export interface DownloadConfig {
 	proxy: string;
 	maxDownloadLimit: string;
 }
+
+/**
+ * 下载统计信息接口
+ */
+export interface DownloadStats {
+	totalSpeed: string;
+	totalSpeedBytes: number;
+	activeCount: number;
+	completedCount: number;
+}
+
+/**
+ * 任务操作接口
+ */
+export interface TaskOperations {
+	pause: (id: string) => void;
+	resume: (id: string) => void;
+	cancel: (id: string) => void;
+	remove: (id: string) => void;
+}

@@ -300,7 +300,6 @@
 	}
 
 	.remaining {
-		/* margin-left: auto;  Moved to added-at or right group */
 		color: var(--text-muted);
 	}
 	
