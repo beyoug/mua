@@ -142,18 +142,17 @@
 
 <style>
 	.download-card {
-		background: var(--bg-card);
-		backdrop-filter: blur(16px) saturate(150%);
-		-webkit-backdrop-filter: blur(16px) saturate(150%);
-		border: 1px solid var(--border-color);
-		border-top-color: var(--border-light);
+		background: var(--glass-bg);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: 1px solid var(--glass-border);
 		border-radius: 16px;
 		padding: 16px 18px;
 		transition: 
 			transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
 			box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
 			border-color 0s;
-		box-shadow: 0 4px 16px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--glass-shadow);
 		transform-style: preserve-3d;
 		perspective: 1000px;
 	}
