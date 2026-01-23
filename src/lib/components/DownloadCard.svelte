@@ -218,7 +218,7 @@
 
 	.filename {
 		font-size: 14px;
-		font-weight: 500;
+		font-weight: 400; /* 减轻字重 */
 		color: var(--text-primary);
 		white-space: nowrap;
 		overflow: hidden;
@@ -242,27 +242,30 @@
 		justify-content: center;
 		width: 30px;
 		height: 30px;
-		background: var(--border-light);
-		border: none;
+		background: var(--surface-hover);
+		border: 1px solid var(--border-subtle);
 		border-radius: 8px;
-		color: var(--text-muted);
+		color: var(--text-secondary);
 		cursor: pointer;
 		transition: all 0.15s ease;
 	}
 
 	.action-btn:hover {
-		background: var(--border-color);
+		background: var(--surface-active);
+		border-color: var(--border-normal);
 		color: var(--text-primary);
 	}
 
 	.action-btn.resume:hover {
 		background: var(--accent-active-bg);
 		color: var(--accent-text);
+		border-color: var(--accent-primary);
 	}
 
 	.action-btn.cancel:hover {
-		background: rgba(239, 68, 68, 0.2);
+		background: rgba(239, 68, 68, 0.15);
 		color: #f87171;
+		border-color: rgba(239, 68, 68, 0.3);
 	}
 
 	.card-footer {
@@ -271,11 +274,12 @@
 		gap: 16px;
 		margin-top: 12px;
 		font-size: 12px;
+		font-weight: 400;
 		color: var(--text-muted);
 	}
 
 	.speed {
-		color: var(--accent-text);
+		color: var(--text-primary);
 		font-weight: 500;
 	}
 

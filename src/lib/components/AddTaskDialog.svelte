@@ -411,7 +411,7 @@
 
 	.dialog-header h2 {
 		font-size: 17px;
-		font-weight: 600;
+		font-weight: 500; /* 减轻字重 */
 		color: var(--text-primary);
 		margin: 0;
 	}
@@ -431,7 +431,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-primary);
 	}
 
@@ -453,6 +453,7 @@
 		align-items: center;
 		gap: 6px;
 		font-size: 13px;
+		font-weight: 400;
 		color: var(--text-secondary);
 	}
 
@@ -469,11 +470,12 @@
 
 	.form-group textarea {
 		padding: 12px 14px;
-		background: var(--border-light);
-		border: 1px solid var(--border-color);
+		background: var(--surface-hover);
+		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		color: var(--text-primary);
 		font-size: 14px;
+		font-weight: 400;
 		font-family: inherit;
 		outline: none;
 		resize: none;
@@ -482,8 +484,8 @@
 	}
 
 	.form-group textarea:focus {
-		border-color: var(--accent-primary);
-		box-shadow: 0 0 0 3px var(--accent-active-bg);
+		border-color: var(--border-strong);
+		box-shadow: 0 0 0 3px var(--surface-active);
 	}
 
 	.form-group textarea::placeholder {
@@ -526,18 +528,19 @@
 
 	.text-input {
 		padding: 12px 14px;
-		background: var(--border-light);
-		border: 1px solid var(--border-color);
+		background: var(--surface-hover);
+		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		color: var(--text-primary);
 		font-size: 14px;
+		font-weight: 400;
 		outline: none;
 		transition: border-color 0s, box-shadow 0.15s ease;
 	}
 
 	.text-input:focus {
-		border-color: var(--accent-primary);
-		box-shadow: 0 0 0 3px var(--accent-active-bg);
+		border-color: var(--border-strong);
+		box-shadow: 0 0 0 3px var(--surface-active);
 	}
 
 	.text-input::placeholder {
@@ -584,12 +587,13 @@
 	}
 
 	.btn-secondary {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-secondary);
+		font-weight: 400;
 	}
 
 	.btn-secondary:hover {
-		background: var(--border-color);
+		background: var(--surface-active);
 		color: var(--text-primary);
 	}
 
@@ -651,7 +655,7 @@
 	}
 
 	.back-btn:hover {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-primary);
 	}
 

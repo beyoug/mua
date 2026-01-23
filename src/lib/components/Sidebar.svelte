@@ -138,7 +138,7 @@
 
 	.logo-text {
 		font-size: 20px;
-		font-weight: 600;
+		font-weight: 600; /* 加强字重，突出品牌 */
 		color: var(--text-primary);
 	}
 
@@ -164,9 +164,9 @@
 	}
 
 	.add-btn:hover {
-		background: var(--border-light);
-		border-color: var(--accent-primary);
-		color: var(--accent-text);
+		background: var(--surface-hover);
+		border-color: var(--border-strong);
+		color: var(--text-primary);
 	}
 
 	.nav-menu {
@@ -185,26 +185,31 @@
 		background: transparent;
 		border: none;
 		border-radius: 10px;
-		color: var(--text-muted);
+		border-left: 2px solid transparent; /* 简约左边框指示 */
+		color: var(--text-secondary);
 		font-size: 14px;
+		font-weight: 400; /* 减轻字重 */
 		cursor: pointer;
 		transition: all 0.2s ease;
 		text-align: left;
 	}
 
 	.nav-item:hover {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-primary);
+		border-left-color: var(--border-strong);
 	}
 
 	.nav-item.active {
-		background: var(--accent-active-bg);
-		color: var(--accent-text);
+		background: var(--surface-active);
+		color: var(--accent-primary); /* 使用主题色，深浅模式自适应 */
+		font-weight: 500;
+		border-left-color: var(--accent-primary); /* 活跃状态使用主题色左边框 */
 	}
 
 	.divider {
 		height: 1px;
-		background: var(--border-color);
+		background: var(--border-normal); /* 简约细线分割 */
 		margin: 16px 20px;
 	}
 
@@ -219,7 +224,7 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		color: var(--accent-text);
+		color: var(--text-primary);
 		font-size: 14px;
 		font-weight: 500;
 		margin-bottom: 8px;
@@ -230,6 +235,7 @@
 		justify-content: space-between;
 		align-items: center;
 		font-size: 13px;
+		font-weight: 400;
 	}
 
 	.stat-label {
@@ -238,12 +244,13 @@
 
 	.stat-count {
 		color: var(--accent-text);
+		opacity: 0.7; /* 弱化显示，不过分强调 */
 		font-weight: 500;
 	}
 
 	.sidebar-footer {
 		padding: 16px 12px 0;
-		border-top: 1px solid var(--border-color);
+		border-top: 1px solid var(--border-normal); /* 简约顶部分割线 */
 		margin-top: 16px;
 	}
 
@@ -256,14 +263,15 @@
 		background: transparent;
 		border: none;
 		border-radius: 10px;
-		color: var(--text-muted);
+		color: var(--text-secondary);
 		font-size: 14px;
+		font-weight: 400;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
 
 	.settings-btn:hover {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-primary);
 	}
 </style>

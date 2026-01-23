@@ -222,7 +222,7 @@
 
 	.panel-header h2 {
 		font-size: 18px;
-		font-weight: 600;
+		font-weight: 500; /* 减轻字重 */
 		color: var(--text-primary);
 		margin: 0;
 	}
@@ -242,7 +242,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--border-light);
+		background: var(--surface-hover);
 		color: var(--text-primary);
 	}
 
@@ -270,8 +270,8 @@
 
 	.theme-grid {
 		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 12px;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
 	}
 
 	.theme-card {
@@ -280,15 +280,16 @@
 		align-items: center;
 		gap: 8px;
 		padding: 12px 8px;
-		background: var(--border-light);
-		border: 1px solid var(--border-color);
+		background: var(--surface-hover);
+		border: 1px solid var(--border-normal);
 		border-radius: 12px;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
 
 	.theme-card:hover {
-		background: var(--border-color);
+		background: var(--surface-active);
+		border-color: var(--border-strong);
 	}
 
 	.theme-card.active {
@@ -325,24 +326,26 @@
 		align-items: center;
 		gap: 8px;
 		padding: 14px 10px;
-		background: var(--border-light);
-		border: 1px solid var(--border-color);
+		background: var(--surface-hover);
+		border: 1px solid var(--border-normal);
 		border-radius: 12px;
-		color: var(--text-muted);
+		color: var(--text-secondary);
 		font-size: 12px;
+		font-weight: 400;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
 
 	.mode-card:hover {
-		background: var(--border-color);
-		color: var(--text-secondary);
+		background: var(--surface-active);
+		border-color: var(--border-strong);
+		color: var(--text-primary);
 	}
 
 	.mode-card.active {
-		border-color: var(--accent-primary);
-		background: var(--accent-active-bg);
-		color: var(--accent-text);
+		border-color: var(--accent-primary); /* 使用主题色边框 */
+		background: var(--accent-subtle); /* 使用主题色淡背景 */
+		color: var(--accent-primary); /* 文字使用主题色 */
 	}
 
 	/* 速度滑块 */
@@ -394,7 +397,8 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 14px;
-		background: var(--border-light);
+		background: var(--surface-hover);
+		border: 1px solid var(--border-subtle);
 		border-radius: 10px;
 	}
 
