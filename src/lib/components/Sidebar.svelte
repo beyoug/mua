@@ -5,6 +5,8 @@
 <script lang="ts">
 	import { Download, CheckCircle, History, Settings, TrendingDown, Plus } from '@lucide/svelte';
 
+	import { getCurrentWindow } from '@tauri-apps/api/window';
+
 	type NavItem = 'active' | 'completed' | 'history';
 
 	interface Props {
@@ -27,6 +29,11 @@
 		stats = { totalSpeed: '0 B/s', activeCount: 0, completedCount: 0 }
 	}: Props = $props();
 
+    function startDrag() {
+        getCurrentWindow().startDragging();
+    }
+
+
 	const navItems = [
 		{ id: 'active' as NavItem, icon: Download, label: '进行中' },
 		{ id: 'completed' as NavItem, icon: CheckCircle, label: '已完成' },
@@ -36,7 +43,8 @@
 
 <aside class="sidebar">
 	<!-- Logo 区域 -->
-	<div class="logo-section">
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="logo-section" onmousedown={startDrag}>
 		<div class="logo">
 			<span class="logo-icon">↓</span>
 			<span class="logo-text">Mua</span>
@@ -105,7 +113,8 @@
 		box-shadow: var(--glass-shadow);
 		display: flex;
 		flex-direction: column;
-		padding: 16px 0;
+		/* 顶部 padding: 红绿灯空间(约28px) + 原有间距 */
+		padding: 0 0 16px; 
 		position: fixed;
 		left: 12px;
 		top: 12px;
@@ -113,14 +122,19 @@
 	}
 
 	.logo-section {
-		padding: 8px 20px 24px;
+		/* 红绿灯区域主要由 Sidebar 顶部空间承载，这里保留适当内边距 */
+		padding: 46px 20px 24px;
 		-webkit-app-region: drag;
+		position: relative; /* 确保 overlay 绝对定位相对于此 */
 	}
 
 	.logo {
 		display: flex;
 		align-items: center;
 		gap: 10px;
+		position: relative;
+		pointer-events: none; /* 让鼠标事件穿透 */
+		z-index: 0;
 	}
 
 	.logo-icon {

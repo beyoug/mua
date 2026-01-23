@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 	import { Play, Pause, Trash2 } from '@lucide/svelte';
+	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	interface Props {
 		title: string;
@@ -37,15 +38,21 @@
 		}
 		return '批量管理';
 	});
+
+	function startDrag() {
+		getCurrentWindow().startDragging();
+	}
 </script>
 
-<header class="floating-header">
+<!-- svelte-ignore a11y_no_static_element_interactions -->
+<header class="floating-header" onmousedown={startDrag}>
 	<div class="header-left">
 		<h1>{title}</h1>
 		<span class="task-count">{taskCount} 个任务</span>
 	</div>
 	
-	<div class="header-actions">
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
+	<div class="header-actions" onmousedown={(e) => e.stopPropagation()}>
 		{#if !isSelectionMode}
 			{#if hasDownloading}
 				<button class="icon-btn" onclick={onGlobalPause} title="全部暂停">
@@ -82,12 +89,22 @@
 		display: flex;
 		align-items: baseline;
 		gap: 12px;
+		position: relative;
+		pointer-events: none; /* 让鼠标事件穿透到下层 overlay，但保留文本渲染 */
+		z-index: 0; 
 	}
 
 	.header-actions {
 		display: flex;
 		gap: 8px;
 		-webkit-app-region: no-drag;
+		position: relative;
+		z-index: 10; /* 确保按钮在遮罩层之上 */
+	}
+
+	/* 确保 header 本身相对定位 */
+	.floating-header {
+		position: relative;
 	}
 
 	h1 {
