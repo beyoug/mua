@@ -5,12 +5,12 @@
 /**
  * 下载任务状态
  */
-export type DownloadState = 
-	| 'downloading' 
-	| 'paused' 
-	| 'completed' 
-	| 'error' 
-	| 'waiting' 
+export type DownloadState =
+	| 'downloading'
+	| 'paused'
+	| 'completed'
+	| 'error'
+	| 'waiting'
 	| 'cancelled';
 
 /**
@@ -19,6 +19,7 @@ export type DownloadState =
 export interface DownloadTask {
 	id: string;
 	filename: string;
+	url?: string;
 	progress: number;
 	speed?: string;
 	downloaded?: string;

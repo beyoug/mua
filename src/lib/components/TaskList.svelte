@@ -40,6 +40,7 @@
 			<div animate:flip={{ duration: 400 }}>
 				<DownloadCard
 					filename={download.filename}
+					url={download.url}
 					progress={download.progress}
 					speed={download.speed}
 					downloaded={download.downloaded}

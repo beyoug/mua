@@ -87,6 +87,7 @@
 	.header-actions {
 		display: flex;
 		gap: 8px;
+		-webkit-app-region: no-drag;
 	}
 
 	h1 {

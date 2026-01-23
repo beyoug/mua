@@ -87,6 +87,8 @@
   --dialog-bg: rgba(18, 18, 24, 0.88);
   /* 内部覆盖层背景 - 更高不透明度避免叠加问题 */
   --overlay-bg: rgba(20, 20, 28, 0.95);
+  /* 菜单背景 - 75% 透明度 + 5% 主题色混合 */
+  --glass-menu-bg: color-mix(in srgb, rgba(20, 20, 28, 0.75), var(--accent-primary) 5%);
 
   /* ===== 语义化颜色 ===== */
   --semantic-danger: #ef4444;
@@ -172,6 +174,8 @@ html.light {
   --dialog-bg: rgba(255, 255, 255, 0.92);
   /* 内部覆盖层背景 - 与弹窗保持一致 */
   --overlay-bg: rgba(255, 255, 255, 0.92);
+  /* 菜单背景 - 75% 透明度 + 5% 主题色混合 */
+  --glass-menu-bg: color-mix(in srgb, rgba(255, 255, 255, 0.75), var(--accent-primary) 5%);
 
   /* ===== 语义化颜色 - 浅色模式优化 ===== */
   --semantic-danger: #dc2626;

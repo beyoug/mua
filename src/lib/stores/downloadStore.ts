@@ -32,6 +32,7 @@ const { subscribe: subscribeTasks, set: setTasks, update: updateTasks } = writab
     {
         id: '1',
         filename: 'macOS-Tahoe-26.0.dmg',
+        url: 'https://updates.cdn-apple.com/2024/macos/012-34567/macOS-Tahoe.dmg',
         progress: 75,
         speed: '12.5 MB/s',
         downloaded: '3.2 GB',
@@ -43,6 +44,7 @@ const { subscribe: subscribeTasks, set: setTasks, update: updateTasks } = writab
     {
         id: '2',
         filename: 'Xcode_16.2.xip',
+        url: 'https://developer.apple.com/services-account/download?path=/Developer_Tools/Xcode_16.2/Xcode_16.2.xip',
         progress: 45,
         speed: '8.3 MB/s',
         downloaded: '2.1 GB',
@@ -163,6 +165,7 @@ export function addDownloadTask(config: DownloadConfig): void {
         const newTasks: DownloadTask[] = config.urls.map(url => ({
             id: crypto.randomUUID(),
             filename: config.filename || extractFilenameFromUrl(url),
+            url: url,
             progress: 0,
             state: 'waiting',
             addedAt: formatAddedAt()
@@ -180,11 +183,11 @@ export function addDownloadTask(config: DownloadConfig): void {
  */
 export function pauseTask(id: string): void {
     updateTasks(tasks => {
-        const task = tasks.find(t => t.id === id);
-        if (task && task.state === 'downloading') {
-            task.state = 'paused';
-        }
-        return tasks;
+        return tasks.map(t =>
+            t.id === id && (t.state === 'downloading' || t.state === 'waiting')
+                ? { ...t, state: 'paused' }
+                : t
+        );
     });
 }
 
@@ -193,11 +196,11 @@ export function pauseTask(id: string): void {
  */
 export function resumeTask(id: string): void {
     updateTasks(tasks => {
-        const task = tasks.find(t => t.id === id);
-        if (task && (task.state === 'paused' || task.state === 'cancelled' || task.state === 'waiting')) {
-            task.state = 'downloading';
-        }
-        return tasks;
+        return tasks.map(t =>
+            t.id === id && (t.state === 'paused' || t.state === 'cancelled' || t.state === 'waiting')
+                ? { ...t, state: 'downloading' }
+                : t
+        );
     });
 }
 
@@ -206,11 +209,11 @@ export function resumeTask(id: string): void {
  */
 export function cancelTask(id: string): void {
     updateTasks(tasks => {
-        const task = tasks.find(t => t.id === id);
-        if (task && isActiveTask(task.state)) {
-            task.state = 'cancelled';
-        }
-        return tasks;
+        return tasks.map(t =>
+            t.id === id && isActiveTask(t.state)
+                ? { ...t, state: 'cancelled' }
+                : t
+        );
     });
 }
 
@@ -219,19 +222,16 @@ export function cancelTask(id: string): void {
  */
 export function removeTask(id: string, deleteFile: boolean = false): void {
     updateTasks(tasks => {
-        const index = tasks.findIndex(t => t.id === id);
-        if (index === -1) return tasks;
+        const taskToDelete = tasks.find(t => t.id === id);
+        if (!taskToDelete) return tasks;
 
-        const task = tasks[index];
-        if (isRemovableTask(task.state)) {
-            tasks.splice(index, 1);
-
+        if (isRemovableTask(taskToDelete.state)) {
             if (deleteFile) {
                 // TODO: 调用 Tauri API 删除文件
                 console.log(`Delete file for task: ${id}`);
             }
+            return tasks.filter(t => t.id !== id);
         }
-
         return tasks;
     });
 }
@@ -259,12 +259,11 @@ export function removeTasks(ids: Set<string>, deleteFile: boolean = false): void
  */
 export function cancelTasks(ids: Set<string>): void {
     updateTasks(tasks => {
-        tasks.forEach(task => {
-            if (ids.has(task.id) && isActiveTask(task.state)) {
-                task.state = 'cancelled';
-            }
-        });
-        return tasks;
+        return tasks.map(task =>
+            ids.has(task.id) && isActiveTask(task.state)
+                ? { ...task, state: 'cancelled' }
+                : task
+        );
     });
 }
 
@@ -273,12 +272,11 @@ export function cancelTasks(ids: Set<string>): void {
  */
 export function pauseAll(): void {
     updateTasks(tasks => {
-        tasks.forEach(task => {
-            if (task.state === 'downloading') {
-                task.state = 'paused';
-            }
-        });
-        return tasks;
+        return tasks.map(task =>
+            (task.state === 'downloading' || task.state === 'waiting')
+                ? { ...task, state: 'paused' }
+                : task
+        );
     });
 }
 
@@ -287,12 +285,11 @@ export function pauseAll(): void {
  */
 export function resumeAll(): void {
     updateTasks(tasks => {
-        tasks.forEach(task => {
-            if (task.state === 'paused') {
-                task.state = 'downloading';
-            }
-        });
-        return tasks;
+        return tasks.map(task =>
+            task.state === 'paused'
+                ? { ...task, state: 'downloading' }
+                : task
+        );
     });
 }
 
@@ -300,7 +297,7 @@ export function resumeAll(): void {
  * 判断是否有正在下载的任务
  */
 export function hasDownloadingTasks(tasks: DownloadTask[]): boolean {
-    return tasks.some(t => t.state === 'downloading');
+    return tasks.some(t => t.state === 'downloading' || t.state === 'waiting');
 }
 
 /**
