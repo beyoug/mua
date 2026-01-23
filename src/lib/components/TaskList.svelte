@@ -33,6 +33,7 @@
 	}: Props = $props();
 </script>
 
+<div class="scroll-container">
 {#if tasks.length > 0}
 	<section class="downloads-list">
 		{#each tasks as download (download.id)}
@@ -67,12 +68,21 @@
 		<p class="empty-hint">{emptyHint}</p>
 	</div>
 {/if}
+</div>
 
 <style>
+	.scroll-container {
+		flex: 1;
+		overflow-y: auto;
+		display: flex;
+		flex-direction: column;
+	}
+
 	.downloads-list {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
+		padding: 20px 24px;
 	}
 
 	.empty-state {
@@ -83,6 +93,7 @@
 		align-items: center;
 		justify-content: center;
 		color: var(--text-muted);
+		padding: 40px 24px;
 	}
 
 	.empty-icon {

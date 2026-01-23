@@ -6,6 +6,7 @@
 export { cn } from './utils';
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
 export { parseSpeedToBytes, formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
+export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';
 export { isValidDownloadUrl, validateUrl, validateDownloadConfig } from './utils/validators';
 export {
     DownloadStateGroups,

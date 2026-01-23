@@ -73,9 +73,9 @@
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.025);
-  --glass-border: rgba(255, 255, 255, 0.08);
-  --glass-blur: blur(60px);
+  --glass-bg: rgba(255, 255, 255, 0.02);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-blur: blur(40px);
   --glass-saturate: saturate(180%);
   --glass-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.08),
@@ -158,9 +158,9 @@ html.light {
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 - 浅色模式 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(0, 0, 0, 0.06);
-  --glass-blur: blur(72px);
+  --glass-bg: rgba(255, 255, 255, 0.25);
+  --glass-border: rgba(0, 0, 0, 0.1);
+  --glass-blur: blur(60px);
   --glass-saturate: saturate(150%);
   --glass-shadow: 
     0 2px 4px rgba(0, 0, 0, 0.04),

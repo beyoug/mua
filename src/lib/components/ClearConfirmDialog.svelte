@@ -1,3 +1,7 @@
+<!--
+  ClearConfirmDialog.svelte
+  清空/删除确认对话框 - 支持选择是否同时删除本地文件
+-->
 <script lang="ts">
 	import { Trash2 } from '@lucide/svelte';
 	import { createScrollLockEffect } from '$lib';

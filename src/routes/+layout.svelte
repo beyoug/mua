@@ -37,7 +37,6 @@
 		}
 	});
 </script>
-
 <svelte:head>
 	<link rel="icon" href={favicon} />
 	<title>Mua - Download Manager</title>

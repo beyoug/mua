@@ -236,31 +236,32 @@
 
 <!-- 主内容区 -->
 <main class="main-content">
-	<TaskListHeader
-		title={pageTitle()}
-		taskCount={filteredTasks().length}
-		tasks={filteredTasks()}
-		{hasDownloading}
-		{hasPaused}
-		{hasRemovable}
-		{isSelectionMode}
-		selectedCount={selectedIds.size}
-		onGlobalPause={handleGlobalPause}
-		onGlobalResume={handleGlobalResume}
-		onTrashClick={handleTrashClick}
-	/>
+	<div class="content-panel">
+		<TaskListHeader
+			title={pageTitle()}
+			taskCount={filteredTasks().length}
+			{hasDownloading}
+			{hasPaused}
+			{hasRemovable}
+			{isSelectionMode}
+			selectedCount={selectedIds.size}
+			onGlobalPause={handleGlobalPause}
+			onGlobalResume={handleGlobalResume}
+			onTrashClick={handleTrashClick}
+		/>
 
-	<TaskList
-		tasks={filteredTasks()}
-		emptyTitle={emptyStateText().title}
-		emptyHint={emptyStateText().hint}
-		{isSelectionMode}
-		{selectedIds}
-		onSelect={toggleSelection}
-		onPause={pauseTask}
-		onResume={resumeTask}
-		onCancel={handleCancelTask}
-	/>
+		<TaskList
+			tasks={filteredTasks()}
+			emptyTitle={emptyStateText().title}
+			emptyHint={emptyStateText().hint}
+			{isSelectionMode}
+			{selectedIds}
+			onSelect={toggleSelection}
+			onPause={pauseTask}
+			onResume={resumeTask}
+			onCancel={handleCancelTask}
+		/>
+	</div>
 </main>
 
 <!-- 添加任务对话框 -->
@@ -292,12 +293,25 @@
 	.main-content {
 		flex: 1;
 		margin-left: 224px;
-		padding: 0 20px 20px;
-		min-height: 100vh;
+		padding: 12px 12px 12px 0;
+		height: 100vh;
 		box-sizing: border-box;
 		display: flex;
 		flex-direction: column;
 		position: relative;
 		z-index: 1;
+	}
+
+	/* 统一的玻璃面板容器 - 无模糊，让粒子透过 */
+	.content-panel {
+		flex: 1;
+		min-height: 0;
+		background: var(--glass-bg);
+		border: 1px solid var(--glass-border);
+		border-radius: 16px;
+		box-shadow: var(--glass-shadow);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
 	}
 </style>

@@ -57,7 +57,6 @@ const unsubscribeSpeed = totalDownloadSpeed.subscribe((speed) => {
 
 function getEmitRate(): number {
   if (currentSpeedMbps <= 0) return 0;
-  // 稍微降低发射率，让粒子更稀疏、更优雅
   return Math.min(4 + currentSpeedMbps * 0.4, 40);
 }
 

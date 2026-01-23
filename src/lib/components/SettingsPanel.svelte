@@ -1,22 +1,13 @@
 <!--
   SettingsPanel.svelte
-  滑出式设置面板 - 主题色 + 颜色模式 + 粒子设置
+  浮动设置面板 - 主题色 + 颜色模式 + 粒子设置
 -->
 <script lang="ts">
 	import { X, Palette, Check, Sun, Moon, Monitor, Zap, Sparkles } from '@lucide/svelte';
 	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode, particlesEnabled } from '$lib/stores/theme';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
 	import { createScrollLockEffect } from '$lib';
-
-	// 计算调试显示信息
-	function getEmitRate(speedMbps: number): number {
-		if (speedMbps <= 0) return 0;
-		return Math.min(6 + speedMbps * 0.5, 56);
-	}
-
-	function getEstimatedParticles(speedMbps: number): number {
-		return Math.round(getEmitRate(speedMbps) * 11); // 平均生命周期约11秒
-	}
+	import { getEmitRate, getEstimatedParticles } from '$lib/utils/particles';
 
 	interface Props {
 		open: boolean;

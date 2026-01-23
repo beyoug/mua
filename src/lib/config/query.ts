@@ -9,7 +9,7 @@ export const queryClient = new QueryClient({
         queries: {
             // 窗口获得焦点时自动 refetch
             refetchOnWindowFocus: true,
-            // 数据过期时间 (ms)
+            // 数据过期时间 (ms) - 配合 polling interval 使用
             staleTime: 1000,
             // 失败重试次数
             retry: 2,

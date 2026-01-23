@@ -4,12 +4,10 @@
 -->
 <script lang="ts">
 	import { Play, Pause, Trash2 } from '@lucide/svelte';
-	import type { DownloadTask } from '$lib/types/download';
 
 	interface Props {
 		title: string;
 		taskCount: number;
-		tasks: DownloadTask[];
 		hasDownloading: boolean;
 		hasPaused: boolean;
 		hasRemovable: boolean;
@@ -23,7 +21,6 @@
 	let {
 		title,
 		taskCount,
-		tasks,
 		hasDownloading,
 		hasPaused,
 		hasRemovable,
@@ -61,7 +58,7 @@
 			{/if}
 		{/if}
 
-		{#if hasRemovable || tasks.length > 0}
+		{#if hasRemovable || taskCount > 0}
 			<button class="icon-btn danger" onclick={onTrashClick} title={trashTooltip()}>
 				<Trash2 size={18} />
 			</button>
@@ -70,22 +67,15 @@
 </header>
 
 <style>
-	/* 悬浮玻璃 Header */
+	/* Header 作为面板内嵌头部 */
 	.floating-header {
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 16px 24px;
-		margin: 12px 0 24px;
-		background: var(--glass-bg);
-		backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
-		border-radius: 20px;
-		box-shadow: var(--glass-shadow);
-		position: sticky;
-		top: 12px;
-		z-index: 10;
+		padding: 18px 24px;
+		border-bottom: 1px solid var(--border-subtle);
+		flex-shrink: 0;
+		-webkit-app-region: drag;
 	}
 
 	.header-left {
