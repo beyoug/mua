@@ -8,6 +8,7 @@
   html {
     overscroll-behavior: none;
   }
+
   body {
     /* 深色模式：纯黑背景 */
     background: #0a0a0a;
@@ -19,14 +20,13 @@
     overscroll-behavior: none;
     user-select: none;
     -webkit-user-select: none;
-    transition: background 0.3s ease, color 0.3s ease;
   }
-  
+
   /* 浅色模式：纯白背景 */
   html.light body {
     background: #ffffff;
   }
-  
+
   .no-scroll {
     overflow: hidden !important;
     height: 100vh !important;
@@ -46,43 +46,47 @@
   --bg-elevated: rgba(24, 24, 27, 0);
   --bg-surface: rgba(25, 25, 35, 0);
   --bg-overlay: rgba(15, 15, 20, 0);
-  
+
   /* 兼容旧变量 */
   --bg-primary: var(--bg-base);
   --bg-secondary: var(--bg-elevated);
   --bg-card: var(--bg-surface);
   --bg-sidebar: var(--bg-overlay);
-  
+
   /* 文本层级 - 纯白字体系统 */
   --text-primary: rgba(255, 255, 255, 0.96);
   --text-secondary: rgba(255, 255, 255, 0.75);
   --text-tertiary: rgba(255, 255, 255, 0.55);
   --text-disabled: rgba(255, 255, 255, 0.4);
-  --text-muted: var(--text-tertiary); /* 兼容旧变量 */
-  
+  --text-muted: var(--text-tertiary);
+  /* 兼容旧变量 */
+
   /* 边框与分割线 - 简约白色线条 */
   --border-strong: rgba(255, 255, 255, 0.25);
   --border-normal: rgba(255, 255, 255, 0.14);
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-color: var(--border-normal); /* 兼容旧变量 */
-  --border-light: var(--border-subtle); /* 兼容旧变量 */
-  
+  --border-color: var(--border-normal);
+  /* 兼容旧变量 */
+  --border-light: var(--border-subtle);
+  /* 兼容旧变量 */
+
   /* 交互反馈 */
   --surface-hover: rgba(255, 255, 255, 0.06);
   --surface-active: rgba(255, 255, 255, 0.1);
-  --bg-hover: var(--surface-hover); /* 兼容旧变量 */
-  
+  --bg-hover: var(--surface-hover);
+  /* 兼容旧变量 */
+
   /* ===== 玻璃态效果 ===== */
   --glass-bg: rgba(255, 255, 255, 0.02);
   --glass-border: rgba(255, 255, 255, 0.1);
   --glass-blur: blur(40px);
   --glass-saturate: saturate(180%);
-  --glass-shadow: 
+  --glass-shadow:
     0 2px 4px rgba(0, 0, 0, 0.08),
     0 8px 24px rgba(0, 0, 0, 0.12),
     0 24px 48px rgba(0, 0, 0, 0.16),
     0 0 0 1px rgba(255, 255, 255, 0.04) inset;
-  
+
   /* 弹窗专用背景 */
   --dialog-bg: rgba(18, 18, 24, 0.88);
   /* 内部覆盖层背景 - 更高不透明度避免叠加问题 */
@@ -103,7 +107,7 @@
   --semantic-info: #3b82f6;
   --semantic-info-bg: rgba(59, 130, 246, 0.15);
   --semantic-info-border: rgba(59, 130, 246, 0.3);
-  
+
   /* 兼容旧变量 */
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
@@ -121,7 +125,7 @@
   --accent-subtle: rgba(255, 255, 255, 0.1);
   --accent-text: #ffffff;
   --bg-gradient: none;
-  
+
   --accent-active-bg: var(--accent-subtle);
 }
 
@@ -133,43 +137,47 @@ html.light {
   --bg-elevated: rgba(255, 255, 255, 0);
   --bg-surface: rgba(255, 255, 255, 0);
   --bg-overlay: rgba(248, 249, 250, 0);
-  
+
   /* 兼容旧变量 */
   --bg-primary: var(--bg-base);
   --bg-secondary: var(--bg-elevated);
   --bg-card: var(--bg-surface);
   --bg-sidebar: var(--bg-overlay);
-  
+
   /* 文本层级 - 深色文字（浅色模式） */
   --text-primary: rgba(15, 23, 42, 0.96);
   --text-secondary: rgba(15, 23, 42, 0.70);
   --text-tertiary: rgba(15, 23, 42, 0.55);
   --text-disabled: rgba(15, 23, 42, 0.4);
-  --text-muted: var(--text-tertiary); /* 兼容旧变量 */
-  
+  --text-muted: var(--text-tertiary);
+  /* 兼容旧变量 */
+
   /* 边框 - 深色线条  */
   --border-strong: rgba(15, 23, 42, 0.22);
   --border-normal: rgba(15, 23, 42, 0.14);
   --border-subtle: rgba(15, 23, 42, 0.08);
-  --border-color: var(--border-normal); /* 兼容旧变量 */
-  --border-light: var(--border-subtle); /* 兼容旧变量 */
-  
+  --border-color: var(--border-normal);
+  /* 兼容旧变量 */
+  --border-light: var(--border-subtle);
+  /* 兼容旧变量 */
+
   /* 交互反馈 */
   --surface-hover: rgba(15, 23, 42, 0.06);
   --surface-active: rgba(15, 23, 42, 0.1);
-  --bg-hover: var(--surface-hover); /* 兼容旧变量 */
-  
+  --bg-hover: var(--surface-hover);
+  /* 兼容旧变量 */
+
   /* ===== 玻璃态效果 - 浅色模式 ===== */
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: rgba(0, 0, 0, 0.1);
   --glass-blur: blur(60px);
   --glass-saturate: saturate(150%);
-  --glass-shadow: 
+  --glass-shadow:
     0 2px 4px rgba(0, 0, 0, 0.04),
     0 8px 24px rgba(0, 0, 0, 0.06),
     0 24px 48px rgba(0, 0, 0, 0.08),
     0 0 0 1px rgba(255, 255, 255, 0.6) inset;
-  
+
   /* 弹窗专用背景 */
   --dialog-bg: rgba(255, 255, 255, 0.92);
   /* 内部覆盖层背景 - 与弹窗保持一致 */
@@ -190,7 +198,7 @@ html.light {
   --semantic-info: #2563eb;
   --semantic-info-bg: rgba(37, 99, 235, 0.08);
   --semantic-info-border: rgba(37, 99, 235, 0.2);
-  
+
   /* 兼容旧变量 */
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
@@ -198,7 +206,7 @@ html.light {
 
   /* 字体 (浅色模式使用相同值) */
   --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
-  
+
   /* 默认主题变量 (极简 - 浅色) */
   --accent-primary: #171717;
   --accent-secondary: #404040;
@@ -208,7 +216,7 @@ html.light {
   --accent-subtle: rgba(0, 0, 0, 0.06);
   --accent-text: #171717;
   --bg-gradient: none;
-  
+
   --accent-active-bg: var(--accent-subtle);
 }
 
@@ -228,7 +236,7 @@ html.theme-minimal {
   --theme-700: #404040;
   --theme-800: #262626;
   --theme-900: #171717;
-  
+
   /* 深色模式应用 - 白色主题色 */
   --accent-primary: #ffffff;
   --accent-secondary: #e5e5e5;
@@ -238,7 +246,7 @@ html.theme-minimal {
   --accent-subtle: rgba(255, 255, 255, 0.1);
   --accent-text: #ffffff;
   --bg-gradient: none;
-  
+
   --accent-active-bg: var(--accent-subtle);
 }
 
@@ -257,7 +265,7 @@ html.light.theme-minimal {
   --accent-subtle: rgba(0, 0, 0, 0.06);
   --accent-text: #171717;
   --bg-gradient: none;
-  
+
   --accent-active-bg: var(--accent-subtle);
 }
 
@@ -279,7 +287,7 @@ html.theme-electric-blue {
   --theme-700: #1D6AD8;
   --theme-800: #1e40af;
   --theme-900: #1e3a8a;
-  
+
   /* 深色模式应用 */
   --accent-primary: var(--theme-500);
   --accent-secondary: var(--theme-400);
@@ -289,14 +297,14 @@ html.theme-electric-blue {
   --accent-subtle: rgba(74, 158, 255, 0.18);
   --accent-text: var(--theme-400);
   --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
-  
+
   /* 兼容旧变量 */
   --accent-active-bg: var(--accent-subtle);
 }
 
 /* 电光蓝深色模式背景 */
 html.theme-electric-blue body {
-  background: 
+  background:
     radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 158, 255, 0.12), transparent),
     linear-gradient(180deg, #0a0f1e, #151b2e);
 }
@@ -311,14 +319,14 @@ html.light.theme-electric-blue {
   --accent-subtle: rgba(30, 95, 217, 0.1);
   --accent-text: #1E5FD9;
   --bg-gradient: radial-gradient(ellipse at top, rgba(30, 95, 217, 0.1), transparent);
-  
+
   /* 兼容旧变量 */
   --accent-active-bg: var(--accent-subtle);
 }
 
 /* 电光蓝浅色模式背景 */
 html.light.theme-electric-blue body {
-  background: 
+  background:
     radial-gradient(ellipse 60% 40% at 50% 0%, rgba(30, 95, 217, 0.08), transparent),
     linear-gradient(180deg, #f5f8fc, #dfe6f0);
 }
@@ -336,7 +344,7 @@ html.theme-cyber-purple {
   --theme-700: #7e22ce;
   --theme-800: #6b21a8;
   --theme-900: #581c87;
-  
+
   /* 深色模式应用 */
   --accent-primary: #8B5CF6;
   --accent-secondary: var(--theme-500);
@@ -346,14 +354,14 @@ html.theme-cyber-purple {
   --accent-subtle: rgba(139, 92, 246, 0.15);
   --accent-text: var(--theme-500);
   --bg-gradient: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15), transparent);
-  
+
   /* 兼容旧变量 */
   --accent-active-bg: var(--accent-subtle);
 }
 
 /* 赛博紫深色模式背景 - 双椭圆梦幻紫 */
 html.theme-cyber-purple body {
-  background: 
+  background:
     radial-gradient(ellipse 60% 40% at 30% 0%, rgba(139, 92, 246, 0.15), transparent),
     radial-gradient(ellipse 50% 50% at 80% 100%, rgba(168, 85, 247, 0.1), transparent),
     linear-gradient(135deg, #0d0a1a 0%, #1a0e2e 50%, #0f0a1e 100%);
@@ -369,14 +377,14 @@ html.light.theme-cyber-purple {
   --accent-subtle: rgba(124, 58, 237, 0.08);
   --accent-text: var(--theme-700);
   --bg-gradient: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.08), transparent);
-  
+
   /* 兼容旧变量 */
   --accent-active-bg: var(--accent-subtle);
 }
 
 /* 赛博紫浅色模式背景 - 柔和紫调 */
 html.light.theme-cyber-purple body {
-  background: 
+  background:
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(126, 34, 206, 0.06), transparent),
     linear-gradient(180deg, #faf5ff, #ede9f5);
 }

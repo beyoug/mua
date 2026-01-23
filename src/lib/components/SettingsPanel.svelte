@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 	import { X, Palette, Check, Sun, Moon, Monitor, Zap, Sparkles } from '@lucide/svelte';
+	import { fade, scale } from 'svelte/transition';
 	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode, particlesEnabled } from '$lib/stores/theme';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
 	import { createScrollLockEffect } from '$lib';
@@ -57,10 +58,17 @@
 
 {#if open}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="panel-overlay" onclick={onClose} onkeydown={handleKeydown}>
+	<div class="panel-overlay" 
+		in:fade={{ duration: 150 }} 
+		out:fade={{ duration: 100 }}
+		onclick={onClose} 
+		onkeydown={handleKeydown}>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="panel" onclick={(e) => e.stopPropagation()}>
+		<div class="panel" 
+			in:scale={{ duration: 150, start: 0.98, opacity: 0.5 }}
+			out:fade={{ duration: 80 }}
+			onclick={(e) => e.stopPropagation()}>
 			<header class="panel-header">
 				<h2>设置</h2>
 				<button class="close-btn" onclick={onClose}>
@@ -196,18 +204,6 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
-		animation: panel-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-
-	@keyframes panel-appear {
-		from {
-			opacity: 0;
-			transform: scale(0.98);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1);
-		}
 	}
 
 	.panel-header {

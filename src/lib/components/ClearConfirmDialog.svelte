@@ -4,6 +4,7 @@
 -->
 <script lang="ts">
 	import { Trash2 } from '@lucide/svelte';
+	import { fade, scale } from 'svelte/transition';
 	import { createScrollLockEffect } from '$lib';
 
 	interface Props {
@@ -49,6 +50,8 @@
 {#if open}
 	<div 
 		class="dialog-overlay" 
+		in:fade={{ duration: 150 }}
+		out:fade={{ duration: 100 }}
 		onclick={onClose}
 		role="button"
 		tabindex="0"
@@ -60,6 +63,8 @@
 			class="dialog" 
 			role="dialog"
 			aria-modal="true"
+			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
+			out:fade={{ duration: 80 }}
 			onclick={(e) => e.stopPropagation()}
 			onkeydown={(e) => e.stopPropagation()}
 			tabindex="-1"
@@ -102,7 +107,6 @@
 		align-items: center;
 		justify-content: center;
 		z-index: 1000;
-		animation: fade-in 0.2s ease;
 	}
 
 	.dialog {
@@ -114,7 +118,6 @@
 		border-radius: 16px;
 		box-shadow: var(--glass-shadow);
 		padding: 24px;
-		animation: scale-in 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 	}
 
 	.dialog-header {
@@ -208,13 +211,4 @@
 		background: #dc2626;
 	}
 
-	@keyframes fade-in {
-		from { opacity: 0; }
-		to { opacity: 1; }
-	}
-
-	@keyframes scale-in {
-		from { opacity: 0; transform: scale(0.95); }
-		to { opacity: 1; transform: scale(1); }
-	}
 </style>

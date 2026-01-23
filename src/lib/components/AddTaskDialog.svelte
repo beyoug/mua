@@ -5,7 +5,7 @@
 <script lang="ts">
 	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { fade, fly } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
 	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
 
@@ -178,10 +178,17 @@
 
 {#if open}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="dialog-overlay" onclick={onClose} onkeydown={handleKeydown}>
+	<div class="dialog-overlay" 
+		in:fade={{ duration: 150 }} 
+		out:fade={{ duration: 100 }}
+		onclick={onClose} 
+		onkeydown={handleKeydown}>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="dialog" onclick={(e) => e.stopPropagation()}>
+		<div class="dialog" 
+			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
+			out:fade={{ duration: 80 }}
+			onclick={(e) => e.stopPropagation()}>
 			<!-- 主面板 -->
 			<header class="dialog-header">
 				<h2>添加下载任务</h2>
@@ -260,8 +267,10 @@
 
 			<!-- 高级设置覆盖层 -->
 			{#if showAdvanced}
-				<div class="advanced-overlay" transition:fade={{ duration: 150 }}>
-					<div class="advanced-panel" transition:fly={{ y: 20, duration: 200 }}>
+				<div class="advanced-overlay" 
+					in:fade={{ duration: 150 }} 
+					out:fade={{ duration: 100 }}>
+					<div class="advanced-panel">
 						<header class="panel-header">
 							<button class="back-btn" onclick={() => showAdvanced = false}>
 								<ArrowLeft size={18} />
@@ -386,19 +395,7 @@
 		border-radius: 18px;
 		overflow: hidden;
 		box-shadow: var(--glass-shadow);
-		animation: dialog-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		position: relative;
-	}
-
-	@keyframes dialog-appear {
-		from {
-			opacity: 0;
-			transform: scale(0.95) translateY(10px);
-		}
-		to {
-			opacity: 1;
-			transform: scale(1) translateY(0);
-		}
 	}
 
 	.dialog-header {
