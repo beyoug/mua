@@ -1,7 +1,7 @@
 /**
  * theme.ts - 主题管理 Store
  * 支持：
- * - 三套主题色（极简、电光蓝、赛博紫）
+ * - 三套主题色（深空、电光蓝、赛博紫）
  * - 三种颜色模式（深色、浅色、自动）
  * - 持久化到 localStorage
  */
@@ -9,7 +9,7 @@ import { writable, derived } from 'svelte/store';
 import { browser } from '$app/environment';
 
 // ============ 主题色 ============
-export type ThemeId = 'minimal' | 'electric-blue' | 'cyber-purple';
+export type ThemeId = 'electric-blue' | 'cyber-purple' | 'deep-space';
 
 export interface Theme {
 	id: ThemeId;
@@ -20,12 +20,12 @@ export interface Theme {
 }
 
 export const themes: Record<ThemeId, Theme> = {
-	'minimal': {
-		id: 'minimal',
-		name: '极简',
-		primary: '#888888',
-		secondary: '#666666',
-		glow: 'rgba(128, 128, 128, 0.2)'
+	'deep-space': {
+		id: 'deep-space',
+		name: '深空',
+		primary: '#ffffff',
+		secondary: '#94a3b8',
+		glow: 'rgba(255, 255, 255, 0.25)'
 	},
 	'electric-blue': {
 		id: 'electric-blue',
@@ -57,7 +57,7 @@ const THEME_KEY = 'mua-theme';
 const MODE_KEY = 'mua-color-mode';
 const PARTICLES_KEY = 'mua-particles-enabled';
 
-const DEFAULT_THEME: ThemeId = 'minimal';
+const DEFAULT_THEME: ThemeId = 'deep-space';
 const DEFAULT_MODE: ColorMode = 'dark';
 const DEFAULT_PARTICLES: boolean = true;
 

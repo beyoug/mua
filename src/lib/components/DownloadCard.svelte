@@ -237,12 +237,11 @@
 	}
 
 	.download-card:hover {
-		border-color: var(--accent-primary);
 		transform: translateY(-1px);
 		box-shadow: 
 			0 4px 12px rgba(0, 0, 0, 0.1),
 			0 12px 32px rgba(0, 0, 0, 0.15),
-			0 0 0 1px var(--accent-primary);
+			0 0 8px var(--accent-glow);
 		z-index: 10;
 	}
 
@@ -333,9 +332,10 @@
 
 	.action-btn:hover {
 		background: var(--surface-active);
-		border-color: var(--border-normal);
+		border-color: var(--accent-primary);
 		color: var(--text-primary);
 		transform: scale(1.05);
+		box-shadow: 0 0 8px var(--accent-glow);
 	}
 
 	.action-btn.resume:hover {

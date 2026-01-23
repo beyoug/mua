@@ -183,7 +183,7 @@
 	.panel-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.2);
+		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.2));
 		backdrop-filter: blur(2px);
 		z-index: 2000;
 	}
@@ -236,7 +236,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		color: var(--text-primary);
 	}
 
@@ -272,7 +272,7 @@
 		align-items: center;
 		justify-content: center;
 		padding: 6px;
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		cursor: pointer;
@@ -296,7 +296,7 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		color: white;
+		color: var(--accent-btn-text, white);
 		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 	}
 
@@ -317,7 +317,7 @@
 		justify-content: center;
 		gap: 6px;
 		padding: 8px 12px;
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		color: var(--text-secondary);
@@ -388,7 +388,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 14px;
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		border: 1px solid var(--border-subtle);
 		border-radius: 10px;
 	}
@@ -419,7 +419,7 @@
 		left: 2px;
 		width: 20px;
 		height: 20px;
-		background: white;
+		background: var(--toggle-knob-c, white);
 		border-radius: 50%;
 		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 		transition: transform 0.2s ease;

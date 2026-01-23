@@ -101,7 +101,7 @@
 	.dialog-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.2);
+		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.2));
 		backdrop-filter: blur(4px);
 		display: flex;
 		align-items: center;
@@ -111,7 +111,7 @@
 
 	.dialog {
 		width: 400px;
-		background: var(--glass-bg);
+		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border: 1px solid var(--glass-border);

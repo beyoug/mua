@@ -3,7 +3,7 @@
   添加下载任务对话框 - 支持高级设置覆盖层
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
@@ -181,7 +181,6 @@
 	<div class="dialog-overlay" 
 		in:fade={{ duration: 150 }} 
 		out:fade={{ duration: 100 }}
-		onclick={onClose} 
 		onkeydown={handleKeydown}>
 		<!-- svelte-ignore a11y_no_static_element_interactions -->
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
@@ -189,184 +188,185 @@
 			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
 			out:fade={{ duration: 80 }}
 			onclick={(e) => e.stopPropagation()}>
-			<!-- 主面板 -->
-			<header class="dialog-header">
-				<h2>添加下载任务</h2>
-				<button class="close-btn" onclick={onClose}>
-					<X size={18} />
-				</button>
-			</header>
+			{#if !showAdvanced}
+				<!-- 主面板 -->
+				<div class="view-main" transition:fade={{ duration: 200 }}>
+					<header class="dialog-header">
+						<h2>添加下载任务</h2>
+						<button class="close-btn" onclick={onClose}>
+							<X size={18} />
+						</button>
+					</header>
 
-			<div class="dialog-body">
-				<!-- 下载链接 -->
-				<div class="form-group">
-					<label for="urls">
-						<Link size={14} />
-						<span>下载链接</span>
-						{#if validationError}
-							<span class="error-inline">
-								<AlertCircle size={12} />
-								{validationError}
-							</span>
-						{/if}
-					</label>
-					<textarea
-						id="urls"
-						placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
-						bind:value={urls}
-						oninput={handleUrlInput}
-						onblur={handleUrlBlur}
-						class:error={!!validationError}
-					></textarea>
-				</div>
+					<div class="dialog-body">
+						<!-- 下载链接 -->
+						<div class="form-group">
+							<label for="urls">
+								<Link size={14} />
+								<span>下载链接</span>
+								{#if validationError}
+									<span class="error-inline">
+										<AlertCircle size={12} />
+										{validationError}
+									</span>
+								{/if}
+							</label>
+							<textarea
+								id="urls"
+								placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
+								bind:value={urls}
+								oninput={handleUrlInput}
+								onblur={handleUrlBlur}
+								class:error={!!validationError}
+							></textarea>
+						</div>
 
-				<!-- 保存位置 -->
-				<div class="form-group">
-					<label>
-						<FolderOpen size={14} />
-						<span>保存位置</span>
-					</label>
-					<button class="path-selector" onclick={selectFolder}>
-						<span class="path-text">{savePath}</span>
-						<FolderOpen size={14} />
-					</button>
-				</div>
-
-				<!-- 保存文件名 -->
-				<div class="form-group">
-					<label>
-						<FileText size={14} />
-						<span>保存文件名</span>
-					</label>
-					<input
-						type="text"
-						class="text-input"
-						placeholder="留空则使用原始文件名"
-						bind:value={filename}
-					/>
-				</div>
-			</div>
-
-			<footer class="dialog-footer">
-				<button class="btn btn-advanced" onclick={() => showAdvanced = true}>
-					<Settings size={14} />
-					<span>高级设置</span>
-				</button>
-				<div class="footer-right">
-					<button class="btn btn-secondary" onclick={onClose}>取消</button>
-					<button 
-						class="btn btn-primary" 
-						onclick={handleSubmit}
-						disabled={!canSubmit()}
-					>
-						<Download size={14} />
-						<span>开始下载</span>
-					</button>
-				</div>
-			</footer>
-
-			<!-- 高级设置覆盖层 -->
-			{#if showAdvanced}
-				<div class="advanced-overlay" 
-					in:fade={{ duration: 150 }} 
-					out:fade={{ duration: 100 }}>
-					<div class="advanced-panel">
-						<header class="panel-header">
-							<button class="back-btn" onclick={() => showAdvanced = false}>
-								<ArrowLeft size={18} />
+						<!-- 保存位置 -->
+						<div class="form-group">
+							<label>
+								<FolderOpen size={14} />
+								<span>保存位置</span>
+							</label>
+							<button class="path-selector" onclick={selectFolder}>
+								<span class="path-text">{savePath}</span>
+								<FolderOpen size={14} />
 							</button>
-							<h3>高级设置</h3>
-						</header>
+						</div>
 
-						<div class="panel-body">
-							<!-- User Agent -->
-							<div class="form-row">
-								<label>
-									<Globe size={14} />
-									<span>User Agent</span>
-								</label>
-								<div class="ua-selector">
-									<select bind:value={selectedUaId}>
-										{#each userAgents as ua}
-											<option value={ua.id}>{ua.name}</option>
-										{/each}
-									</select>
-									{#if selectedUaId === 'custom'}
-										<input
-											type="text"
-											placeholder="输入自定义 User Agent"
-											bind:value={customUserAgent}
-										/>
-									{/if}
-								</div>
-							</div>
+						<!-- 保存文件名 -->
+						<div class="form-group">
+							<label>
+								<FileText size={14} />
+								<span>保存文件名</span>
+							</label>
+							<input
+								type="text"
+								class="text-input"
+								placeholder="留空则使用原始文件名"
+								bind:value={filename}
+							/>
+						</div>
+					</div>
 
-							<!-- Referer -->
-							<div class="form-row">
-								<label>
-									<Link size={14} />
-									<span>Referer</span>
-								</label>
-								<input
-									type="text"
-									placeholder="https://example.com"
-									bind:value={referer}
-								/>
-							</div>
+					<footer class="dialog-footer">
+						<button class="btn btn-advanced" onclick={() => showAdvanced = true}>
+							<Settings size={14} />
+							<span>高级设置</span>
+						</button>
+						<div class="footer-right">
+							<button 
+								class="btn btn-primary" 
+								onclick={handleSubmit}
+								disabled={!canSubmit()}
+							>
+								<Download size={14} />
+								<span>开始下载</span>
+							</button>
+						</div>
+					</footer>
+				</div>
+			{:else}
+				<!-- 高级设置面板 (直接渲染，共享背景) -->
+				<div class="advanced-panel" transition:fade={{ duration: 200 }}>
+					<header class="panel-header">
+						<button class="back-btn" onclick={() => showAdvanced = false}>
+							<ArrowLeft size={18} />
+						</button>
+						<div class="breadcrumb">
+							<span class="crumb-parent">添加下载任务</span>
+							<ChevronRight size={14} class="crumb-sep" />
+							<span class="crumb-current">高级设置</span>
+						</div>
+					</header>
 
-							<!-- 自定义 Header -->
-							<div class="form-row">
-								<label>
-									<FileText size={14} />
-									<span>自定义 Header</span>
-								</label>
-								<input
-									type="text"
-									placeholder="Key: Value (多个用分号分隔)"
-									bind:value={headers}
-								/>
-							</div>
-
-							<!-- 代理服务器 -->
-							<div class="form-row">
-								<label>
-									<Shield size={14} />
-									<span>代理服务器</span>
-								</label>
-								<input
-									type="text"
-									placeholder="http://host:port 或 socks5://host:port"
-									bind:value={proxy}
-								/>
-							</div>
-
-							<!-- 速度限制 -->
-							<div class="form-row">
-								<label>
-									<Gauge size={14} />
-									<span>速度限制</span>
-								</label>
-								<div class="rate-limit-input">
+					<div class="panel-body">
+						<!-- User Agent -->
+						<div class="form-row">
+							<label>
+								<Globe size={14} />
+								<span>User Agent</span>
+							</label>
+							<div class="ua-selector">
+								<select bind:value={selectedUaId}>
+									{#each userAgents as ua}
+										<option value={ua.id}>{ua.name}</option>
+									{/each}
+								</select>
+								{#if selectedUaId === 'custom'}
 									<input
-										type="number"
-										min="0"
-										placeholder="0"
-										bind:value={maxDownloadLimitValue}
+										type="text"
+										placeholder="输入自定义 User Agent"
+										bind:value={customUserAgent}
 									/>
-									<select bind:value={maxDownloadLimitUnit}>
-										<option value="M">MB/s</option>
-										<option value="K">KB/s</option>
-									</select>
-								</div>
+								{/if}
 							</div>
 						</div>
 
-						<footer class="panel-footer">
-							<button class="btn btn-primary" onclick={() => showAdvanced = false}>
-								确定
-							</button>
-						</footer>
+						<!-- Referer -->
+						<div class="form-row">
+							<label>
+								<Link size={14} />
+								<span>Referer</span>
+							</label>
+							<input
+								type="text"
+								placeholder="https://example.com"
+								bind:value={referer}
+							/>
+						</div>
+
+						<!-- 自定义 Header -->
+						<div class="form-row">
+							<label>
+								<FileText size={14} />
+								<span>自定义 Header</span>
+							</label>
+							<input
+								type="text"
+								placeholder="Key: Value (多个用分号分隔)"
+								bind:value={headers}
+							/>
+						</div>
+
+						<!-- 代理服务器 -->
+						<div class="form-row">
+							<label>
+								<Shield size={14} />
+								<span>代理服务器</span>
+							</label>
+							<input
+								type="text"
+								placeholder="http://host:port 或 socks5://host:port"
+								bind:value={proxy}
+							/>
+						</div>
+
+						<!-- 速度限制 -->
+						<div class="form-row">
+							<label>
+								<Gauge size={14} />
+								<span>速度限制</span>
+							</label>
+							<div class="rate-limit-input">
+								<input
+									type="number"
+									min="0"
+									placeholder="0"
+									bind:value={maxDownloadLimitValue}
+								/>
+								<select bind:value={maxDownloadLimitUnit}>
+									<option value="M">MB/s</option>
+									<option value="K">KB/s</option>
+								</select>
+							</div>
+						</div>
 					</div>
+
+					<footer class="panel-footer">
+						<button class="btn btn-primary" onclick={() => showAdvanced = false}>
+							确定
+						</button>
+					</footer>
 				</div>
 			{/if}
 		</div>
@@ -377,7 +377,7 @@
 	.dialog-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
+		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.5));
 		backdrop-filter: blur(8px);
 		display: flex;
 		align-items: center;
@@ -396,6 +396,17 @@
 		overflow: hidden;
 		box-shadow: var(--glass-shadow);
 		position: relative;
+		/* Grid Stack for Transition */
+		display: grid;
+		grid-template-rows: 1fr;
+		grid-template-columns: 1fr;
+	}
+	
+	.view-main, .advanced-panel {
+		grid-area: 1 / 1;
+		width: 100%;
+		display: flex;
+		flex-direction: column;
 	}
 
 	.dialog-header {
@@ -429,7 +440,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		color: var(--text-primary);
 	}
 
@@ -438,6 +449,8 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+		height: 340px;
+		overflow-y: auto;
 	}
 
 	.form-group {
@@ -468,7 +481,7 @@
 
 	.form-group textarea {
 		padding: 12px 14px;
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		color: var(--text-primary);
@@ -505,7 +518,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 12px 14px;
-		background: var(--border-light);
+		background: var(--input-bg);
 		border: 1px solid var(--border-color);
 		border-radius: 10px;
 		color: var(--text-secondary);
@@ -526,7 +539,7 @@
 
 	.text-input {
 		padding: 12px 14px;
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		border: 1px solid var(--border-normal);
 		border-radius: 10px;
 		color: var(--text-primary);
@@ -579,13 +592,13 @@
 	}
 
 	.btn-advanced:hover {
-		background: var(--border-light);
+		background: var(--input-bg);
 		border-color: var(--accent-primary);
 		color: var(--accent-text);
 	}
 
 	.btn-secondary {
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		color: var(--text-secondary);
 		font-weight: 400;
 	}
@@ -597,7 +610,7 @@
 
 	.btn-primary {
 		background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-		color: white;
+		color: var(--accent-btn-text, #ffffff);
 		box-shadow: 0 2px 8px var(--accent-glow);
 	}
 
@@ -611,18 +624,7 @@
 		cursor: not-allowed;
 	}
 
-	/* 高级设置覆盖层 - 使用不透明背景避免叠加问题 */
-	.advanced-overlay {
-		position: absolute;
-		inset: 0;
-		background: var(--overlay-bg, var(--dialog-bg));
-		backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border-radius: 18px;
-		display: flex;
-		flex-direction: column;
-		z-index: 10;
-	}
+
 
 	.advanced-panel {
 		display: flex;
@@ -642,8 +644,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: center;
-		width: 32px;
-		height: 32px;
+		width: 28px;
+		height: 28px;
 		background: transparent;
 		border: none;
 		border-radius: 8px;
@@ -653,19 +655,36 @@
 	}
 
 	.back-btn:hover {
-		background: var(--surface-hover);
+		background: var(--input-bg);
 		color: var(--text-primary);
 	}
 
-	.panel-header h3 {
-		font-size: 17px;
-		font-weight: 600;
+	.breadcrumb {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: 14px;
+	}
+	
+	.crumb-parent {
+		color: var(--text-secondary);
+		font-weight: 400;
+	}
+	
+	/* Global style for lucide icon if needed, or inline style */
+	:global(.crumb-sep) {
+		color: var(--text-tertiary);
+		opacity: 0.7;
+	}
+
+	.crumb-current {
 		color: var(--text-primary);
-		margin: 0;
+		font-weight: 600;
+		font-size: 15px;
 	}
 
 	.panel-body {
-		flex: 1;
+		height: 340px;
 		padding: 24px;
 		display: flex;
 		flex-direction: column;
@@ -690,7 +709,7 @@
 	.form-row input,
 	.form-row select {
 		padding: 10px 12px;
-		background: var(--border-light);
+		background: var(--input-bg);
 		border: 1px solid var(--border-color);
 		border-radius: 8px;
 		color: var(--text-primary);

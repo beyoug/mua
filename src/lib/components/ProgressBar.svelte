@@ -52,7 +52,7 @@
 	.progress-track {
 		flex: 1;
 		height: 4px;
-		background: var(--border-subtle);
+		background: var(--progress-track-bg, var(--border-subtle));
 		border-radius: 2px;
 		overflow: hidden;
 	}
@@ -84,8 +84,9 @@
 			-45deg,
 			transparent,
 			transparent 8px,
-			rgba(255, 255, 255, 0.12) 8px,
-			rgba(255, 255, 255, 0.12) 16px
+			transparent 8px,
+			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 8px,
+			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 16px
 		);
 		animation: stripe-move 0.8s linear infinite;
 	}
