@@ -73,16 +73,20 @@
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.04);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-blur: blur(48px);
-  --glass-saturate: saturate(200%);
+  --glass-bg: rgba(255, 255, 255, 0.025);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(60px);
+  --glass-saturate: saturate(180%);
   --glass-shadow: 
-    0 8px 40px rgba(0, 0, 0, 0.2),
-    0 0 0 1px rgba(255, 255, 255, 0.08) inset;
+    0 2px 4px rgba(0, 0, 0, 0.08),
+    0 8px 24px rgba(0, 0, 0, 0.12),
+    0 24px 48px rgba(0, 0, 0, 0.16),
+    0 0 0 1px rgba(255, 255, 255, 0.04) inset;
   
   /* 弹窗专用背景 */
-  --dialog-bg: rgba(15, 15, 20, 0.3); /* 更透明 */
+  --dialog-bg: rgba(18, 18, 24, 0.88);
+  /* 内部覆盖层背景 - 更高不透明度避免叠加问题 */
+  --overlay-bg: rgba(20, 20, 28, 0.95);
 
   /* ===== 语义化颜色 ===== */
   --semantic-danger: #ef4444;
@@ -154,16 +158,20 @@ html.light {
   --bg-hover: var(--surface-hover); /* 兼容旧变量 */
   
   /* ===== 玻璃态效果 - 浅色模式 ===== */
-  --glass-bg: rgba(255, 255, 255, 0.6);
-  --glass-border: rgba(0, 0, 0, 0.1);
-  --glass-blur: blur(56px);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(0, 0, 0, 0.06);
+  --glass-blur: blur(72px);
   --glass-saturate: saturate(150%);
   --glass-shadow: 
-    0 8px 40px rgba(15, 23, 42, 0.12),
-    0 0 0 1px rgba(255, 255, 255, 0.5) inset;
+    0 2px 4px rgba(0, 0, 0, 0.04),
+    0 8px 24px rgba(0, 0, 0, 0.06),
+    0 24px 48px rgba(0, 0, 0, 0.08),
+    0 0 0 1px rgba(255, 255, 255, 0.6) inset;
   
   /* 弹窗专用背景 */
-  --dialog-bg: rgba(255, 255, 255, 0.6);
+  --dialog-bg: rgba(255, 255, 255, 0.92);
+  /* 内部覆盖层背景 - 与弹窗保持一致 */
+  --overlay-bg: rgba(255, 255, 255, 0.92);
 
   /* ===== 语义化颜色 - 浅色模式优化 ===== */
   --semantic-danger: #dc2626;
@@ -367,5 +375,4 @@ html.light.theme-cyber-purple body {
   background: 
     radial-gradient(ellipse 70% 50% at 50% 0%, rgba(126, 34, 206, 0.06), transparent),
     linear-gradient(180deg, #faf5ff, #ede9f5);
-}
 }

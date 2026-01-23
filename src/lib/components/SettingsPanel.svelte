@@ -91,6 +91,7 @@
 								class="theme-card"
 								class:active={$currentTheme === theme.id}
 								onclick={() => selectTheme(theme.id)}
+								title={theme.name}
 							>
 								<div 
 									class="theme-preview"
@@ -183,32 +184,38 @@
 	.panel-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.5);
-		backdrop-filter: blur(4px);
-		display: flex;
-		justify-content: flex-end;
+		background: rgba(0, 0, 0, 0.2);
+		backdrop-filter: blur(2px);
 		z-index: 2000;
 	}
 
 	.panel {
-		width: 320px;
-		height: 100%;
+		position: fixed;
+		/* 与任务列表区域对齐：Sidebar (200px) + 左边距 (12px) + 间距 (12px) = 224px */
+		left: 224px;
+		top: 12px;
+		right: 12px;
+		bottom: 12px;
 		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border-left: 1px solid var(--glass-border);
+		border: 1px solid var(--glass-border);
+		border-radius: 16px;
 		box-shadow: var(--glass-shadow);
 		display: flex;
 		flex-direction: column;
-		animation: slide-in 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		overflow: hidden;
+		animation: panel-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
-	@keyframes slide-in {
+	@keyframes panel-appear {
 		from {
-			transform: translateX(100%);
+			opacity: 0;
+			transform: scale(0.98);
 		}
 		to {
-			transform: translateX(0);
+			opacity: 1;
+			transform: scale(1);
 		}
 	}
 
@@ -216,13 +223,13 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		padding: 20px 24px;
+		padding: 14px 18px;
 		border-bottom: 1px solid var(--border-color);
 	}
 
 	.panel-header h2 {
-		font-size: 18px;
-		font-weight: 500; /* 减轻字重 */
+		font-size: 15px;
+		font-weight: 500;
 		color: var(--text-primary);
 		margin: 0;
 	}
@@ -248,41 +255,39 @@
 
 	.panel-body {
 		flex: 1;
-		padding: 24px;
+		padding: 16px 18px;
 		overflow-y: auto;
 	}
 
 	.settings-section {
-		margin-bottom: 32px;
+		margin-bottom: 20px;
 	}
 
 	.section-header {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		font-size: 13px;
+		gap: 6px;
+		font-size: 12px;
 		font-weight: 500;
 		color: var(--text-secondary);
-		margin-bottom: 16px;
+		margin-bottom: 10px;
 		text-transform: uppercase;
-		letter-spacing: 0.5px;
+		letter-spacing: 0.4px;
 	}
 
 	.theme-grid {
-		display: grid;
-		grid-template-columns: repeat(2, 1fr);
-		gap: 10px;
+		display: flex;
+		gap: 8px;
 	}
 
 	.theme-card {
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 8px;
-		padding: 12px 8px;
+		justify-content: center;
+		padding: 6px;
 		background: var(--surface-hover);
 		border: 1px solid var(--border-normal);
-		border-radius: 12px;
+		border-radius: 10px;
 		cursor: pointer;
 		transition: all 0.2s ease;
 	}
@@ -298,37 +303,36 @@
 	}
 
 	.theme-preview {
-		width: 48px;
-		height: 48px;
+		width: 32px;
+		height: 32px;
 		border-radius: 50%;
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		color: white;
-		box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+		box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
 	}
 
 	.theme-name {
-		font-size: 12px;
-		color: var(--text-secondary);
+		/* 隐藏文字，使用 title 属性提供提示 */
+		display: none;
 	}
 
 	/* 颜色模式选择器 */
 	.mode-grid {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 10px;
+		display: flex;
+		gap: 8px;
 	}
 
 	.mode-card {
 		display: flex;
-		flex-direction: column;
 		align-items: center;
-		gap: 8px;
-		padding: 14px 10px;
+		justify-content: center;
+		gap: 6px;
+		padding: 8px 12px;
 		background: var(--surface-hover);
 		border: 1px solid var(--border-normal);
-		border-radius: 12px;
+		border-radius: 10px;
 		color: var(--text-secondary);
 		font-size: 12px;
 		font-weight: 400;
@@ -343,9 +347,9 @@
 	}
 
 	.mode-card.active {
-		border-color: var(--accent-primary); /* 使用主题色边框 */
-		background: var(--accent-subtle); /* 使用主题色淡背景 */
-		color: var(--accent-primary); /* 文字使用主题色 */
+		border-color: var(--accent-primary);
+		background: var(--accent-subtle);
+		color: var(--accent-primary);
 	}
 
 	/* 速度滑块 */

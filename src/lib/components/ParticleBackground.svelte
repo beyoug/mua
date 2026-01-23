@@ -1,3 +1,8 @@
+<!--
+  ParticleBackground.svelte
+  背景粒子效果 - 响应下载速度动态调整
+  优化：更分散的发射区域、有机曲线运动、主题感知颜色
+-->
 <script lang="ts">
 import { onMount, onDestroy } from 'svelte';
 import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
@@ -11,6 +16,9 @@ interface Particle {
   opacity: number;
   life: number;
   maxLife: number;
+  // 新增：用于曲线运动的参数
+  wavePhase: number;
+  waveAmplitude: number;
 }
 
 let canvas: HTMLCanvasElement;
@@ -21,8 +29,13 @@ let lastTime = 0;
 let emitAccumulator = 0;
 let currentSpeedMbps = 0;
 
+// 缓存主题颜色，避免每帧读取 DOM
+let cachedColors = { primary: '#ffffff', glow: 'rgba(255,255,255,0.2)' };
+let colorCacheTime = 0;
+const COLOR_CACHE_DURATION = 500; // 每 500ms 更新一次颜色缓存
+
 // 粒子池 - 避免频繁创建对象
-const POOL_SIZE = 1000;
+const POOL_SIZE = 800;
 const particlePool: Particle[] = [];
 let poolIndex = 0;
 
@@ -31,7 +44,8 @@ function initPool() {
   for (let i = 0; i < POOL_SIZE; i++) {
     particlePool.push({
       x: 0, y: 0, size: 0, vx: 0, vy: 0,
-      opacity: 0, life: 0, maxLife: 0
+      opacity: 0, life: 0, maxLife: 0,
+      wavePhase: 0, waveAmplitude: 0
     });
   }
 }
@@ -43,16 +57,36 @@ const unsubscribeSpeed = totalDownloadSpeed.subscribe((speed) => {
 
 function getEmitRate(): number {
   if (currentSpeedMbps <= 0) return 0;
-  return Math.min(6 + currentSpeedMbps * 0.5, 56);
+  // 稍微降低发射率，让粒子更稀疏、更优雅
+  return Math.min(4 + currentSpeedMbps * 0.4, 40);
 }
 
 function getSpeedMultiplier(): number {
   if (currentSpeedMbps <= 0) return 1;
-  return 1 + Math.min(currentSpeedMbps / 100, 1);
+  return 1 + Math.min(currentSpeedMbps / 150, 0.8);
 }
 
-function getGlowOpacity(base: number): number {
-  return base + Math.min(currentSpeedMbps / 100, 1) * 0.25;
+// 获取粒子颜色（主题感知）
+function updateColorCache() {
+  const now = performance.now();
+  if (now - colorCacheTime < COLOR_CACHE_DURATION) return;
+  colorCacheTime = now;
+  
+  const style = getComputedStyle(document.documentElement);
+  const isMinimalTheme = document.documentElement.classList.contains('theme-minimal');
+  const isLightMode = document.documentElement.classList.contains('light');
+  
+  if (isMinimalTheme) {
+    // 极简模式：使用柔和的中性灰色
+    cachedColors = isLightMode 
+      ? { primary: 'rgba(120, 120, 130, 1)', glow: 'rgba(120, 120, 130, 0.25)' }
+      : { primary: 'rgba(160, 160, 170, 1)', glow: 'rgba(160, 160, 170, 0.2)' };
+  } else {
+    cachedColors = {
+      primary: style.getPropertyValue('--accent-primary').trim() || '#3B82F6',
+      glow: style.getPropertyValue('--accent-glow').trim() || 'rgba(59, 130, 246, 0.4)'
+    };
+  }
 }
 
 // 从池中获取粒子
@@ -62,22 +96,29 @@ function getParticleFromPool(): Particle | null {
   const particle = particlePool[poolIndex];
   poolIndex = (poolIndex + 1) % POOL_SIZE;
   
-  const isScattered = Math.random() < 0.15;
-  const baseAngle = Math.PI / 4;
-  const angleVariation = (Math.random() - 0.5) * 0.6;
+  // 更分散的发射角度
+  const baseAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.4;
+  const angleVariation = (Math.random() - 0.5) * 0.7;
   const angle = baseAngle + angleVariation;
   const speedMultiplier = getSpeedMultiplier();
-  const speed = (30 + Math.random() * 40) * speedMultiplier;
+  const speed = (25 + Math.random() * 35) * speedMultiplier;
   
-  // 从左下角发射粒子，对应侧边栏底部的网速统计位置
-  particle.x = (canvas.width * 0.05) + Math.random() * (canvas.width * 0.1);
-  particle.y = (canvas.height * 0.85) + Math.random() * (canvas.height * 0.1);
-  particle.size = 2 + Math.random() * 4;
-  particle.vx = Math.cos(angle) * speed * (isScattered ? 0.6 : 1);
-  particle.vy = -Math.sin(angle) * speed * (isScattered ? 0.6 : 1);
+  // 更宽的发射区域 - 从左下角扩展
+  particle.x = Math.random() * (canvas.width * 0.3);
+  particle.y = (canvas.height * 0.7) + Math.random() * (canvas.height * 0.3);
+  
+  // 粒子大小：使用幂函数让小粒子更多
+  particle.size = 1.2 + Math.pow(Math.random(), 1.5) * 4.5;
+  
+  particle.vx = Math.cos(angle) * speed;
+  particle.vy = -Math.sin(angle) * speed;
   particle.opacity = 0;
   particle.life = 0;
-  particle.maxLife = 8 + Math.random() * 6;
+  particle.maxLife = 10 + Math.random() * 8;
+  
+  // 曲线运动参数
+  particle.wavePhase = Math.random() * Math.PI * 2;
+  particle.waveAmplitude = 0.2 + Math.random() * 0.4;
   
   return particle;
 }
@@ -103,21 +144,24 @@ function updateParticles(deltaTime: number) {
     p.life += dt;
     const lifeRatio = p.life / p.maxLife;
     
-    // 渐入渐出
-    if (lifeRatio < 0.1) {
-      p.opacity = lifeRatio / 0.1 * 0.5;
-    } else if (lifeRatio > 0.8) {
-      p.opacity = (1 - lifeRatio) / 0.2 * 0.5;
+    // 更平滑的渐入渐出曲线
+    if (lifeRatio < 0.15) {
+      p.opacity = (lifeRatio / 0.15) * 0.3;
+    } else if (lifeRatio > 0.75) {
+      p.opacity = ((1 - lifeRatio) / 0.25) * 0.3;
     } else {
-      p.opacity = 0.5;
+      p.opacity = 0.3;
     }
     
-    // 更新位置
+    // 更新位置 - 添加柔和的曲线运动
     p.x += p.vx * dt;
     p.y += p.vy * dt;
     
+    // 微弱的横向震荡，让轨迹更有机
+    p.x += Math.sin(p.life * 0.6 + p.wavePhase) * p.waveAmplitude;
+    
     // 移除死亡或越界的粒子
-    if (p.life >= p.maxLife || p.x > canvas.width * 1.1 || p.y < -10) {
+    if (p.life >= p.maxLife || p.x > canvas.width * 1.1 || p.y < -20) {
       particles.splice(i, 1);
     }
   }
@@ -127,36 +171,33 @@ function updateParticles(deltaTime: number) {
 function renderParticles() {
   if (!ctx || !canvas) return;
   
+  // 更新颜色缓存
+  updateColorCache();
+  
   // 清空画布
   ctx.clearRect(0, 0, canvas.width, canvas.height);
-  
-  // 获取当前主题颜色
-  const accentPrimary = getComputedStyle(document.documentElement)
-    .getPropertyValue('--accent-primary').trim();
-  const accentGlow = getComputedStyle(document.documentElement)
-    .getPropertyValue('--accent-glow').trim();
   
   // 绘制粒子
   for (const p of particles) {
     ctx.save();
-    
     ctx.globalAlpha = p.opacity;
     
     // 绘制光晕
-    const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2);
-    gradient.addColorStop(0, accentPrimary);
-    gradient.addColorStop(0.5, accentGlow);
+    const gradient = ctx.createRadialGradient(p.x, p.y, 0, p.x, p.y, p.size * 2.5);
+    gradient.addColorStop(0, cachedColors.primary);
+    gradient.addColorStop(0.4, cachedColors.glow);
     gradient.addColorStop(1, 'transparent');
     
     ctx.fillStyle = gradient;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size * 2, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, p.size * 2.5, 0, Math.PI * 2);
     ctx.fill();
     
-    // 绘制核心
-    ctx.fillStyle = accentPrimary;
+    // 绘制核心 - 更小更亮
+    ctx.globalAlpha = p.opacity * 1.5;
+    ctx.fillStyle = cachedColors.primary;
     ctx.beginPath();
-    ctx.arc(p.x, p.y, p.size / 2, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, p.size * 0.4, 0, Math.PI * 2);
     ctx.fill();
     
     ctx.restore();
@@ -192,6 +233,7 @@ onMount(() => {
   window.addEventListener('resize', handleResize);
   
   initPool();
+  updateColorCache();
   animationId = requestAnimationFrame(animate);
 });
 
@@ -203,9 +245,9 @@ onDestroy(() => {
 </script>
 
 <div class="particle-container">
-  <!-- 背景光晕 -->
-  <div class="glow glow-1" style="opacity: {getGlowOpacity(0.15)}"></div>
-  <div class="glow glow-2" style="opacity: {getGlowOpacity(0.1)}"></div>
+  <!-- 背景光晕 - 仅彩色主题显示 -->
+  <div class="glow glow-1"></div>
+  <div class="glow glow-2"></div>
   
   <!-- Canvas 粒子层 -->
   <canvas bind:this={canvas} class="particle-canvas"></canvas>
@@ -217,7 +259,7 @@ onDestroy(() => {
   inset: 0;
   overflow: hidden;
   pointer-events: none;
-  z-index: 0; /* 作为背景层，在所有内容下方 */
+  z-index: 0;
 }
 
 .particle-canvas {
@@ -227,38 +269,47 @@ onDestroy(() => {
   height: 100%;
 }
 
-/* 背景光晕 */
+/* 背景光晕 - 更柔和 */
 .glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(100px);
-  transition: opacity 0.5s ease;
+  filter: blur(120px);
+  opacity: 0.1;
+  transition: opacity 0.8s ease;
 }
 
 .glow-1 {
-  width: 500px;
-  height: 500px;
+  width: 400px;
+  height: 400px;
   background: var(--accent-primary);
-  bottom: -150px;
-  left: -100px;
-  animation: pulse 8s ease-in-out infinite;
+  bottom: -120px;
+  left: -80px;
+  animation: pulse 10s ease-in-out infinite;
 }
 
 .glow-2 {
-  width: 400px;
-  height: 400px;
+  width: 350px;
+  height: 350px;
   background: var(--accent-secondary);
-  top: -100px;
-  right: 100px;
-  animation: pulse 10s ease-in-out infinite reverse;
+  top: -80px;
+  right: 80px;
+  opacity: 0.06;
+  animation: pulse 12s ease-in-out infinite reverse;
 }
 
 @keyframes pulse {
   0%, 100% {
     transform: scale(1);
+    opacity: 0.1;
   }
   50% {
-    transform: scale(1.1);
+    transform: scale(1.08);
+    opacity: 0.12;
   }
+}
+
+/* 极简主题：隐藏背景光晕 */
+:global(html.theme-minimal) .glow {
+  display: none;
 }
 </style>

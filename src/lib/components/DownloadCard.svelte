@@ -146,24 +146,22 @@
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border: 1px solid var(--glass-border);
-		border-radius: 16px;
-		padding: 16px 18px;
+		border-radius: 14px;
+		padding: 14px 16px;
 		transition: 
-			transform 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-			box-shadow 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94),
-			border-color 0s;
+			transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+			box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
+			border-color 0.15s ease;
 		box-shadow: var(--glass-shadow);
-		transform-style: preserve-3d;
-		perspective: 1000px;
 	}
 
 	.download-card:hover {
 		border-color: var(--accent-primary);
-		transform: translateY(-2px) rotateX(2deg);
+		transform: translateY(-1px);
 		box-shadow: 
-			0 8px 32px rgba(0, 0, 0, 0.15),
-			0 0 0 1px var(--accent-primary),
-			0 0 20px var(--accent-glow);
+			0 4px 12px rgba(0, 0, 0, 0.1),
+			0 12px 32px rgba(0, 0, 0, 0.15),
+			0 0 0 1px var(--accent-primary);
 	}
 
 	.download-card.completed {
@@ -217,12 +215,13 @@
 	}
 
 	.filename {
-		font-size: 14px;
-		font-weight: 400; /* 减轻字重 */
+		font-size: 13px;
+		font-weight: 500;
 		color: var(--text-primary);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
+		letter-spacing: -0.01em;
 	}
 
 	.actions {
@@ -254,6 +253,7 @@
 		background: var(--surface-active);
 		border-color: var(--border-normal);
 		color: var(--text-primary);
+		transform: scale(1.05);
 	}
 
 	.action-btn.resume:hover {
@@ -271,9 +271,9 @@
 	.card-footer {
 		display: flex;
 		align-items: center;
-		gap: 16px;
-		margin-top: 12px;
-		font-size: 12px;
+		gap: 14px;
+		margin-top: 10px;
+		font-size: 11px;
 		font-weight: 400;
 		color: var(--text-muted);
 	}

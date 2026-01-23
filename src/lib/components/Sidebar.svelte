@@ -101,11 +101,11 @@
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border: 1px solid var(--glass-border);
-		border-radius: 20px;
+		border-radius: 16px;
 		box-shadow: var(--glass-shadow);
 		display: flex;
 		flex-direction: column;
-		padding: 20px 0;
+		padding: 16px 0;
 		position: fixed;
 		left: 12px;
 		top: 12px;
@@ -137,9 +137,10 @@
 	}
 
 	.logo-text {
-		font-size: 20px;
-		font-weight: 600; /* 加强字重，突出品牌 */
+		font-size: 18px;
+		font-weight: 600;
 		color: var(--text-primary);
+		letter-spacing: -0.02em;
 	}
 
 	.add-section {
@@ -180,17 +181,17 @@
 	.nav-item {
 		display: flex;
 		align-items: center;
-		gap: 12px;
-		padding: 10px 12px;
+		gap: 10px;
+		padding: 9px 12px;
 		background: transparent;
 		border: none;
 		border-radius: 10px;
-		border-left: 2px solid transparent; /* 简约左边框指示 */
+		border-left: 2px solid transparent;
 		color: var(--text-secondary);
-		font-size: 14px;
-		font-weight: 400; /* 减轻字重 */
+		font-size: 13px;
+		font-weight: 400;
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		text-align: left;
 	}
 
@@ -225,16 +226,16 @@
 		align-items: center;
 		gap: 8px;
 		color: var(--text-primary);
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 500;
-		margin-bottom: 8px;
+		margin-bottom: 6px;
 	}
 
 	.stat-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: 13px;
+		font-size: 12px;
 		font-weight: 400;
 	}
 
@@ -257,17 +258,17 @@
 	.settings-btn {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 10px;
 		width: 100%;
-		padding: 10px 12px;
+		padding: 9px 12px;
 		background: transparent;
 		border: none;
 		border-radius: 10px;
 		color: var(--text-secondary);
-		font-size: 14px;
+		font-size: 13px;
 		font-weight: 400;
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 
 	.settings-btn:hover {

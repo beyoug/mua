@@ -368,8 +368,8 @@
 	.dialog-overlay {
 		position: fixed;
 		inset: 0;
-		background: rgba(0, 0, 0, 0.6);
-		backdrop-filter: blur(4px);
+		background: rgba(0, 0, 0, 0.5);
+		backdrop-filter: blur(8px);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -377,16 +377,16 @@
 	}
 
 	.dialog {
-		width: 560px;
+		width: 520px;
 		max-width: 90vw;
 		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		border: 1px solid var(--glass-border);
-		border-radius: 20px;
+		border-radius: 18px;
 		overflow: hidden;
 		box-shadow: var(--glass-shadow);
-		animation: dialog-appear 0.25s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+		animation: dialog-appear 0.2s cubic-bezier(0.4, 0, 0.2, 1);
 		position: relative;
 	}
 
@@ -410,10 +410,11 @@
 	}
 
 	.dialog-header h2 {
-		font-size: 17px;
-		font-weight: 500; /* 减轻字重 */
+		font-size: 16px;
+		font-weight: 500;
 		color: var(--text-primary);
 		margin: 0;
+		letter-spacing: -0.01em;
 	}
 
 	.close-btn {
@@ -613,14 +614,14 @@
 		cursor: not-allowed;
 	}
 
-	/* 高级设置覆盖层 */
+	/* 高级设置覆盖层 - 使用不透明背景避免叠加问题 */
 	.advanced-overlay {
 		position: absolute;
 		inset: 0;
-		background: var(--dialog-bg);
+		background: var(--overlay-bg, var(--dialog-bg));
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border-radius: 20px;
+		border-radius: 18px;
 		display: flex;
 		flex-direction: column;
 		z-index: 10;

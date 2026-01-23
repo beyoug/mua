@@ -51,17 +51,16 @@
 
 	.progress-track {
 		flex: 1;
-		height: 6px;
-		background: var(--border-light);
-		border-radius: 3px;
+		height: 4px;
+		background: var(--border-subtle);
+		border-radius: 2px;
 		overflow: hidden;
-		box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.progress-fill {
 		height: 100%;
-		border-radius: 3px;
-		transition: width 0.3s ease;
+		border-radius: 2px;
+		transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 		position: relative;
 		overflow: hidden;
 	}
@@ -111,10 +110,11 @@
 	}
 
 	.progress-percent {
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 500;
 		color: var(--accent-text);
-		min-width: 36px;
+		min-width: 32px;
 		text-align: right;
+		opacity: 0.8;
 	}
 </style>
