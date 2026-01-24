@@ -9,6 +9,16 @@
     "core:default",
     "core:window:allow-start-dragging",
     "shell:allow-open",
-    "dialog:default"
+    "dialog:default",
+    {
+      "identifier": "shell:allow-spawn",
+      "allow": [
+        {
+          "name": "aria2c",
+          "sidecar": true,
+          "args": true
+        }
+      ]
+    }
   ]
 }

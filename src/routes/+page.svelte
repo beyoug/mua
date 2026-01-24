@@ -195,32 +195,48 @@
 		showClearDialog = true;
 	}
 
-	// 执行批量清理
+	// 执行清理（批量或单项）
 	function performClear(deleteFile: boolean) {
-		if (activeNav === 'active') {
-			// 进行中页面：软删除（取消）
-			cancelTasks(selectedIds);
+		if (itemToDelete) {
+			// 单项删除
+			removeTask(itemToDelete, deleteFile);
+			itemToDelete = null;
 		} else {
-			// 历史/已完成页面：硬删除
-			removeTasks(selectedIds, deleteFile);
+			// 批量删除
+			if (activeNav === 'active') {
+				// 进行中页面：软删除（取消）
+				cancelTasks(selectedIds);
+			} else {
+				// 历史/已完成页面：硬删除
+				removeTasks(selectedIds, deleteFile);
+			}
+			isSelectionMode = false;
+			selectedIds = new Set();
 		}
 		
 		showClearDialog = false;
-		isSelectionMode = false;
-		selectedIds = new Set();
 	}
 
 	function handleAddTask(config: DownloadConfig) {
-		addDownloadTask(config);
+		// addDownloadTask(config); // Handled in AddTaskDialog
 	}
+
+	// 待删除的单个任务 ID
+	let itemToDelete = $state<string | null>(null);
 
 	function handleCancelTask(id: string) {
 		if (activeNav === 'active') {
-			// 进行中：软删除（取消）
+			// 进行中：软删除（取消），无需确认
 			cancelTask(id);
 		} else {
-			// 历史记录：物理删除
-			removeTask(id);
+			// 历史记录：需要确认是否删除文件
+			itemToDelete = id;
+			clearDialogProps = {
+				title: '删除任务',
+				description: '确定要删除这条任务记录吗？',
+				confirmText: '删除'
+			};
+			showClearDialog = true;
 		}
 	}
 </script>
@@ -284,7 +300,10 @@
 	description={clearDialogProps.description}
 	confirmText={clearDialogProps.confirmText}
 	showDeleteFileOption={activeNav !== 'active'}
-	onClose={() => showClearDialog = false}
+	onClose={() => {
+		showClearDialog = false;
+		itemToDelete = null;
+	}}
 	onConfirm={performClear}
 />
 

@@ -7,7 +7,7 @@
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
+	import { createScrollLockEffect, isValidDownloadUrl, validateUrl, addDownloadTask } from '$lib';
 
 	interface Props {
 		open: boolean;
@@ -60,36 +60,66 @@
 		return isValidDownloadUrl(trimmed);
 	});
 
-	function handleSubmit() {
+	// 提交状态
+	let isSubmitting = $state(false);
+
+	async function handleSubmit() {
+		if (isSubmitting) return;
+		isSubmitting = true;
+
 		// 执行验证
 		const error = validateUrl(urls);
 		validationError = error;
 		
 		if (error) {
+			isSubmitting = false;
 			return; // 阻止提交
 		}
 		
 		const trimmedUrl = urls.trim();
-		const limit = maxDownloadLimitValue.trim() ? `${maxDownloadLimitValue}${maxDownloadLimitUnit}` : '';
 		
-		onSubmit?.({
-			urls: [trimmedUrl],
-			savePath,
-			filename,
-			userAgent: effectiveUserAgent(),
-			referer,
-			headers,
-			proxy,
-			maxDownloadLimit: limit
-		});
-		resetForm();
-		onClose();
+		try {
+            // Svelte binds input type="number" as number, so we need to stringify
+            const limitStr = String(maxDownloadLimitValue || '').trim();
+            const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
+
+			await addDownloadTask({
+				urls: [trimmedUrl],
+				savePath,
+				filename,
+				userAgent: effectiveUserAgent(),
+				referer,
+				headers,
+				proxy,
+				maxDownloadLimit: limit
+			});
+			
+			// 可选：通知父组件或显示成功toast
+			onSubmit?.({
+				urls: [trimmedUrl],
+				savePath,
+				filename,
+				userAgent: effectiveUserAgent(),
+				referer,
+				headers,
+				proxy,
+				maxDownloadLimit: limit
+			});
+			resetForm();
+			onClose();
+		} catch (e) {
+			console.error('Failed to add task:', e);
+			validationError = typeof e === 'string' ? e : '添加任务失败，请检查 Aria2 服务是否正常';
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	function resetForm() {
 		urls = '';
 		filename = '';
 		selectedUaId = 'default';
+        isSubmitting = false;
 		customUserAgent = '';
 		referer = '';
 		headers = '';
@@ -257,10 +287,15 @@
 							<button 
 								class="btn btn-primary" 
 								onclick={handleSubmit}
-								disabled={!canSubmit()}
+								disabled={!canSubmit() || isSubmitting}
 							>
-								<Download size={14} />
-								<span>开始下载</span>
+								{#if isSubmitting}
+									<!-- 简单的 loading 状态 -->
+									<span>提交中...</span>
+								{:else}
+									<Download size={14} />
+									<span>开始下载</span>
+								{/if}
 							</button>
 						</div>
 					</footer>

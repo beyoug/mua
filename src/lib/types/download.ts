@@ -27,6 +27,7 @@ export interface DownloadTask {
 	remaining?: string;
 	state: DownloadState;
 	addedAt?: string;
+	savePath?: string; // Directory where file is saved
 }
 
 /**
