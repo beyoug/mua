@@ -182,11 +182,137 @@ async fn import_aria2_config(app: tauri::AppHandle, path: String) -> Result<Stri
 }
 
 #[tauri::command]
-async fn update_tray_speed(app: tauri::AppHandle, speed: String) -> Result<(), String> {
+async fn update_tray_icon_with_speed(app: tauri::AppHandle, dl_speed: u64, ul_speed: u64) -> Result<(), String> {
     use tauri::Manager;
-    if let Some(tray) = app.tray_by_id("tray") {
-        let _ = tray.set_title(Some(speed));
+    use image::{Rgba, RgbaImage, GenericImage, GenericImageView};
+    use rusttype::{Font, Scale, Point};
+
+    let tray = match app.tray_by_id("tray") {
+        Some(t) => t,
+        None => return Ok(()),
+    };
+
+    // 1. Format text
+    fn format_speed_compact(bytes: u64) -> String {
+        if bytes == 0 {
+            return "0 KB/s".to_string();
+        }
+        let k = 1024.0;
+        let m = k * 1024.0;
+        if (bytes as f64) >= m {
+            format!("{:.1} MB/s", (bytes as f64) / m)
+        } else {
+            format!("{:.0} KB/s", (bytes as f64) / k)
+        }
     }
+    
+    let dl_text = format!("↓ {}", format_speed_compact(dl_speed));
+    let ul_text = format!("↑ {}", format_speed_compact(ul_speed));
+
+    // 2. Load Font (System Font)
+    let font_data = std::fs::read("/System/Library/Fonts/Menlo.ttc").unwrap_or_else(|_| {
+        std::fs::read("/System/Library/Fonts/Helvetica.ttc").unwrap_or_default()
+    });
+    
+    if font_data.is_empty() {
+        // Fallback: just set title if font missing
+        let _ = tray.set_title(Some(format!("{}  {}", dl_text, ul_text)));
+        return Ok(());
+    }
+
+    let font = Font::try_from_vec(font_data).ok_or("Failed to load font")?;
+
+    // 3. Setup Canvas (Height 22px for macOS tray, but we render at 2x for Retina: 44px)
+    let scale_factor = 2; // Render at 2x
+    let height = 22 * scale_factor; 
+    let icon_size = 18 * scale_factor;
+    let padding = 8 * scale_factor;
+    let font_size = 10.0 * (scale_factor as f32); // 10px font size
+    
+    let scale = Scale::uniform(font_size);
+    
+    // Calculate width
+    let v_metrics = font.v_metrics(scale);
+    let glyphs_dl: Vec<_> = font.layout(&dl_text, scale, Point { x: 0.0, y: 0.0 }).collect();
+    let glyphs_ul: Vec<_> = font.layout(&ul_text, scale, Point { x: 0.0, y: 0.0 }).collect();
+    
+    let width_dl = glyphs_dl.iter().map(|g| g.position().x + g.unpositioned().h_metrics().advance_width).last().unwrap_or(0.0);
+    let width_ul = glyphs_ul.iter().map(|g| g.position().x + g.unpositioned().h_metrics().advance_width).last().unwrap_or(0.0);
+    
+    let text_width = width_dl.max(width_ul).ceil() as u32;
+    let total_width = icon_size + padding + text_width + (4 * scale_factor); // extra padding right
+
+    let mut image = RgbaImage::new(total_width, height);
+
+    // 4. Draw App Icon (if available)
+    if let Some(icon) = app.default_window_icon() {
+        let icon_rgba = icon.rgba();
+        let icon_width = icon.width();
+        let icon_height = icon.height();
+        
+        if let Some(src_img) = RgbaImage::from_raw(icon_width, icon_height, icon_rgba.to_vec()) {
+             // Resize to icon_size
+             let resized = image::imageops::resize(&src_img, icon_size, icon_size, image::imageops::FilterType::Lanczos3);
+             // Center vertically
+             let y_offset = (height - icon_size) / 2;
+             let _ = image.copy_from(&resized, 2 * scale_factor, y_offset);
+        }
+    }
+
+    // 5. Draw Text (Double Line)
+    let text_color = Rgba([255, 255, 255, 255]); // White text (macOS handles dark/light mode inversion for template images? No, we need to be careful.
+    // Actually macOS tray icons are usually template images (black and transparent).
+    // If we want it to adapt, we should draw in black/alpha and treat as template.
+    // But for colored "upload/download" we might want persistent colors?
+    // User asked for "like the red box". The red box had white text on blue bg (iStat Menus).
+    // Standard macOS tray is monochrome.
+    // If we assume dark mode or standard menu bar, white might be invisible on light theme.
+    // Best practice for macOS tray: make it a Template Image?
+    // Tauri tray icon `set_icon_as_template` boolean.
+    // Let's draw in solid black (or white) and let macOS invert it if we set as template.
+    // Let's try drawing WHITE pixels and rely on system compositing? 
+    // Actually, usually you draw BLACK for template on alpha.
+    // Let's draw WHITE for now, and assume dark menu bar? No.
+    // Let's stick to standard practice: Draw everything.
+    // Let's use specific coordinates.
+    // Line 1: Top
+    // Line 2: Bottom
+    
+    let text_x = icon_size + padding;
+    let line_height = height / 2;
+    // Centering text in each line
+    let offset_y_1 = (line_height as f32 - v_metrics.ascent + v_metrics.descent) / 2.0 + v_metrics.ascent; // baseline
+    let offset_y_2 = line_height as f32 + offset_y_1; // incomplete math but close enough for fixed layout
+
+    // Just hardcode baseline offsets for 22px * 2 height = 44px.
+    // Line 1 baseline around 15px.
+    // Line 2 baseline around 35px.
+    
+    let draw_text = |img: &mut RgbaImage, text: &str, x: u32, y: u32 | {
+        for glyph in font.layout(text, scale, Point { x: x as f32, y: y as f32 }) {
+            if let Some(bb) = glyph.pixel_bounding_box() {
+                glyph.draw(|gx, gy, v| {
+                    let px = (gx as i32 + bb.min.x) as u32;
+                    let py = (gy as i32 + bb.min.y) as u32;
+                    if px < img.width() && py < img.height() {
+                        let alpha = (v * 255.0) as u8;
+                        // Draw White
+                        img.put_pixel(px, py, Rgba([255, 255, 255, alpha]));
+                    }
+                });
+            }
+        }
+    };
+
+    draw_text(&mut image, &ul_text, text_x, 15); // Upper line (Upload)
+    draw_text(&mut image, &dl_text, text_x, 36); // Lower line (Download)
+
+    // 6. Set Icon
+    let tauri_img = tauri::image::Image::new_owned(image.into_vec(), total_width, height);
+    let _ = tray.set_icon(Some(tauri_img));
+    // Clear title if any
+    let _ = tray.set_title(None::<&str>);
+
     Ok(())
 }
 
@@ -268,7 +394,7 @@ pub fn run() {
             get_aria2_config_path,
             read_aria2_config,
             import_aria2_config,
-            update_tray_speed
+            update_tray_icon_with_speed
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

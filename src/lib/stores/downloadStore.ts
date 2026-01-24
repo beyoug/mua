@@ -190,13 +190,10 @@ async function startPolling() {
                 if (!isNaN(ul)) totalUpload += ul;
             });
 
-            // Format: "↓ 2.5 MB/s  ↑ 10 KB/s"
-            const dlStr = formatSpeed(totalDownload);
-            const ulStr = formatSpeed(totalUpload);
-            // Use unicode arrows for compactness
-            const trayStr = `↓ ${dlStr}  ↑ ${ulStr}`;
 
-            await invoke('update_tray_speed', { speed: trayStr });
+
+            // Update Tray Speed (Dynamic Icon)
+            await invoke('update_tray_icon_with_speed', { dlSpeed: totalDownload, ulSpeed: totalUpload });
 
         } catch (e) {
             console.error('Failed to sync tasks:', e);
