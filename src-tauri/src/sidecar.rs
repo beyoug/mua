@@ -15,13 +15,34 @@ pub fn init_aria2_sidecar(app: &AppHandle) {
     ];
 
     // Check for custom configuration file
+    // Check for custom configuration file & Setup session
     use tauri::Manager;
     if let Ok(config_dir) = app.path().app_config_dir() {
+        // Ensure config directory exists
+        if !config_dir.exists() {
+            let _ = std::fs::create_dir_all(&config_dir);
+        }
+
+        // 1. Custom Config
         let conf_path = config_dir.join("aria2.conf");
         if conf_path.exists() {
              log::info!("Found custom aria2 config: {:?}", conf_path);
              args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
         }
+
+        // 2. Session File (Persistence)
+        let session_path = config_dir.join("aria2.session");
+        if !session_path.exists() {
+            // Must create the file if it doesn't exist, otherwise aria2 fails to start with --input-file
+            if let Err(e) = std::fs::File::create(&session_path) {
+                log::error!("Failed to create session file: {}", e);
+            }
+        }
+        
+        let session_path_str = session_path.to_string_lossy();
+        args.push(format!("--input-file={}", session_path_str));
+        args.push(format!("--save-session={}", session_path_str));
+        args.push("--save-session-interval=30".to_string());
     }
 
     // 配置 Aria2 参数
