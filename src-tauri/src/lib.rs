@@ -225,7 +225,7 @@ async fn update_tray_icon_with_speed(app: tauri::AppHandle, dl_speed: u64, ul_sp
     // 3. Setup Canvas (Height 22px for macOS tray, but we render at 2x for Retina: 44px)
     let scale_factor = 2; // Render at 2x
     let height = 22 * scale_factor; 
-    let icon_size = 20 * scale_factor;
+    let icon_size = 22 * scale_factor;
     let padding = 8 * scale_factor;
     let font_size = 10.0 * (scale_factor as f32); // 10px font size
     
