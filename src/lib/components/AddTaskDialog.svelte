@@ -632,16 +632,7 @@
 		color: var(--accent-text);
 	}
 
-	.btn-secondary {
-		background: var(--input-bg);
-		color: var(--text-secondary);
-		font-weight: 400;
-	}
 
-	.btn-secondary:hover {
-		background: var(--surface-active);
-		color: var(--text-primary);
-	}
 
 	.btn-primary {
 		background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
