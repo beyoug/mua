@@ -16,7 +16,7 @@
 	}
 
 	let { open, onClose }: Props = $props();
-    let activeTab: 'appearance' | 'advanced' = $state('appearance');
+    let activeTab: 'basic' | 'advanced' = $state('basic');
 
 	function selectTheme(themeId: ThemeId) {
 		currentTheme.set(themeId);
