@@ -176,14 +176,15 @@ async function startPolling() {
                 const sub = subscribeTasks(t => resolve(t));
                 sub(); // unsub immediately? No, subscribe calls callback immediately.
             });
-            
+
             // Re-calculate total speed from the updated store or just use rawTasks?
             // Using rawTasks is cheaper.
             const totalSpeed = rawTasks
                 .map(t => parseInt(t.downloadSpeed, 10))
                 .reduce((a, b) => a + b, 0);
 
-            const speedStr = totalSpeed > 0 ? formatSpeed(totalSpeed) : '';
+            // Always show speed for consistency
+            const speedStr = formatSpeed(totalSpeed);
             await invoke('update_tray_speed', { speed: speedStr });
 
         } catch (e) {
