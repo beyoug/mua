@@ -32,11 +32,16 @@ interface Aria2Task {
     totalLength: string;
     completedLength: string;
     downloadSpeed: string;
+    uploadLength: string;
+    uploadSpeed: string;
     errorCode: string | null;
     errorMessage: string | null;
     dir: string;
     files: Aria2File[];
 }
+// ...
+// ...
+// Update Tray Speed logic moved to poll function
 
 interface Aria2File {
     index: string;
@@ -171,21 +176,27 @@ async function startPolling() {
                 return merged;
             });
 
-            // Update Tray Speed
-            const current = await new Promise<DownloadTask[]>(resolve => {
-                const sub = subscribeTasks(t => resolve(t));
-                sub(); // unsub immediately? No, subscribe calls callback immediately.
+            // Update Tray Speed (Bidirectional)
+            let totalDownload = 0;
+            let totalUpload = 0;
+
+            rawTasks.forEach(t => {
+                const dl = parseInt(t.downloadSpeed, 10);
+                // t.uploadSpeed might be undefined if backend struct not yet synced (or if json missing)
+                // Use safe parsing
+                const ul = t.uploadSpeed ? parseInt(t.uploadSpeed, 10) : 0;
+
+                if (!isNaN(dl)) totalDownload += dl;
+                if (!isNaN(ul)) totalUpload += ul;
             });
 
-            // Re-calculate total speed from the updated store or just use rawTasks?
-            // Using rawTasks is cheaper.
-            const totalSpeed = rawTasks
-                .map(t => parseInt(t.downloadSpeed, 10))
-                .reduce((a, b) => a + b, 0);
+            // Format: "↓ 2.5 MB/s  ↑ 10 KB/s"
+            const dlStr = formatSpeed(totalDownload);
+            const ulStr = formatSpeed(totalUpload);
+            // Use unicode arrows for compactness
+            const trayStr = `↓ ${dlStr}  ↑ ${ulStr}`;
 
-            // Always show speed for consistency
-            const speedStr = formatSpeed(totalSpeed);
-            await invoke('update_tray_speed', { speed: speedStr });
+            await invoke('update_tray_speed', { speed: trayStr });
 
         } catch (e) {
             console.error('Failed to sync tasks:', e);

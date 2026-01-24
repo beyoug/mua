@@ -16,6 +16,10 @@ pub struct Aria2Task {
     pub completed_length: String,
     #[serde(rename = "downloadSpeed")]
     pub download_speed: String,
+    #[serde(rename = "uploadLength")]
+    pub upload_length: String,
+    #[serde(rename = "uploadSpeed")]
+    pub upload_speed: String,
     #[serde(rename = "errorCode")]
     pub error_code: Option<String>,
     #[serde(rename = "errorMessage")]
