@@ -170,6 +170,22 @@ async function startPolling() {
 
                 return merged;
             });
+
+            // Update Tray Speed
+            const current = await new Promise<DownloadTask[]>(resolve => {
+                const sub = subscribeTasks(t => resolve(t));
+                sub(); // unsub immediately? No, subscribe calls callback immediately.
+            });
+            
+            // Re-calculate total speed from the updated store or just use rawTasks?
+            // Using rawTasks is cheaper.
+            const totalSpeed = rawTasks
+                .map(t => parseInt(t.downloadSpeed, 10))
+                .reduce((a, b) => a + b, 0);
+
+            const speedStr = totalSpeed > 0 ? formatSpeed(totalSpeed) : '';
+            await invoke('update_tray_speed', { speed: speedStr });
+
         } catch (e) {
             console.error('Failed to sync tasks:', e);
         }

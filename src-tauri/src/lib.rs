@@ -181,6 +181,15 @@ async fn import_aria2_config(app: tauri::AppHandle, path: String) -> Result<Stri
     Ok("Imported".to_string())
 }
 
+#[tauri::command]
+async fn update_tray_speed(app: tauri::AppHandle, speed: String) -> Result<(), String> {
+    use tauri::Manager;
+    if let Some(tray) = app.tray_by_id("tray") {
+        let _ = tray.set_title(Some(speed));
+    }
+    Ok(())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -258,7 +267,8 @@ pub fn run() {
             remove_task_record,
             get_aria2_config_path,
             read_aria2_config,
-            import_aria2_config
+            import_aria2_config,
+            update_tray_speed
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
