@@ -145,6 +145,42 @@ async fn get_tasks() -> Result<Vec<Aria2Task>, String> {
     tasks
 }
 
+#[tauri::command]
+async fn get_aria2_config_path(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let path = config_dir.join("aria2.conf");
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
+async fn read_aria2_config(app: tauri::AppHandle) -> Result<String, String> {
+    use tauri::Manager;
+    let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let path = config_dir.join("aria2.conf");
+    
+    if path.exists() {
+        std::fs::read_to_string(path).map_err(|e| e.to_string())
+    } else {
+        Ok("".to_string())
+    }
+}
+
+#[tauri::command]
+async fn import_aria2_config(app: tauri::AppHandle, path: String) -> Result<String, String> {
+    use tauri::Manager;
+    let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    
+    if !config_dir.exists() {
+        std::fs::create_dir_all(&config_dir).map_err(|e| e.to_string())?;
+    }
+    
+    let dest_path = config_dir.join("aria2.conf");
+    std::fs::copy(&path, &dest_path).map_err(|e| e.to_string())?;
+    
+    Ok("Imported".to_string())
+}
+
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_shell::init())
@@ -168,7 +204,10 @@ pub fn run() {
             pause_task,
             resume_task,
             cancel_task,
-            remove_task_record
+            remove_task_record,
+            get_aria2_config_path,
+            read_aria2_config,
+            import_aria2_config
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

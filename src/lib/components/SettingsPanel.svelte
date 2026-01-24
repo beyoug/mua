@@ -3,12 +3,12 @@
   浮动设置面板 - 主题色 + 颜色模式 + 粒子设置
 -->
 <script lang="ts">
-	import { X, Palette, Check, Sun, Moon, Monitor, Zap, Sparkles } from '@lucide/svelte';
+	import { X, Palette, Check, Sun, Moon, Monitor, FileCode, FileUp } from '@lucide/svelte';
+    import { invoke } from '@tauri-apps/api/core';
+    import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, scale } from 'svelte/transition';
-	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode, particlesEnabled } from '$lib/stores/theme';
-	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
+	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode } from '$lib/stores/theme';
 	import { createScrollLockEffect } from '$lib';
-	import { getEmitRate, getEstimatedParticles } from '$lib/utils/particles';
 
 	interface Props {
 		open: boolean;
@@ -16,7 +16,7 @@
 	}
 
 	let { open, onClose }: Props = $props();
-	let testSpeed = $state(0); // 测试速度 MB/s
+    let activeTab: 'appearance' | 'advanced' = $state('appearance');
 
 	function selectTheme(themeId: ThemeId) {
 		currentTheme.set(themeId);
@@ -26,20 +26,10 @@
 		colorMode.set(mode);
 	}
 
-	function toggleParticles() {
-		particlesEnabled.toggle();
-	}
-
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			onClose();
 		}
-	}
-
-	function updateTestSpeed(e: Event) {
-		const value = (e.target as HTMLInputElement).valueAsNumber;
-		testSpeed = value;
-		totalDownloadSpeed.set(value * 1024 * 1024);
 	}
 
 	const themeList = Object.values(themes);
@@ -49,6 +39,54 @@
 		'light': Sun,
 		'auto': Monitor
 	};
+
+	// Aria2 Config State
+	let aria2Config = $state('');
+	let configPath = $state('');
+	let isImporting = $state(false);
+
+	async function loadConfig() {
+		try {
+			configPath = await invoke<string>('get_aria2_config_path');
+			aria2Config = await invoke<string>('read_aria2_config');
+		} catch (e) {
+			console.error('Failed to load aria2 config:', e);
+		}
+	}
+
+	async function importConfig() {
+		if (isImporting) return;
+        
+        try {
+            const selected = await openDialog({
+                filters: [{
+                    name: 'Config',
+                    extensions: ['conf', 'txt']
+                }]
+            });
+            
+            if (selected) {
+                isImporting = true;
+                const path = typeof selected === 'string' ? selected : selected.path;
+                
+                await invoke('import_aria2_config', { path });
+                await loadConfig(); // Reload to show preview
+                alert('配置导入成功！请重启应用以生效。');
+            }
+        } catch (e) {
+            console.error('Failed to import config:', e);
+            alert('导入失败: ' + e);
+        } finally {
+            isImporting = false;
+        }
+	}
+
+	// Load config when panel opens
+	$effect(() => {
+		if (open) {
+			loadConfig();
+		}
+	});
 
 	// 使用统一的滚动锁定工具
 	$effect(() => {
@@ -77,103 +115,118 @@
 			</header>
 
 			<div class="panel-body">
-				<!-- 主题选择 -->
-				<section class="settings-section">
-					<div class="section-header">
-						<Palette size={16} />
-						<span>主题颜色</span>
-					</div>
-					
-					<div class="theme-grid">
-						{#each themeList as theme}
-							<button
-								class="theme-card"
-								class:active={$currentTheme === theme.id}
-								onclick={() => selectTheme(theme.id)}
-								title={theme.name}
-							>
-								<div 
-									class="theme-preview"
-									style="background: linear-gradient(135deg, {theme.primary}, {theme.secondary})"
-								>
-									{#if $currentTheme === theme.id}
-										<Check size={16} strokeWidth={3} />
-									{/if}
-								</div>
-								<span class="theme-name">{theme.name}</span>
-							</button>
-						{/each}
-					</div>
-				</section>
+				<div class="tabs">
+					<button 
+						class="tab-btn" 
+						class:active={activeTab === 'basic'} 
+						onclick={() => activeTab = 'basic'}
+					>
+						基本设置
+					</button>
+					<button 
+						class="tab-btn" 
+						class:active={activeTab === 'advanced'} 
+						onclick={() => activeTab = 'advanced'}
+					>
+						高级配置
+					</button>
+				</div>
 
-				<!-- 颜色模式 -->
-				<section class="settings-section">
-					<div class="section-header">
-						<Sun size={16} />
-						<span>外观模式</span>
-					</div>
-					
-					<div class="mode-grid">
-						{#each colorModes as mode}
-							{@const Icon = modeIcons[mode.id]}
-							<button
-								class="mode-card"
-								class:active={$colorMode === mode.id}
-								onclick={() => selectColorMode(mode.id)}
-							>
-								<Icon size={20} />
-								<span>{mode.name}</span>
-							</button>
-						{/each}
-					</div>
-				</section>
-
-				<!-- 粒子效果 -->
-				<section class="settings-section">
-					<div class="section-header">
-						<Sparkles size={16} />
-						<span>粒子效果</span>
-					</div>
-					
-					<div class="toggle-row">
-						<span class="toggle-label">背景粒子效果</span>
-						<button 
-							class="toggle-switch"
-							class:active={$particlesEnabled}
-							onclick={toggleParticles}
-							aria-pressed={$particlesEnabled}
-							aria-label="Toggle particle effects"
-						>
-							<span class="toggle-knob"></span>
-						</button>
-					</div>
-				</section>
-
-					<!-- 粒子调试 -->
-				<section class="settings-section">
-					<div class="section-header">
-						<Zap size={16} />
-						<span>粒子调试</span>
-					</div>
-					
-					<div class="speed-slider">
-						<label>
-							<span>模拟速度: {testSpeed} MB/s</span>
-							<input 
-								type="range" 
-								min="0" 
-								max="100" 
-								step="1"
-								value={testSpeed}
-								oninput={updateTestSpeed}
-							/>
-						</label>
-						<div class="speed-info">
-							<span>释放: {getEmitRate(testSpeed).toFixed(1)}/秒</span>
-							<span>预估: ~{getEstimatedParticles(testSpeed)}个</span>
+				{#if activeTab === 'basic'}
+					<!-- 主题选择 -->
+					<section class="settings-section">
+						<div class="section-header">
+							<Palette size={16} />
+							<span>主题颜色</span>
 						</div>
-					</div>
-				</section>
+						
+						<div class="theme-grid">
+							{#each themeList as theme}
+								<button
+									class="theme-card"
+									class:active={$currentTheme === theme.id}
+									onclick={() => selectTheme(theme.id)}
+									title={theme.name}
+								>
+									<div 
+										class="theme-preview"
+										style="background: linear-gradient(135deg, {theme.primary}, {theme.secondary})"
+									>
+										{#if $currentTheme === theme.id}
+											<Check size={16} strokeWidth={3} />
+										{/if}
+									</div>
+									<span class="theme-name">{theme.name}</span>
+								</button>
+							{/each}
+						</div>
+					</section>
+
+					<!-- 颜色模式 -->
+					<section class="settings-section">
+						<div class="section-header">
+							<Sun size={16} />
+							<span>外观模式</span>
+						</div>
+						
+						<div class="mode-grid">
+							{#each colorModes as mode}
+								{@const Icon = modeIcons[mode.id]}
+								<button
+									class="mode-card"
+									class:active={$colorMode === mode.id}
+									onclick={() => selectColorMode(mode.id)}
+								>
+									<Icon size={20} />
+									<span>{mode.name}</span>
+								</button>
+							{/each}
+						</div>
+					</section>
+				{/if}
+
+				{#if activeTab === 'advanced'}
+					<!-- Aria2 配置 -->
+					<section class="settings-section">
+						<div class="section-header">
+							<FileCode size={16} />
+							<span>Aria2 配置</span>
+						</div>
+						
+						<div class="import-panel">
+							<div class="config-status">
+								{#if aria2Config}
+									<div class="status-indicator active">
+										<Check size={14} />
+										<span>已加载自定义配置</span>
+									</div>
+									<div class="config-preview">
+										{aria2Config}
+									</div>
+								{:else}
+									<div class="status-indicator">
+										<span>未检测到自定义配置文件</span>
+									</div>
+								{/if}
+							</div>
+
+							<div class="action-row">
+								<span class="config-path" title={configPath}>
+									{configPath ? configPath : '初始化路径中...'}
+								</span>
+								<button class="import-btn" onclick={importConfig} disabled={isImporting}>
+									<FileUp size={14} />
+									{isImporting ? '导入中...' : '导入配置文件'}
+								</button>
+							</div>
+						</div>
+						<p class="section-hint">
+							选择本地的 <code>aria2.conf</code> 文件导入。
+							<br/>
+							注意：导入将覆盖现有配置，且需要重启应用生效。
+						</p>
+					</section>
+				{/if}
 			</div>
 		</div>
 	</div>
@@ -245,6 +298,40 @@
 		padding: 16px 18px;
 		overflow-y: auto;
 	}
+
+    .tabs {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 24px;
+        background: var(--input-bg);
+        padding: 4px;
+        border-radius: 10px;
+        border: 1px solid var(--border-normal);
+    }
+
+    .tab-btn {
+        flex: 1;
+        padding: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+        background: transparent;
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        font-weight: 500;
+    }
+
+    .tab-btn:hover {
+        color: var(--text-primary);
+    }
+
+    .tab-btn.active {
+        background: var(--dialog-bg);
+        color: var(--accent-primary);
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        font-weight: 600;
+    }
 
 	.settings-section {
 		margin-bottom: 20px;
@@ -339,93 +426,105 @@
 		color: var(--accent-primary);
 	}
 
-	/* 速度滑块 */
-	.speed-slider {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
+	.mode-card.active {
+		border-color: var(--accent-primary);
+		background: var(--accent-subtle);
+		color: var(--accent-primary);
 	}
 
-	.speed-slider label {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-		font-size: 13px;
-		color: var(--text-secondary);
-	}
+    /* Import Panel */
+    .import-panel {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        padding: 12px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+    }
 
-	.speed-slider input[type="range"] {
-		width: 100%;
-		height: 6px;
-		appearance: none;
-		background: var(--border-color);
-		border-radius: 3px;
-		cursor: pointer;
-	}
+    .config-status {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
 
-	.speed-slider input[type="range"]::-webkit-slider-thumb {
-		appearance: none;
-		width: 16px;
-		height: 16px;
-		background: var(--accent-primary);
-		border-radius: 50%;
-		box-shadow: 0 2px 6px var(--accent-glow);
-	}
+    .status-indicator {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
 
-	.speed-info {
-		display: flex;
-		justify-content: space-between;
-		font-size: 12px;
-		color: var(--text-muted);
-		padding: 8px 12px;
-		background: var(--border-light);
-		border-radius: 8px;
-	}
+    .status-indicator.active {
+        color: var(--success, #10b981);
+    }
 
-	/* Toggle 开关 */
-	.toggle-row {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 12px 14px;
-		background: var(--input-bg);
-		border: 1px solid var(--border-subtle);
-		border-radius: 10px;
-	}
+    .config-preview {
+        max-height: 80px;
+        overflow-y: auto;
+        padding: 8px;
+        background: var(--bg-hover);
+        border-radius: 6px;
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: pre-wrap;
+        border: 1px solid var(--border-subtle);
+    }
 
-	.toggle-label {
-		font-size: 13px;
-		color: var(--text-secondary);
-	}
+    .action-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        padding-top: 8px;
+        border-top: 1px solid var(--border-subtle);
+    }
 
-	.toggle-switch {
-		position: relative;
-		width: 44px;
-		height: 24px;
-		background: var(--border-color);
-		border: none;
-		border-radius: 12px;
-		cursor: pointer;
-		transition: background 0.2s ease;
-	}
+    .config-path {
+        font-size: 11px;
+        color: var(--text-muted);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1;
+        min-width: 0;
+    }
 
-	.toggle-switch.active {
-		background: var(--accent-primary);
-	}
+    .import-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        font-size: 12px;
+        color: white;
+        background: var(--accent-primary);
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: opacity 0.2s;
+        white-space: nowrap;
+    }
 
-	.toggle-knob {
-		position: absolute;
-		top: 2px;
-		left: 2px;
-		width: 20px;
-		height: 20px;
-		background: var(--toggle-knob-c, white);
-		border-radius: 50%;
-		box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-		transition: transform 0.2s ease;
-	}
+    .import-btn:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
 
-	.toggle-switch.active .toggle-knob {
-		transform: translateX(20px);
-	}
+    .section-hint {
+        margin-top: 8px;
+        font-size: 12px;
+        color: var(--text-muted);
+        line-height: 1.4;
+    }
+    
+    .section-hint code {
+        background: var(--border-light);
+        padding: 2px 4px;
+        border-radius: 4px;
+        font-family: inherit;
+        font-size: 11px;
+    }
 </style>

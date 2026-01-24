@@ -5,20 +5,27 @@ use tauri_plugin_shell::process::CommandEvent;
 pub fn init_aria2_sidecar(app: &AppHandle) {
     let sidecar_command = app.shell().sidecar("aria2c").unwrap();
     
+    let mut args = vec![
+        "--enable-rpc".to_string(),
+        "--rpc-listen-all=true".to_string(),
+        "--rpc-allow-origin-all".to_string(),
+        "--rpc-listen-port=6800".to_string(),
+        "--disable-ipv6".to_string(),
+        "--log-level=warn".to_string(),
+    ];
+
+    // Check for custom configuration file
+    use tauri::Manager;
+    if let Ok(config_dir) = app.path().app_config_dir() {
+        let conf_path = config_dir.join("aria2.conf");
+        if conf_path.exists() {
+             log::info!("Found custom aria2 config: {:?}", conf_path);
+             args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
+        }
+    }
+
     // 配置 Aria2 参数
-    let command = sidecar_command.args([
-        "--enable-rpc",
-        "--rpc-listen-all=true",
-        "--rpc-allow-origin-all",
-        "--rpc-listen-port=6800",
-        // 建议禁用 ipv6 以避免某些网络环境下的连接问题
-        "--disable-ipv6", 
-        // 保持 session 文件 (可选)
-        // "--save-session=aria2.session",
-        // "--input-file=aria2.session",
-        // 日志级别
-        "--log-level=warn"
-    ]);
+    let command = sidecar_command.args(&args);
 
     let (mut rx, child) = command.spawn().expect("Failed to spawn aria2 sidecar");
     
