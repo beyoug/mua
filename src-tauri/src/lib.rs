@@ -220,7 +220,9 @@ async fn update_tray_icon_with_speed(app: tauri::AppHandle, dl_speed: u64, ul_sp
         return Ok(());
     }
 
-    let font = Font::try_from_vec(font_data).ok_or("Failed to load font")?;
+    let font = Font::try_from_bytes_and_index(&font_data, 2)
+        .or_else(|| Font::try_from_bytes(&font_data))
+        .ok_or("Failed to load font")?;
 
     // 3. Setup Canvas (Height 22px for macOS tray, but we render at 2x for Retina: 44px)
     let scale_factor = 2; // Render at 2x
