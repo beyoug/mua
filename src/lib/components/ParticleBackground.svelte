@@ -228,17 +228,42 @@ onMount(() => {
     desynchronized: true
   })!;
   
+
   handleResize();
   window.addEventListener('resize', handleResize);
+  document.addEventListener('visibilitychange', handleVisibilityChange);
   
   initPool();
   updateColorCache();
-  animationId = requestAnimationFrame(animate);
+  startAnimation();
 });
 
+function startAnimation() {
+    if (!animationId) {
+        lastTime = performance.now();
+        animate(lastTime);
+    }
+}
+
+function stopAnimation() {
+    if (animationId) {
+        cancelAnimationFrame(animationId);
+        animationId = 0;
+    }
+}
+
+function handleVisibilityChange() {
+    if (document.hidden) {
+        stopAnimation();
+    } else {
+        startAnimation();
+    }
+}
+
 onDestroy(() => {
-  cancelAnimationFrame(animationId);
+  stopAnimation();
   window.removeEventListener('resize', handleResize);
+  document.removeEventListener('visibilitychange', handleVisibilityChange);
   unsubscribeSpeed();
 });
 </script>

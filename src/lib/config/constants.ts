@@ -10,7 +10,7 @@ export const APP_VERSION = '0.0.1';
  */
 export const DEFAULT_ARIA2_CONFIG = {
     host: 'localhost',
-    port: 6800,
+    port: 0, // Dynamic, managed by backend
     secret: '',
     secure: false
 } as const;

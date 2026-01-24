@@ -4,10 +4,10 @@
 -->
 <script lang="ts">
 	import { X, Palette, Check, Sun, Moon, Monitor, FileCode, FileUp } from '@lucide/svelte';
-    import { invoke } from '@tauri-apps/api/core';
-    import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { fade, scale } from 'svelte/transition';
+    import { fade, scale } from 'svelte/transition';
 	import { currentTheme, themes, colorMode, colorModes, type ThemeId, type ColorMode } from '$lib/stores/theme';
+    import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/stores/aria2Config';
+    import { appSettings, loadAppSettings, saveAppSettings } from '$lib/stores/settings';
 	import { createScrollLockEffect } from '$lib';
 
 	interface Props {
@@ -40,53 +40,29 @@
 		'auto': Monitor
 	};
 
-	// Aria2 Config State
-	let aria2Config = $state('');
-	let configPath = $state('');
-	let isImporting = $state(false);
-
-	async function loadConfig() {
-		try {
-			configPath = await invoke<string>('get_aria2_config_path');
-			aria2Config = await invoke<string>('read_aria2_config');
-		} catch (e) {
-			console.error('Failed to load aria2 config:', e);
-		}
-	}
-
-	async function importConfig() {
-		if (isImporting) return;
-        
-        try {
-            const selected = await openDialog({
-                filters: [{
-                    name: 'Config',
-                    extensions: ['conf', 'txt']
-                }]
-            });
-            
-            if (selected) {
-                isImporting = true;
-                const path = typeof selected === 'string' ? selected : selected.path;
-                
-                await invoke('import_aria2_config', { path });
-                await loadConfig(); // Reload to show preview
-                alert('配置导入成功！请重启应用以生效。');
-            }
-        } catch (e) {
-            console.error('Failed to import config:', e);
-            alert('导入失败: ' + e);
-        } finally {
-            isImporting = false;
-        }
-	}
-
 	// Load config when panel opens
 	$effect(() => {
 		if (open) {
-			loadConfig();
+			loadAria2Config();
+            loadAppSettings();
 		}
 	});
+
+    let isDirty = $state(false);
+    
+    function onPortChange() {
+        isDirty = true;
+    }
+
+    async function saveSettings() {
+        try {
+            await saveAppSettings($appSettings);
+            isDirty = false;
+            // Optional: Toast success
+        } catch (e) {
+            alert('保存失败');
+        }
+    }
 
 	// 使用统一的滚动锁定工具
 	$effect(() => {
@@ -183,25 +159,80 @@
 							{/each}
 						</div>
 					</section>
+
+                    <!-- 系统设置 -->
+					<section class="settings-section">
+						<div class="section-header">
+							<Monitor size={16} />
+							<span>系统</span>
+						</div>
+                        <div class="settings-group">
+                            <div class="input-helper">
+                                <label for="close-to-tray">关闭主面板时</label>
+                                <span class="helper-text">
+                                    {$appSettings.closeToTray ? "最小化到托盘，保持后台运行" : "退出应用"}
+                                </span>
+                            </div>
+                            
+                            <div class="switch-row">
+                                <label class="switch">
+                                    <input 
+                                        type="checkbox" 
+                                        id="close-to-tray"
+                                        bind:checked={$appSettings.closeToTray}
+                                        onchange={saveSettings} 
+                                    />
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                        </div>
+                    </section>
 				{/if}
 
 				{#if activeTab === 'advanced'}
-					<!-- Aria2 配置 -->
 					<section class="settings-section">
-						<div class="section-header">
+						<div class="settings-group">
+                            <!-- Helper Text -->
+                             <div class="input-helper">
+                                <label for="rpc-port">RPC 监听端口</label>
+                                <span class="helper-text">修改后将在下次启动时生效</span>
+                             </div>
+
+                             <div class="input-row">
+                                 <input 
+                                    id="rpc-port"
+                                    type="number" 
+                                    min="1024" 
+                                    max="65535"
+                                    class="port-input"
+                                    bind:value={$appSettings.rpcPort}
+                                    onchange={onPortChange}
+                                 />
+                                 <button class="save-btn" onclick={saveSettings} disabled={!isDirty}>
+                                     <Check size={14} />
+                                     保存
+                                 </button>
+                             </div>
+                        </div>
+                        
+
+
+                        <div class="divider"></div>
+
+                        <div class="section-header">
 							<FileCode size={16} />
-							<span>Aria2 配置</span>
+							<span>Aria2 配置文件</span>
 						</div>
 						
 						<div class="import-panel">
 							<div class="config-status">
-								{#if aria2Config}
+								{#if $aria2Config}
 									<div class="status-indicator active">
 										<Check size={14} />
 										<span>已加载自定义配置</span>
 									</div>
 									<div class="config-preview">
-										{aria2Config}
+										{$aria2Config}
 									</div>
 								{:else}
 									<div class="status-indicator">
@@ -211,12 +242,12 @@
 							</div>
 
 							<div class="action-row">
-								<span class="config-path" title={configPath}>
-									{configPath ? configPath : '初始化路径中...'}
+								<span class="config-path" title={$configPath}>
+									{$configPath ? $configPath : '初始化路径中...'}
 								</span>
-								<button class="import-btn" onclick={importConfig} disabled={isImporting}>
+								<button class="import-btn" onclick={importAria2Config} disabled={$isImporting}>
 									<FileUp size={14} />
-									{isImporting ? '导入中...' : '导入配置文件'}
+									{$isImporting ? '导入中...' : '导入配置文件'}
 								</button>
 							</div>
 						</div>
@@ -527,4 +558,139 @@
         font-family: inherit;
         font-size: 11px;
     }
+
+    .settings-group {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-normal);
+        padding: 12px;
+        border-radius: 12px;
+        margin-bottom: 20px;
+    }
+
+    .input-helper {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .input-helper label {
+        font-size: 13px;
+        color: var(--text-primary);
+        font-weight: 500;
+    }
+    
+    .helper-text {
+        font-size: 11px;
+        color: var(--text-muted);
+    }
+
+    .input-row {
+        display: flex;
+        gap: 8px;
+    }
+
+    .port-input {
+        flex: 1;
+        background: var(--bg-hover);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        padding: 8px 12px;
+        color: var(--text-primary);
+        font-size: 13px;
+    }
+
+    .port-input:focus {
+        outline: none;
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px var(--accent-subtle);
+    }
+
+    .save-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 0 16px;
+        background: var(--accent-primary);
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .save-btn:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: var(--border-strong);
+    }
+    
+    .divider {
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 20px 0;
+    }
+
+    .switch-row {
+        margin-top: 8px;
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    /* Toggle Switch Styles */
+    .switch {
+        position: relative;
+        display: inline-block;
+        width: 36px;
+        height: 20px;
+    }
+
+    .switch input {
+        opacity: 0;
+        width: 0;
+        height: 0;
+    }
+
+    .slider {
+        position: absolute;
+        cursor: pointer;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background-color: var(--bg-hover);
+        transition: .3s;
+        border: 1px solid var(--border-subtle);
+    }
+
+    .slider:before {
+        position: absolute;
+        content: "";
+        height: 14px;
+        width: 14px;
+        left: 2px;
+        bottom: 2px;
+        background-color: var(--text-muted);
+        transition: .3s;
+        border-radius: 50%;
+    }
+
+    input:checked + .slider {
+        background-color: var(--accent-subtle);
+        border-color: var(--accent-primary);
+    }
+
+    input:checked + .slider:before {
+        transform: translateX(16px);
+        background-color: var(--accent-primary);
+    }
+
+    .slider.round {
+        border-radius: 20px;
+    }
+
 </style>

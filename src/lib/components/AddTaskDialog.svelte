@@ -7,7 +7,8 @@
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { createScrollLockEffect, isValidDownloadUrl, validateUrl, addDownloadTask } from '$lib';
+	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
+    import { addDownloadTask } from '$lib/stores/downloadStore';
 
 	interface Props {
 		open: boolean;

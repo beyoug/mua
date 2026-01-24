@@ -1,75 +1,141 @@
-use tauri::AppHandle;
+use tauri::{AppHandle, Manager};
 use tauri_plugin_shell::ShellExt;
 use tauri_plugin_shell::process::CommandEvent;
+use std::time::Duration;
 
-pub fn init_aria2_sidecar(app: &AppHandle) {
-    let sidecar_command = app.shell().sidecar("aria2c").unwrap();
-    
-    let mut args = vec![
-        "--enable-rpc".to_string(),
-        "--rpc-listen-all=true".to_string(),
-        "--rpc-allow-origin-all".to_string(),
-        "--rpc-listen-port=6800".to_string(),
-        "--disable-ipv6".to_string(),
-        "--log-level=warn".to_string(),
-    ];
 
-    // Check for custom configuration file
-    // Check for custom configuration file & Setup session
-    use tauri::Manager;
-    if let Ok(config_dir) = app.path().app_config_dir() {
-        // Ensure config directory exists
-        if !config_dir.exists() {
-            let _ = std::fs::create_dir_all(&config_dir);
+fn find_available_port(start: u16) -> u16 {
+    let mut port = start;
+    loop {
+        // 检查 0.0.0.0，因为 aria2c 使用 --rpc-listen-all=true
+        if std::net::TcpListener::bind(("0.0.0.0", port)).is_ok() {
+             return port;
         }
-
-        // 1. Custom Config
-        let conf_path = config_dir.join("aria2.conf");
-        if conf_path.exists() {
-             log::info!("Found custom aria2 config: {:?}", conf_path);
-             args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
+        port += 1;
+        // 限制搜索范围以防止死循环
+        if port > start + 100 {
+            log::warn!("Could not find available port in range {}-{}, fallback to {}", start, start+100, start);
+            return start; 
         }
-
-        // 2. Session File (Persistence)
-        let session_path = config_dir.join("aria2.session");
-        if !session_path.exists() {
-            // Must create the file if it doesn't exist, otherwise aria2 fails to start with --input-file
-            if let Err(e) = std::fs::File::create(&session_path) {
-                log::error!("Failed to create session file: {}", e);
-            }
-        }
-        
-        let session_path_str = session_path.to_string_lossy();
-        args.push(format!("--input-file={}", session_path_str));
-        args.push(format!("--save-session={}", session_path_str));
-        args.push("--save-session-interval=30".to_string());
     }
+}
 
-    // 配置 Aria2 参数
-    let command = sidecar_command.args(&args);
 
-    let (mut rx, child) = command.spawn().expect("Failed to spawn aria2 sidecar");
-    
-    let pid = child.pid();
-    log::info!("Aria2 sidecar started with PID: {}", pid);
+use std::sync::Mutex;
+use tauri_plugin_shell::process::CommandChild;
 
-    // 异步监听输出 (可选，用于调试)
+pub struct SidecarState {
+    pub child: Mutex<Option<CommandChild>>,
+}
+
+pub fn init_aria2_sidecar(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
-        while let Some(event) = rx.recv().await {
-            match event {
-                CommandEvent::Stdout(line) => {
-                    let log = String::from_utf8_lossy(&line);
-                    log::info!("Aria2 stdout: {}", log);
+        loop {
+             let sidecar_command = match app.shell().sidecar("aria2c") {
+                Ok(cmd) => cmd,
+                Err(e) => {
+                    log::error!("Failed to create aria2 sidecar command: {}. Retrying in 5s...", e);
+                    tokio::time::sleep(Duration::from_secs(5)).await;
+                    continue;
                 }
-                CommandEvent::Stderr(line) => {
-                    let log = String::from_utf8_lossy(&line);
-                    log::warn!("Aria2 stderr: {}", log);
-                }
-                CommandEvent::Terminated(payload) => {
-                    log::error!("Aria2 terminated: {:?}", payload);
-                }
-                _ => {}
+            };
+            
+            // 1. 从配置获取首选端口
+            let mut preferred_port: u16 = 6800;
+            if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
+                preferred_port = state.rpc_port;
             }
+            log::info!("Preferred Aria2 port: {}", preferred_port);
+            
+            // 2. 查找可用端口
+            let port = find_available_port(preferred_port);
+            log::info!("Selected port for Aria2: {}", port);
+            
+            // 3. 更新全局客户端状态
+            crate::aria2_client::set_aria2_port(port);
+
+            let mut args = vec![
+                "--enable-rpc".to_string(),
+                "--rpc-listen-all=true".to_string(),
+                "--rpc-allow-origin-all".to_string(),
+                format!("--rpc-listen-port={}", port),
+                "--disable-ipv6".to_string(),
+                "--log-level=warn".to_string(),
+            ];
+
+            // 检查自定义配置文件
+            if let Ok(config_dir) = app.path().app_config_dir() {
+                // 确保配置目录存在
+                if !config_dir.exists() {
+                    let _ = std::fs::create_dir_all(&config_dir);
+                }
+
+                // 1. 自定义配置
+                let conf_path = config_dir.join("aria2.conf");
+                if conf_path.exists() {
+                     log::info!("Found custom aria2 config: {:?}", conf_path);
+                     args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
+                }
+
+                // 2. 会话文件 (持久化)
+                let session_path = config_dir.join("aria2.session");
+                if !session_path.exists() {
+                    if let Err(e) = std::fs::File::create(&session_path) {
+                        log::error!("Failed to create session file: {}", e);
+                    }
+                }
+                
+                let session_path_str = session_path.to_string_lossy();
+                args.push(format!("--input-file={}", session_path_str));
+                args.push(format!("--save-session={}", session_path_str));
+                args.push("--save-session-interval=30".to_string());
+            }
+
+            log::info!("Starting Aria2 sidecar...");
+            let command = sidecar_command.args(&args);
+
+            match command.spawn() {
+                Ok((mut rx, child)) => {
+                    let pid = child.pid();
+                    log::info!("Aria2 sidecar started with PID: {}", pid);
+
+                    // 在状态中存储子进程
+                    let state = app.state::<SidecarState>();
+                    *state.child.lock().unwrap() = Some(child);
+
+                    // 监控进程
+                    let mut manually_exited = false;
+                    while let Some(event) = rx.recv().await {
+                        match event {
+                            CommandEvent::Stdout(line) => {
+                                let log = String::from_utf8_lossy(&line);
+                                log::info!("Aria2 stdout: {}", log);
+                            }
+                            CommandEvent::Stderr(line) => {
+                                let log = String::from_utf8_lossy(&line);
+                                log::warn!("Aria2 stderr: {}", log);
+                            }
+                            CommandEvent::Terminated(payload) => {
+                                log::warn!("Aria2 terminated: {:?}", payload);
+                                manually_exited = true;
+                                break;
+                            }
+                            _ => {}
+                        }
+                    }
+                    
+                    if !manually_exited {
+                         log::warn!("Aria2 channel closed unexpectedly.");
+                    }
+                }
+                Err(e) => {
+                    log::error!("Failed to spawn aria2 sidecar: {}", e);
+                }
+            }
+
+            log::info!("Aria2 sidecar exited. Restarting in 5 seconds...");
+            tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });
 }
+

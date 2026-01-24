@@ -23,39 +23,23 @@ import {
     formatAddedAt,
     extractFilenameFromUrl
 } from '$lib/utils/formatters';
-import { invoke } from '@tauri-apps/api/core';
+import {
+    getTasks,
+    addDownloadTask as addDownloadTaskCmd,
+    pauseTask as pauseTaskCmd,
+    resumeTask as resumeTaskCmd,
+    cancelTaskCmd,
+    removeTaskRecord,
+    updateTrayIconSpeed
+} from '$lib/api/cmd';
+import type { Aria2Task } from '$lib/types/aria2';
 
-// Backend Type Definition
-interface Aria2Task {
-    gid: string;
-    status: string; // active, waiting, paused, error, complete, removed
-    totalLength: string;
-    completedLength: string;
-    downloadSpeed: string;
-    uploadLength: string;
-    uploadSpeed: string;
-    errorCode: string | null;
-    errorMessage: string | null;
-    dir: string;
-    files: Aria2File[];
-}
 // ...
 // ...
-// Update Tray Speed logic moved to poll function
+// 托盘速度更新逻辑已移至轮询函数
 
-interface Aria2File {
-    index: string;
-    path: string;
-    length: string;
-    completedLength: string;
-    selected: string;
-    uris: Aria2Uri[];
-}
-
-interface Aria2Uri {
-    uri: string;
-    status: string;
-}
+// Aria2File 和 Aria2Uri 现在是 Aria2Task 类型的一部分，已导入。
+// 不需要本地定义。
 
 function mapAria2Status(status: string): DownloadState {
     switch (status) {
@@ -89,17 +73,17 @@ async function startPolling() {
 
     const poll = async () => {
         try {
-            const rawTasks = await invoke<Aria2Task[]>('get_tasks');
+            const rawTasks = await getTasks();
             updateTasks(currentTasks => {
-                // Merge strategy:
-                // 1. We prioritize backend data.
-                // 2. We try to preserve 'addedAt' and 'filename' (if user renamed it) from local store if possible.
-                //    But actually, filename in Aria2 might be updated after download starts (metadata).
+                // 合并策略：
+                // 1. 优先使用后端数据。
+                // 2. 尝试保留本地存储中的 'addedAt' 和 'filename'（如果用户重命名了）。
+                //    实际上，文件名在 Aria2 下载开始后可能会更新（元数据）。
 
                 const merged: DownloadTask[] = rawTasks.map(rt => {
                     const existing = currentTasks.find(t => t.id === rt.gid);
 
-                    // Calculate basic stats
+                    // 计算基本统计信息
                     const total = parseInt(rt.totalLength, 10);
                     const completed = parseInt(rt.completedLength, 10);
                     const speed = parseInt(rt.downloadSpeed, 10);
@@ -108,7 +92,7 @@ async function startPolling() {
                         progress = (completed / total) * 100;
                     }
 
-                    // Remaining time calculation
+                    // 剩余时间计算
                     let remaining = '';
                     if (speed > 0 && total > completed) {
                         const seconds = (total - completed) / speed;
@@ -117,31 +101,31 @@ async function startPolling() {
                         else remaining = `${Math.ceil(seconds)}s`;
                     }
 
-                    // Filename
-                    // If rt.files[0].path is non-empty, use basename.
-                    // Otherwise use existing or fallback to url.
+                    //文件名
+                    // 如果 rt.files[0].path 非空，使用 basename。
+                    // 否则使用现有的或回退到 url。
                     let filename = existing?.filename || 'Unknown';
                     if (rt.files && rt.files.length > 0 && rt.files[0].path) {
-                        // Extract basename
+                        // 提取文件名
                         const path = rt.files[0].path;
-                        // Handle both unix and windows paths just in case, though we are on mac
+                        // 处理 unix 和 windows 路径以防万一，虽然我们在 Mac 上
                         const parts = path.split(/[/\\]/);
                         if (parts.length > 0 && parts[parts.length - 1]) {
                             filename = parts[parts.length - 1];
                         }
                     }
 
-                    // State determination with locking logic
-                    // If we have a pending local change for this task, verify if we should ignore backend entirely
+                    // 带锁逻辑的状态判定
+                    // 如果此任务有挂起的本地更改，验证是否应完全忽略后端
                     if (pendingStateChanges.has(rt.gid)) {
                         const lockTime = pendingStateChanges.get(rt.gid)!;
                         if (Date.now() - lockTime < 1000) {
-                            // Lock active: Return existing local state to prevent jitter/reversion
+                            // 锁激活：返回现有的本地状态以防止抖动/回退
                             if (existing) {
                                 return existing;
                             }
                         } else {
-                            // Lock expired
+                            // 锁过期
                             pendingStateChanges.delete(rt.gid);
                         }
                     }
@@ -161,50 +145,63 @@ async function startPolling() {
                     }
                 });
 
-                // Keep cancelled/removed tasks? 
-                // Aria2 'removed' status is transient. If we want history, we might need to keep them if they are missing from backend 
-                // AND were previously in 'completed' or 'cancelled' state in local store.
-                // For 'active'/'waiting'/'paused' tasks that disappear, they are likely removed.
+                // 保留已取消/已移除的任务？
+                // Aria2 'removed' 状态是短暂的。如果我们需要历史记录，可能需要在它们从后端消失时保留它们
+                // 并且之前在本地存储中处于 'completed' 或 'cancelled' 状态。
+                // 对于消失的 'active'/'waiting'/'paused' 任务，它们可能已被移除。
 
-                // For specific requirements: "History"
-                // Aria2 tellStopped returns stopped (completed/error) tasks.
-                // So merged list should contain everything Aria2 knows about.
-                // If a task was manually removed from UI (and thus Aria2), it's gone.
-                // If we want to keep history of removed tasks locally, we need separate logic.
-                // For now, let's sync with Aria2.
+                // 对于具体需求："历史记录"
+                // Aria2 tellStopped 返回已停止（已完成/错误）的任务。
+                // 因此合并列表应包含 Aria2 知道的所有内容。
+                // 如果任务从 UI（以及 Aria2）手动移除，它就消失了。
+                // 如果我们想在本地保留已移除任务的历史记录，我们需要单独的逻辑。
+                // 目前，让我们与 Aria2 保持同步。
 
                 return merged;
             });
 
-            // Update Tray Speed (Bidirectional)
+            // 更新托盘速度（双向）
             let totalDownload = 0;
             let totalUpload = 0;
 
             rawTasks.forEach(t => {
                 const dl = parseInt(t.downloadSpeed, 10);
-                // t.uploadSpeed might be undefined if backend struct not yet synced (or if json missing)
-                // Use safe parsing
+                // t.uploadSpeed 可能未定义，如果后端结构尚未同步（或 json 缺失）
+                // 使用安全解析
                 const ul = t.uploadSpeed ? parseInt(t.uploadSpeed, 10) : 0;
 
                 if (!isNaN(dl)) totalDownload += dl;
                 if (!isNaN(ul)) totalUpload += ul;
             });
 
-
-
-            // Update Tray Speed (Dynamic Icon)
-            await invoke('update_tray_icon_with_speed', { dlSpeed: totalDownload, ulSpeed: totalUpload });
+            // 更新托盘速度（动态图标）
+            await updateTrayIconSpeed(totalDownload, totalUpload);
 
         } catch (e) {
             console.error('Failed to sync tasks:', e);
         }
 
         if (isPolling) {
-            pollingInterval = setTimeout(poll, 1000) as unknown as number;
+            // 自适应轮询策略
+            // 如果隐藏：5s，如果可见：1s
+            const interval = (typeof document !== 'undefined' && document.visibilityState === 'hidden')
+                ? 5000
+                : 1000;
+            pollingInterval = setTimeout(poll, interval) as unknown as number;
         }
     };
 
     poll();
+
+    // 监听可见性变化以获得即时响应
+    if (typeof document !== 'undefined') {
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && isPolling) {
+                if (pollingInterval) clearTimeout(pollingInterval);
+                poll();
+            }
+        });
+    }
 }
 
 function stopPolling() {
@@ -215,7 +212,7 @@ function stopPolling() {
     }
 }
 
-// Auto start polling
+// 自动开始轮询
 if (typeof window !== 'undefined') {
     startPolling();
 }
@@ -298,7 +295,7 @@ function sortByStateAndTime(a: DownloadTask, b: DownloadTask): number {
 
 // ============ 任务操作方法 ============
 
-// Helper for formatBytes if not imported
+// formatBytes 的辅助函数（如果未导入）
 function formatBytes(bytes: number, decimals = 2) {
     if (!+bytes) return '0 B';
     const k = 1024;
@@ -314,22 +311,13 @@ function formatBytes(bytes: number, decimals = 2) {
  */
 export async function addDownloadTask(config: DownloadConfig): Promise<void> {
     try {
-        const gid = await invoke<string>('add_download_task', {
-            urls: config.urls,
-            savePath: config.savePath,
-            filename: config.filename,
-            userAgent: config.userAgent,
-            referer: config.referer,
-            headers: config.headers,
-            proxy: config.proxy,
-            maxDownloadLimit: config.maxDownloadLimit
-        });
+        const gid = await addDownloadTaskCmd(config);
 
-        // Optimistic UI update or just wait for next poll
-        // Let's add a placeholder to feel responsive
+        // 乐观 UI 更新或仅等待下一次轮询
+        // 让我们添加一个占位符以感觉响应迅速
         updateTasks(tasks => {
             const newTasks: DownloadTask[] = config.urls.map(url => ({
-                id: gid, // Use the GID returned!
+                id: gid, // 使用返回的 GID！
                 filename: config.filename || extractFilenameFromUrl(url),
                 url: url,
                 progress: 0,
@@ -350,16 +338,16 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
  */
 export async function pauseTask(id: string): Promise<void> {
     try {
-        // Lock state to avoid jitter
+        // 锁定状态以避免抖动
         pendingStateChanges.set(id, Date.now());
 
-        await invoke('pause_task', { gid: id });
+        await pauseTaskCmd(id);
         updateTasks(tasks => tasks.map(t =>
             t.id === id ? { ...t, state: 'paused', speed: '0 B/s' } : t
         ));
     } catch (e) {
         console.error(`Failed to pause task ${id}:`, e);
-        pendingStateChanges.delete(id); // Unlock on error
+        pendingStateChanges.delete(id); // 发生错误时解锁
     }
 }
 
@@ -368,11 +356,11 @@ export async function pauseTask(id: string): Promise<void> {
  */
 export async function resumeTask(id: string): Promise<void> {
     try {
-        // Lock state
+        // 锁定状态
         pendingStateChanges.set(id, Date.now());
 
-        await invoke('resume_task', { gid: id });
-        // Optimistic update
+        await resumeTaskCmd(id);
+        // 乐观更新
         updateTasks(tasks => tasks.map(t =>
             t.id === id ? { ...t, state: 'downloading' } : t
         ));
@@ -387,12 +375,12 @@ export async function resumeTask(id: string): Promise<void> {
  */
 export async function cancelTask(id: string): Promise<void> {
     try {
-        await invoke('cancel_task', { gid: id });
-        // For cancel, aria2 changes status to removed or error. Polling will pick it up.
-        // But we can optimistically mark it as cancelled or remove it from active list if desired.
-        // UI expects 'cancelled' state for soft delete in 'active' view usually?
-        // Actually, 'cancel_task' calls 'aria2.remove'. 
-        // We'll let polling handle the state change or update locally.
+        await cancelTaskCmd(id);
+        // 对于取消，aria2 将状态更改为已移除或错误。轮询将获取它。
+        // 但我们可以乐观地将其标记为已取消或根据需要将其从活动列表中移除。
+        // UI 通常期望在 'active' 视图中进行软删除的 'cancelled' 状态？
+        // 实际上，'cancel_task' 调用 'aria2.remove'。
+        // 我们将让轮询处理状态更改或在本地更新。
         updateTasks(tasks => tasks.map(t =>
             t.id === id ? { ...t, state: 'cancelled' } : t
         ));
@@ -412,9 +400,9 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
         if (isRemovableTask(taskToDelete.state)) {
             let filepath: string | null = null;
             if (taskToDelete.savePath && taskToDelete.filename) {
-                // Determine separator based on assumption (or just use / for mac)
-                // We'll trust the backend/Aria2 path format usually.
-                // Simple concat for Mac/Linux
+                // 基于假设确定分隔符（或者在 Mac 上直接使用 /）
+                // 我们通常信任后端/Aria2 路径格式。
+                // Mac/Linux 的简单拼接
                 if (taskToDelete.savePath.endsWith('/')) {
                     filepath = taskToDelete.savePath + taskToDelete.filename;
                 } else {
@@ -423,14 +411,11 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
             }
 
             if (deleteFile) {
-                // console.log(`[DEBUG] Attempting to delete file...`);
+
             }
 
-            invoke('remove_task_record', {
-                gid: id,
-                deleteFile: deleteFile,
-                filepath: filepath
-            }).catch(e => console.error("remove failed", e));
+            removeTaskRecord(id, deleteFile, filepath)
+                .catch(e => console.error("remove failed", e));
 
             return tasks.filter(t => t.id !== id);
         }
@@ -462,17 +447,17 @@ export function cancelTasks(ids: Set<string>): void {
  * 全局暂停所有下载中的任务
  */
 export function pauseAll(): void {
-    // We should iterate active tasks and pause them
-    // Or call a batch method. iterating is easiest for now.
+    // 我们应该遍历活动任务并暂停它们
+    // 或者调用批处理方法。目前遍历是最简单的。
     activeTasks.subscribe(tasks => {
         tasks.forEach(t => {
             if (t.state === 'downloading' || t.state === 'waiting') {
                 pauseTask(t.id);
             }
         });
-    })(); // Subscribe returns unsubscribe, but we just want the current value once? 
-    // Actually using `get(activeTasks)` is better but we are inside the module.
-    // simpler:
+    })(); // Subscribe 返回 unsubscribe，但我们只想获取一次当前值？
+    // 实际上使用 get(activeTasks) 更好，但我们在模块内部。
+    // 更简单的方法：
     updateTasks(tasks => {
         tasks.forEach(t => {
             if (t.state === 'downloading' || t.state === 'waiting') {
