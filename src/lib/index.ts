@@ -41,4 +41,4 @@ export {
 } from './stores/downloadStore';
 
 // Types
-export type { DownloadTask, DownloadConfig, DownloadState, DownloadStats, TaskOperations } from './types/download';
+export type { DownloadTask, DownloadConfig, DownloadState, DownloadStats } from './types/download';

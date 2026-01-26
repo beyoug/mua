@@ -48,8 +48,10 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
             // 1. 从配置获取首选端口
             let mut preferred_port: u16 = 6800;
+            let mut save_session_interval = 30;
             if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
                 preferred_port = state.rpc_port;
+                save_session_interval = state.save_session_interval;
             }
             log::info!("Preferred Aria2 port: {}", preferred_port);
 
@@ -59,6 +61,15 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
             // 3. 更新全局客户端状态
             crate::aria2_client::set_aria2_port(port);
+            
+            // Get Secret from config
+            let mut rpc_secret_arg = String::new();
+            if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
+                if let Some(secret) = &state.rpc_secret {
+                     crate::aria2_client::set_aria2_secret(secret.clone());
+                     rpc_secret_arg = secret.clone();
+                }
+            }
 
             let mut args = vec![
                 "--enable-rpc".to_string(),
@@ -67,7 +78,12 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 format!("--rpc-listen-port={}", port),
                 "--disable-ipv6".to_string(),
                 "--log-level=warn".to_string(),
+                format!("--stop-with-process={}", std::process::id()), // Auto-shutdown when parent dies
             ];
+            
+            if !rpc_secret_arg.is_empty() {
+                args.push(format!("--rpc-secret={}", rpc_secret_arg));
+            }
 
             // 检查自定义配置文件
             if let Ok(config_dir) = app.path().app_config_dir() {
@@ -94,7 +110,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 let session_path_str = session_path.to_string_lossy();
                 args.push(format!("--input-file={}", session_path_str));
                 args.push(format!("--save-session={}", session_path_str));
-                args.push("--save-session-interval=30".to_string());
+                args.push(format!("--save-session-interval={}", save_session_interval));
             }
 
             log::info!("Starting Aria2 sidecar...");
@@ -117,7 +133,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         match event {
                             CommandEvent::Stdout(line) => {
                                 let log = String::from_utf8_lossy(&line);
-                                log::info!("Aria2 stdout: {}", log);
+                                if log.contains("Serialized session to") {
+                                    log::debug!("Aria2 stdout: {}", log);
+                                } else {
+                                    log::info!("Aria2 stdout: {}", log);
+                                }
                             }
                             CommandEvent::Stderr(line) => {
                                 let log = String::from_utf8_lossy(&line);

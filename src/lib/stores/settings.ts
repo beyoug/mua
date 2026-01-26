@@ -5,6 +5,7 @@ export interface AppConfig {
     rpcPort: number;
     closeToTray: boolean;
     autoResume: boolean;
+    rpcSecret?: string;
 }
 
 const DEFAULT_CONFIG: AppConfig = {

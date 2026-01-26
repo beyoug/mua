@@ -18,6 +18,7 @@
 		onPause?: (id: string) => void;
 		onResume?: (id: string) => void;
 		onCancel?: (id: string) => void;
+		onOpenFolder?: (id: string) => void;
 	}
 
 	let {
@@ -29,7 +30,8 @@
 		onSelect,
 		onPause,
 		onResume,
-		onCancel
+		onCancel,
+		onOpenFolder
 	}: Props = $props();
 </script>
 
@@ -53,6 +55,7 @@
 					onPause={() => onPause?.(download.id)}
 					onResume={() => onResume?.(download.id)}
 					onCancel={() => onCancel?.(download.id)}
+					onOpenFolder={() => onOpenFolder?.(download.id)}
 					addedAt={download.addedAt}
 				/>
 			</div>

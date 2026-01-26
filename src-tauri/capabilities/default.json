@@ -19,6 +19,7 @@
           "args": true
         }
       ]
-    }
+    },
+    "notification:default"
   ]
 }

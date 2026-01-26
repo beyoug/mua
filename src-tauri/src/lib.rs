@@ -6,14 +6,18 @@ pub mod config;
 pub mod sidecar;
 pub mod store;
 pub mod tray;
+
 pub mod utils; // Register new module
+pub mod sync; // Register sync module
 
 use commands::*;
+
 use tauri::Manager;
 use tray::update_tray_icon_with_speed;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
@@ -52,6 +56,34 @@ pub fn run() {
                         .build(),
                 )?;
             }
+
+            // --- Auto Resume Logic ---
+            let config_state = app.state::<crate::config::ConfigState>();
+            let auto_resume = config_state.config.lock().unwrap().auto_resume;
+
+            if auto_resume {
+                log::info!("Auto Resume enabled. Attempting to resume tasks...");
+                let app_handle_resume = app.handle().clone();
+
+                tauri::async_runtime::spawn(async move {
+                    let state = app_handle_resume.state::<crate::store::TaskStore>();
+                    let store_tasks = state.get_all();
+
+                    for task in store_tasks {
+                        if task.state == "paused"
+                            || task.state == "waiting"
+                            || task.state == "downloading"
+                        {
+                            log::info!("Auto-resuming task: {}", task.gid);
+                            let _ = commands::resume_task(state.clone(), task.gid).await;
+                        }
+                    }
+                });
+            }
+
+            // --- Background Sync Loop ---
+            crate::sync::start_background_sync(app.handle().clone());
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -66,7 +98,12 @@ pub fn run() {
             import_aria2_config,
             update_tray_icon_with_speed,
             get_app_config,
-            save_app_config
+            save_app_config,
+            show_task_in_folder,
+            pause_all_tasks,
+            resume_all_tasks,
+            remove_tasks,
+            cancel_tasks
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

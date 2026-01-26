@@ -19,15 +19,18 @@ export type DownloadState =
 export interface DownloadTask {
 	id: string;
 	filename: string;
-	url?: string;
+	url: string;
 	progress: number;
-	speed?: string;
-	downloaded?: string;
-	total?: string;
-	remaining?: string;
+	speed: string;
+	speed_u64: number;
+	downloaded: string;
+	downloaded_u64: number;
+	total: string;
+	total_u64: number;
+	remaining: string;
 	state: DownloadState;
-	addedAt?: string;
-	savePath?: string; // Directory where file is saved
+	addedAt: string;
+	savePath: string;
 }
 
 /**
@@ -54,12 +57,4 @@ export interface DownloadStats {
 	completedCount: number;
 }
 
-/**
- * 任务操作接口
- */
-export interface TaskOperations {
-	pause: (id: string) => void;
-	resume: (id: string) => void;
-	cancel: (id: string) => void;
-	remove: (id: string) => void;
-}
+

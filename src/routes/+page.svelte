@@ -15,35 +15,26 @@
 		addDownloadTask,
 		pauseTask,
 		resumeTask,
-		cancelTask,
-		removeTask,
-		removeTasks,
-		cancelTasks,
 		pauseAll,
 		resumeAll,
 		hasDownloadingTasks,
 		hasPausedTasks
 	} from '$lib';
 	import { isRemovableTask } from '$lib';
+    import { TaskController } from '$lib/services/taskController.svelte';
+
+    // 实例化控制器
+    const controller = new TaskController();
 
 	// ============ 界面状态 ============
-	let activeNav: 'active' | 'completed' | 'history' = $state('active');
 	let showAddDialog = $state(false);
-	let showClearDialog = $state(false);
 	let showSettings = $state(false);
-	let isSelectionMode = $state(false);
-	let selectedIds = $state(new Set<string>());
-	let clearDialogProps = $state({
-		title: '确认清空',
-		description: '确定要清空这些任务吗？此操作无法撤销。',
-		confirmText: '清空'
-	});
 
 	// ============ Derived States ============
 
 	// 当前显示的任务列表
 	const filteredTasks = $derived(() => {
-		switch (activeNav) {
+		switch (controller.activeNav) {
 			case 'active':
 				return $activeTasks;
 			case 'completed':
@@ -57,7 +48,7 @@
 
 	// 页面标题
 	const pageTitle = $derived(() => {
-		switch (activeNav) {
+		switch (controller.activeNav) {
 			case 'active': return '进行中';
 			case 'completed': return '已完成';
 			case 'history': return '历史记录';
@@ -67,7 +58,7 @@
 
 	// 空状态提示文案
 	const emptyStateText = $derived(() => {
-		switch (activeNav) {
+		switch (controller.activeNav) {
 			case 'active': 
 				return {
 					title: '暂无进行中的任务',
@@ -109,16 +100,14 @@
 		const currentIds = $activeTasks.map(d => d.id);
 
 		// 触发条件：处于 Active 页面，之前有任务，现在没了
-		if (activeNav === 'active' && prevActiveIds.length > 0 && currentIds.length === 0) {
+		if (controller.activeNav === 'active' && prevActiveIds.length > 0 && currentIds.length === 0) {
 			// 检查消失的任务是否全部完成
 			const allCompleted = prevActiveIds.every(id => 
 				$completedTasks.some(t => t.id === id)
 			);
 
 			if (allCompleted) {
-				activeNav = 'completed';
-				isSelectionMode = false;
-				selectedIds = new Set();
+                controller.handleNavChange('completed');
 			}
 		}
 		prevActiveIds = currentIds;
@@ -126,125 +115,15 @@
 
 	// ============ Event Handlers ============
 
-	function handleNavChange(nav: typeof activeNav) {
-		activeNav = nav;
-		isSelectionMode = false;
-		selectedIds.clear();
-	}
-
-	function toggleSelection(id: string) {
-		const next = new Set(selectedIds);
-		if (next.has(id)) {
-			next.delete(id);
-		} else {
-			next.add(id);
-		}
-		selectedIds = next;
-	}
-
-	function handleGlobalPause() {
-		pauseAll();
-	}
-
-	function handleGlobalResume() {
-		resumeAll();
-	}
-
-	// 垃圾桶按钮点击逻辑：进入模式 -> 全选 -> 确认删除
-	function handleTrashClick() {
-		// 1. 进入选择模式
-		if (!isSelectionMode) {
-			isSelectionMode = true;
-			selectedIds = new Set();
-			return;
-		}
-		
-		// 2. 如果未选中任何项，则全选
-		if (selectedIds.size === 0) {
-			const next = new Set(selectedIds);
-			filteredTasks().forEach(d => next.add(d.id));
-			selectedIds = next;
-			return;
-		}
-
-		// 3. 执行逻辑分流
-		// 进行中页面：默认直接移动到历史记录（软删除），不需要弹窗
-		if (activeNav === 'active') {
-			performClear(false);
-			return;
-		}
-
-		// 其他页面（已完成/历史）：需要弹窗确认 + 删除文件选项
-		const count = selectedIds.size;
-		let title = '';
-		let description = '';
-
-		if (activeNav === 'history') {
-			title = '删除记录';
-			description = `确定要永久删除这 ${count} 条任务记录吗？`;
-		} else {
-			title = '清空记录';
-			description = `确定要清空这 ${count} 条已完成的任务记录吗？`;
-		}
-
-		clearDialogProps = {
-			title,
-			description,
-			confirmText: '确定'
-		};
-		showClearDialog = true;
-	}
-
-	// 执行清理（批量或单项）
-	function performClear(deleteFile: boolean) {
-		if (itemToDelete) {
-			// 单项删除
-			removeTask(itemToDelete, deleteFile);
-			itemToDelete = null;
-		} else {
-			// 批量删除
-			if (activeNav === 'active') {
-				// 进行中页面：软删除（取消）
-				cancelTasks(selectedIds);
-			} else {
-				// 历史/已完成页面：硬删除
-				removeTasks(selectedIds, deleteFile);
-			}
-			isSelectionMode = false;
-			selectedIds = new Set();
-		}
-		
-		showClearDialog = false;
-	}
-
 	function handleAddTask(config: DownloadConfig) {
-		// addDownloadTask(config); // Handled in AddTaskDialog
-	}
-
-	// 待删除的单个任务 ID
-	let itemToDelete = $state<string | null>(null);
-
-	function handleCancelTask(id: string) {
-		if (activeNav === 'active') {
-			// 进行中：软删除（取消），无需确认
-			cancelTask(id);
-		} else {
-			// 历史记录：需要确认是否删除文件
-			itemToDelete = id;
-			clearDialogProps = {
-				title: '删除任务',
-				description: '确定要删除这条任务记录吗？',
-				confirmText: '删除'
-			};
-			showClearDialog = true;
-		}
+		addDownloadTask(config);
 	}
 </script>
 
 <!-- 侧边栏 -->
 <Sidebar 
-	{activeNav}
-	onNavChange={handleNavChange}
+	activeNav={controller.activeNav}
+	onNavChange={(nav) => controller.handleNavChange(nav)}
 	onSettingsClick={() => showSettings = true}
 	onAddClick={() => showAddDialog = true}
 	stats={$downloadStats}
@@ -259,23 +138,24 @@
 			{hasDownloading}
 			{hasPaused}
 			{hasRemovable}
-			{isSelectionMode}
-			selectedCount={selectedIds.size}
-			onGlobalPause={handleGlobalPause}
-			onGlobalResume={handleGlobalResume}
-			onTrashClick={handleTrashClick}
+			isSelectionMode={controller.isSelectionMode}
+			selectedCount={controller.selectedIds.size}
+			onGlobalPause={pauseAll}
+			onGlobalResume={resumeAll}
+			onTrashClick={() => controller.handleTrashClick(filteredTasks())}
 		/>
 
 		<TaskList
 			tasks={filteredTasks()}
 			emptyTitle={emptyStateText().title}
 			emptyHint={emptyStateText().hint}
-			{isSelectionMode}
-			{selectedIds}
-			onSelect={toggleSelection}
+			isSelectionMode={controller.isSelectionMode}
+			selectedIds={controller.selectedIds}
+			onSelect={(id) => controller.toggleSelection(id)}
 			onPause={pauseTask}
 			onResume={resumeTask}
-			onCancel={handleCancelTask}
+			onCancel={(id) => controller.handleCancelTask(id)}
+			onOpenFolder={(id) => controller.handleOpenFolder(id)}
 		/>
 	</div>
 </main>
@@ -295,16 +175,16 @@
 
 <!-- 清空确认弹窗 -->
 <ClearConfirmDialog
-	open={showClearDialog}
-	title={clearDialogProps.title}
-	description={clearDialogProps.description}
-	confirmText={clearDialogProps.confirmText}
-	showDeleteFileOption={activeNav !== 'active'}
+	open={controller.showClearDialog}
+	title={controller.clearDialogProps.title}
+	description={controller.clearDialogProps.description}
+	confirmText={controller.clearDialogProps.confirmText}
+	showDeleteFileOption={controller.activeNav !== 'active'}
 	onClose={() => {
-		showClearDialog = false;
-		itemToDelete = null;
+		controller.showClearDialog = false;
+		controller.itemToDelete = null;
 	}}
-	onConfirm={performClear}
+	onConfirm={(del) => controller.performClear(del)}
 />
 
 <style>

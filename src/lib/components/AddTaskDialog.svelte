@@ -8,7 +8,6 @@
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
 	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
-    import { addDownloadTask } from '$lib/stores/downloadStore';
 
 	interface Props {
 		open: boolean;
@@ -84,16 +83,10 @@
             const limitStr = String(maxDownloadLimitValue || '').trim();
             const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
 
-			await addDownloadTask({
-				urls: [trimmedUrl],
-				savePath,
-				filename,
-				userAgent: effectiveUserAgent(),
-				referer,
-				headers,
-				proxy,
-				maxDownloadLimit: limit
-			});
+			/* 
+             * 移除内部直接调用，完全依赖 onSubmit 回调
+             * 防止 +page.svelte 中处理 onSubmit 时造成重复添加
+             */
 			
 			// 可选：通知父组件或显示成功toast
 			onSubmit?.({

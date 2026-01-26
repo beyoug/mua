@@ -55,18 +55,33 @@ impl TaskStore {
     }
 
     pub fn save(&self) {
-        if let Ok(path_opt) = self.file_path.lock() {
-            if let Some(path) = path_opt.as_ref() {
-                if let Ok(tasks) = self.tasks.lock() {
-                    let list: Vec<&PersistedTask> = tasks.values().collect();
+        // 1. Snapshot Path (Fast lock)
+        let path = if let Ok(path_opt) = self.file_path.lock() {
+             path_opt.clone()
+        } else {
+            None
+        };
+
+        if let Some(path) = path {
+            // 2. Snapshot Data (Fast lock)
+            let tasks = if let Ok(tasks_guard) = self.tasks.lock() {
+                Some(tasks_guard.values().cloned().collect::<Vec<PersistedTask>>())
+            } else {
+                None
+            };
+
+            if let Some(mut list) = tasks {
+                // 3. Offload IO to thread
+                std::thread::spawn(move || {
+                    // Sort for stable JSON output
+                    list.sort_by(|a, b| b.added_at.cmp(&a.added_at));
+
                     if let Ok(json) = serde_json::to_string_pretty(&list) {
-                        // Ensure dir exists
-                        if let Some(parent) = path.parent() {
-                            let _ = fs::create_dir_all(parent);
-                        }
-                        let _ = fs::write(path, json);
+                         if let Err(e) = crate::utils::atomic_write(&path, &json) {
+                             log::error!("Failed to save tasks: {}", e);
+                         }
                     }
-                }
+                });
             }
         }
     }
@@ -89,6 +104,29 @@ impl TaskStore {
         if let Ok(mut tasks) = self.tasks.lock() {
             if let Some(t) = tasks.get_mut(gid) {
                 t.state = state.to_string();
+            }
+        }
+        self.save();
+    }
+
+    pub fn update_filename(&self, gid: &str, filename: &str) {
+        if let Ok(mut tasks) = self.tasks.lock() {
+            if let Some(t) = tasks.get_mut(gid) {
+                t.filename = filename.to_string();
+            }
+        }
+        self.save();
+    }
+    
+    // Batch update all tasks (Performance Optimization)
+    pub fn update_all(&self, updated_tasks: Vec<PersistedTask>) {
+        if let Ok(mut tasks) = self.tasks.lock() {
+            // Update existing or insert new, but typically this comes from get_all() so it's updates.
+            // However, sync_tasks iterates mutable list, so we might just want to replace the values
+            // based on the list we passed back?
+            // Actually, we should probably iterate and update.
+            for task in updated_tasks {
+                 tasks.insert(task.gid.clone(), task);
             }
         }
         self.save();
@@ -124,9 +162,33 @@ impl TaskStore {
         vec![]
     }
 
-    pub fn remove_task(&self, gid: &str) {
+    pub fn remove_task(&self, gid: &str) -> bool {
+        let mut removed = false;
         if let Ok(mut tasks) = self.tasks.lock() {
-            tasks.remove(gid);
+            removed = tasks.remove(gid).is_some();
+        }
+        self.save();
+        removed
+    }
+
+    pub fn update_all_active_to_paused(&self) {
+        if let Ok(mut tasks) = self.tasks.lock() {
+            for task in tasks.values_mut() {
+                if task.state == "downloading" || task.state == "waiting" {
+                    task.state = "paused".to_string();
+                }
+            }
+        }
+        self.save();
+    }
+
+    pub fn update_all_paused_to_waiting(&self) {
+        if let Ok(mut tasks) = self.tasks.lock() {
+            for task in tasks.values_mut() {
+                if task.state == "paused" {
+                    task.state = "waiting".to_string();
+                }
+            }
         }
         self.save();
     }

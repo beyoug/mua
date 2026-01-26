@@ -1,17 +1,24 @@
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
-use std::collections::HashMap;
+
 use std::sync::OnceLock;
 
 use std::sync::atomic::{AtomicU16, Ordering};
 
 static ARIA2_PORT: AtomicU16 = AtomicU16::new(6800);
+static ARIA2_SECRET: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None); // Store secret
 
 static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 pub fn set_aria2_port(port: u16) {
     ARIA2_PORT.store(port, Ordering::SeqCst);
     log::info!("Aria2 client configured to use port: {}", port);
+}
+
+pub fn set_aria2_secret(secret: String) {
+    if let Ok(mut s) = ARIA2_SECRET.lock() {
+        *s = Some(secret);
+    }
 }
 
 pub fn get_aria2_port() -> u16 {
@@ -66,14 +73,24 @@ where
     T: serde::de::DeserializeOwned,
 {
     let client = get_client();
+    
+    // Inject Token if exists
+    let mut final_params = params;
+    if let Ok(secret_guard) = ARIA2_SECRET.lock() {
+        if let Some(secret) = secret_guard.as_ref() {
+             // Aria2 requires token:<secret> as the FIRST parameter
+             final_params.insert(0, json!(format!("token:{}", secret)));
+        }
+    }
+
     let payload = json!({
         "jsonrpc": "2.0",
         "id": "mua-app",
         "method": method,
-        "params": params
+        "params": final_params
     });
 
-    log::debug!("Sending RPC request: {} {:?}", method, params);
+    log::debug!("Sending RPC request: {}", method);
 
     let port = get_aria2_port();
     let url = format!("http://localhost:{}/jsonrpc", port);
@@ -106,7 +123,7 @@ where
 
 pub async fn add_uri(
     urls: Vec<String>,
-    options: Option<HashMap<String, String>>,
+    options: Option<Value>,
 ) -> Result<String, String> {
     let mut params = vec![json!(urls)];
     if let Some(opts) = options {

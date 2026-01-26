@@ -113,7 +113,7 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
         )?;
 
         let _ = TrayIconBuilder::with_id("tray")
-            .icon(app.default_window_icon().unwrap().clone())
+            .icon(app.default_window_icon().ok_or("Default window icon not found")?.clone())
             .menu(&menu)
             .show_menu_on_left_click(false)
             .on_menu_event(|app, event| match event.id.as_ref() {
