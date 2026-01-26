@@ -61,8 +61,7 @@ pub struct Aria2Uri {
     pub status: String,
 }
 
-
-async fn send_rpc_request<T>(method: &str, params: Vec<Value>) -> Result<T, String> 
+async fn send_rpc_request<T>(method: &str, params: Vec<Value>) -> Result<T, String>
 where
     T: serde::de::DeserializeOwned,
 {
@@ -79,7 +78,8 @@ where
     let port = get_aria2_port();
     let url = format!("http://localhost:{}/jsonrpc", port);
 
-    let response = client.post(&url)
+    let response = client
+        .post(&url)
         .json(&payload)
         .send()
         .await
@@ -90,7 +90,7 @@ where
     }
 
     let body: Value = response.json().await.map_err(|e| e.to_string())?;
-    
+
     if let Some(error) = body.get("error") {
         return Err(error.to_string());
     }
@@ -104,12 +104,15 @@ where
     }
 }
 
-pub async fn add_uri(urls: Vec<String>, options: Option<HashMap<String, String>>) -> Result<String, String> {
+pub async fn add_uri(
+    urls: Vec<String>,
+    options: Option<HashMap<String, String>>,
+) -> Result<String, String> {
     let mut params = vec![json!(urls)];
     if let Some(opts) = options {
         params.push(json!(opts));
     }
-    
+
     send_rpc_request::<String>("aria2.addUri", params).await
 }
 
@@ -147,21 +150,26 @@ pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
         Ok(response) => {
             if response.status().is_success() {
                 let body: Value = response.json().await.map_err(|e| e.to_string())?;
-                
+
                 if let Some(results) = body.get("result") {
                     if let Some(results_array) = results.as_array() {
                         let mut all_tasks = Vec::new();
-                        
+
                         for result_value in results_array {
-                             if let Some(tasks_val) = result_value.get(0) { // 每个调用的结果都包裹在一个数组中 [result]
-                                 if let Ok(tasks) = serde_json::from_value::<Vec<Aria2Task>>(tasks_val.clone()) {
-                                     all_tasks.extend(tasks);
-                                 } else if let Ok(tasks) = serde_json::from_value::<Vec<Aria2Task>>(result_value.clone()) {
-                                     all_tasks.extend(tasks);
-                                 }
-                             }
+                            if let Some(tasks_val) = result_value.get(0) {
+                                // 每个调用的结果都包裹在一个数组中 [result]
+                                if let Ok(tasks) =
+                                    serde_json::from_value::<Vec<Aria2Task>>(tasks_val.clone())
+                                {
+                                    all_tasks.extend(tasks);
+                                } else if let Ok(tasks) =
+                                    serde_json::from_value::<Vec<Aria2Task>>(result_value.clone())
+                                {
+                                    all_tasks.extend(tasks);
+                                }
+                            }
                         }
-                        
+
                         Ok(all_tasks)
                     } else {
                         Err("Result is not an array".to_string())
@@ -169,14 +177,46 @@ pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
                 } else if let Some(error) = body.get("error") {
                     Err(error.to_string())
                 } else {
-                     Err("Unknown response format".to_string())
+                    Err("Unknown response format".to_string())
                 }
             } else {
                 Err(format!("HTTP Error: {}", response.status()))
             }
-        },
-        Err(e) => Err(e.to_string())
+        }
+        Err(e) => Err(e.to_string()),
     }
+}
+
+pub async fn tell_active(keys: Vec<&str>) -> Result<Vec<Aria2Task>, String> {
+    send_rpc_request::<Vec<Aria2Task>>("aria2.tellActive", vec![json!(keys)]).await
+}
+
+pub async fn tell_waiting(
+    offset: usize,
+    num: usize,
+    keys: Vec<&str>,
+) -> Result<Vec<Aria2Task>, String> {
+    send_rpc_request::<Vec<Aria2Task>>(
+        "aria2.tellWaiting",
+        vec![json!(offset), json!(num), json!(keys)],
+    )
+    .await
+}
+
+pub async fn tell_stopped(
+    offset: usize,
+    num: usize,
+    keys: Vec<&str>,
+) -> Result<Vec<Aria2Task>, String> {
+    send_rpc_request::<Vec<Aria2Task>>(
+        "aria2.tellStopped",
+        vec![json!(offset), json!(num), json!(keys)],
+    )
+    .await
+}
+
+pub async fn tell_status(gid: String, keys: Vec<&str>) -> Result<Aria2Task, String> {
+    send_rpc_request::<Aria2Task>("aria2.tellStatus", vec![json!(gid), json!(keys)]).await
 }
 
 pub async fn pause(gid: String) -> Result<String, String> {

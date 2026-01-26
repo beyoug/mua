@@ -185,6 +185,27 @@
                                     <span class="slider round"></span>
                                 </label>
                             </div>
+
+                            <div class="divider-small"></div>
+
+                            <div class="input-helper">
+                                <label for="auto-resume">自动恢复下载</label>
+                                <span class="helper-text">
+                                    {$appSettings.autoResume ? "启动时自动恢复未完成的任务" : "启动时暂停所有未完成的任务"}
+                                </span>
+                            </div>
+                            
+                            <div class="switch-row">
+                                <label class="switch">
+                                    <input 
+                                        type="checkbox" 
+                                        id="auto-resume"
+                                        bind:checked={$appSettings.autoResume}
+                                        onchange={saveSettings} 
+                                    />
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
                         </div>
                     </section>
 				{/if}
@@ -633,6 +654,13 @@
         height: 1px;
         background: var(--border-subtle);
         margin: 20px 0;
+    }
+
+    .divider-small {
+        height: 1px;
+        background: var(--border-subtle);
+        margin: 12px 0;
+        opacity: 0.5;
     }
 
     .switch-row {

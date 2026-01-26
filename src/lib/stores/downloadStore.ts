@@ -9,8 +9,9 @@
  * 5. 实现任务自动跳转逻辑
  */
 
-import { writable, derived, type Readable } from 'svelte/store';
+import { writable, derived, get, type Readable } from 'svelte/store';
 import type { DownloadTask, DownloadConfig, DownloadStats, DownloadState } from '$lib/types/download';
+import { appSettings } from '$lib/stores/settings';
 import {
     isActiveTask,
     isCompletedTask,
@@ -157,7 +158,42 @@ async function startPolling() {
                 // 如果我们想在本地保留已移除任务的历史记录，我们需要单独的逻辑。
                 // 目前，让我们与 Aria2 保持同步。
 
-                return merged;
+                // 提取后端任务ID集合
+                const backendIds = new Set(rawTasks.map(t => t.gid));
+
+                // 2. 识别并保留本地存在但后端已消失的任务
+                // 这些通常是已被取消(Removed)的任务，我们需要将其保留为历史记录
+                const retainedTasks: DownloadTask[] = [];
+                currentTasks.forEach(localTask => {
+                    if (!backendIds.has(localTask.id)) {
+                        // 如果它之前是一个活跃任务(下载中/等待/暂停)，现在不见了 -> 视为被取消
+                        if (['downloading', 'waiting', 'paused'].includes(localTask.state)) {
+                            // 检查是否已有挂起的删除操作 Pending？
+                            // 如果用户请求了 purge (removeTaskRecord)，那么它应该彻底消失。
+                            // removeTask 函数会更新本地 store 移除它。
+                            // 但在这里我们是基于上一帧的 store。
+                            // 最简单的方式：保留它，标记为 cancelled。
+                            retainedTasks.push({
+                                ...localTask,
+                                state: 'cancelled',
+                                speed: '0 B/s',
+                                remaining: ''
+                            });
+                        }
+                        // 如果已经是 completed, error, cancelled，也应该保留作为历史
+                        else if (['completed', 'error', 'cancelled'].includes(localTask.state)) {
+                            retainedTasks.push(localTask);
+                        }
+                    }
+                });
+
+                // 3. 合并列表 (后端新状态 + 本地保留的历史)
+                // 注意去重：backendIds 中的任务已经在 merged Map 中处理过？
+                // rawTasks.map 生成了 merged 数组，包含了所有后端任务。
+                // retainedTasks 包含所有后端缺失的任务。
+                // 两者互斥，直接拼接即可。
+
+                return [...merged, ...retainedTasks];
             });
 
             // 更新托盘速度（双向）
@@ -353,28 +389,110 @@ export async function pauseTask(id: string): Promise<void> {
 
 /**
  * 恢复任务
+ * 对于 'paused' 任务：调用 aria2.unpause
+ * 对于 'cancelled'/'error' 任务：重新添加任务 (Retry)
  */
 export async function resumeTask(id: string): Promise<void> {
     try {
-        // 锁定状态
+        // 1. 获取当前任务详情以进行决策
+        // 此时我们只能从本地 store 获取状态，因为后端可能已经没有这个任务了
+        let task: DownloadTask | undefined;
+        const unsubscribe = subscribeTasks(tasks => {
+            task = tasks.find(t => t.id === id);
+        });
+        unsubscribe();
+
+        if (!task) {
+            console.error(`Cannot resume task ${id}: Task not found in local store`);
+            return;
+        }
+
+        // 锁定状态以防止 UI 闪烁
         pendingStateChanges.set(id, Date.now());
 
-        await resumeTaskCmd(id);
-        // 乐观更新
-        updateTasks(tasks => tasks.map(t =>
-            t.id === id ? { ...t, state: 'downloading' } : t
-        ));
+        if (task.state === 'cancelled' || task.state === 'error' || task.state === 'completed') {
+            // 2. 如果任务已结束（被取消/出错/完成），Aria2 可能已遗忘 GID。
+            // 我们必须重新添加任务。
+            console.log(`Resuming (Restarting) task ${id} from state ${task.state}`);
+
+            // 构建配置
+            const config: DownloadConfig = {
+                urls: [task.url || ''],
+                filename: task.filename || '',
+                savePath: task.savePath || '',
+                userAgent: '',
+                referer: '',
+                headers: '',
+                proxy: '',
+                maxDownloadLimit: ''
+            };
+
+            await addDownloadTask(config);
+
+            // 重新添加后，我们会得到一个新的 GID。
+            // 旧的 'cancelled' 任务记录怎么办？
+            // 1. 保留它作为历史？
+            // 2. 删除它（替换为新的）？
+            // 通常 "重试" 意味着替换。
+            // 我们可以手动移除旧记录。
+            removeTask(id, false);
+
+        } else {
+            // 3. 这里的状态通常是 'paused'，直接调用后端恢复
+            await resumeTaskCmd(id);
+            // 乐观更新
+            updateTasks(tasks => tasks.map(t =>
+                t.id === id ? { ...t, state: 'downloading' } : t
+            ));
+        }
+
     } catch (e) {
         console.error(`Failed to resume task ${id}:`, e);
+
+        // 如果错误是 "GID check failed" 或类似，且任务在本地存在，则尝试 Retry
+        // 简单起见，如果 unpause 失败，且不是网络错误，我们可以推断 GID 无效
+        // 尝试 fallback 到重试逻辑
+        const errStr = String(e);
+        if (errStr.includes('is not found') || errStr.includes('GID')) {
+            console.log(`Resume failed for ${id}, assuming GID lost. Retrying...`);
+            let task: DownloadTask | undefined;
+            const unsubscribe = subscribeTasks(tasks => {
+                task = tasks.find(t => t.id === id);
+            });
+            unsubscribe();
+
+            if (task) {
+                // 复用上面的 Retry 逻辑
+                // Copy-paste 逻辑提取? 暂时内联
+                const config: DownloadConfig = {
+                    urls: [task.url || ''],
+                    filename: task.filename || '',
+                    savePath: task.savePath || '',
+                    userAgent: '',
+                    referer: '',
+                    headers: '',
+                    proxy: '',
+                    maxDownloadLimit: ''
+                };
+                await addDownloadTask(config).catch(err => console.error("Retry failed", err));
+                removeTask(id, false);
+                return;
+            }
+        }
+
         pendingStateChanges.delete(id);
     }
 }
+
 
 /**
  * 取消任务（软删除/移除下载）
  */
 export async function cancelTask(id: string): Promise<void> {
     try {
+        // 锁定状态以避免抖动 (防止轮询在 Aria2 处理完成前覆盖本地状态)
+        pendingStateChanges.set(id, Date.now());
+
         await cancelTaskCmd(id);
         // 对于取消，aria2 将状态更改为已移除或错误。轮询将获取它。
         // 但我们可以乐观地将其标记为已取消或根据需要将其从活动列表中移除。
@@ -386,6 +504,7 @@ export async function cancelTask(id: string): Promise<void> {
         ));
     } catch (e) {
         console.error(`Failed to cancel task ${id}:`, e);
+        pendingStateChanges.delete(id); // 解锁
     }
 }
 
@@ -397,29 +516,54 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
         const taskToDelete = tasks.find(t => t.id === id);
         if (!taskToDelete) return tasks;
 
+        // 计算文件路径（无论状态如何都需要，用于删除文件）
+        let filepath: string | null = null;
+        if (taskToDelete.savePath && taskToDelete.filename) {
+            // 基于假设确定分隔符（或者在 Mac 上直接使用 /）
+            if (taskToDelete.savePath.endsWith('/')) {
+                filepath = taskToDelete.savePath + taskToDelete.filename;
+            } else {
+                filepath = taskToDelete.savePath + '/' + taskToDelete.filename;
+            }
+        }
+
+        if (deleteFile) {
+            // 我们不能在这里直接删除，因为逻辑太深。
+            // 但我们的 removeTaskRecord 会处理。
+        }
+
         if (isRemovableTask(taskToDelete.state)) {
-            let filepath: string | null = null;
-            if (taskToDelete.savePath && taskToDelete.filename) {
-                // 基于假设确定分隔符（或者在 Mac 上直接使用 /）
-                // 我们通常信任后端/Aria2 路径格式。
-                // Mac/Linux 的简单拼接
-                if (taskToDelete.savePath.endsWith('/')) {
-                    filepath = taskToDelete.savePath + taskToDelete.filename;
-                } else {
-                    filepath = taskToDelete.savePath + '/' + taskToDelete.filename;
-                }
-            }
-
-            if (deleteFile) {
-
-            }
-
+            // 已完成/已取消/错误的任务 -> Purge (清空记录)
             removeTaskRecord(id, deleteFile, filepath)
                 .catch(e => console.error("remove failed", e));
+        } else {
+            // 进行中的任务 -> Force Cancel (移除任务)
+            // 锁定以防轮询再次读取到它 ('active')
+            pendingStateChanges.set(id, Date.now());
 
-            return tasks.filter(t => t.id !== id);
+            cancelTaskCmd(id).catch(e => {
+                console.error("Cancel for remove failed", e);
+                pendingStateChanges.delete(id);
+            });
+
+            // 如果需要删除文件，这可能比较棘手，因为任务还没停。
+            // 最好的做法是尝试调用 removeTaskRecord，它内部也是尽力而为。
+            // 但 aria2.purge 只能对 stopped 任务生效。
+            // 我们可以仅依靠 cancelTaskCmd(aria2.remove) 来停止任务。
+            // 对于文件删除：
+            if (deleteFile && filepath) {
+                // 延迟一点删除？或者现在尝试？
+                // 用户希望“删除”，我们应该尽力清理。
+                // 如果 aria2 还没释放句柄，可能会失败。
+                // 我们尝试调用 removeTaskRecord (它包含文件删除逻辑)
+                // 虽然 purge 会失败，但文件删除代码是独立的。
+                removeTaskRecord(id, deleteFile, filepath)
+                    .catch(e => console.warn("File deletion might fail as task is active", e));
+            }
         }
-        return tasks;
+
+        // 无论状态如何，都从本地列表移除
+        return tasks.filter(t => t.id !== id);
     });
 }
 
@@ -434,6 +578,20 @@ export function removeTasks(ids: Set<string>, deleteFile: boolean = false): void
  * 批量取消任务
  */
 export function cancelTasks(ids: Set<string>): void {
+    // 锁定所有涉及的任务
+    const now = Date.now();
+    ids.forEach(id => pendingStateChanges.set(id, now));
+
+    // 调用后端取消（这里需要单独遍历调用，因为 aria2 没有 batch cancel）
+    // 或者我们可以在 commands.rs 实现 batch cancel
+    // 目前简单遍历
+    ids.forEach(id => {
+        cancelTaskCmd(id).catch(e => {
+            console.error(`Failed to cancel task ${id}`, e);
+            pendingStateChanges.delete(id);
+        });
+    });
+
     updateTasks(tasks => {
         return tasks.map(task =>
             ids.has(task.id) && isActiveTask(task.state)

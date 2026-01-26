@@ -1,15 +1,16 @@
 #![cfg_attr(mobile, tauri::mobile_entry_point)]
 
-pub mod sidecar;
 pub mod aria2_client;
 pub mod commands;
-pub mod tray;
-pub mod utils;
 pub mod config;
+pub mod sidecar;
+pub mod store;
+pub mod tray;
+pub mod utils; // Register new module
 
 use commands::*;
-use tray::update_tray_icon_with_speed;
 use tauri::Manager;
+use tray::update_tray_icon_with_speed;
 
 pub fn run() {
     tauri::Builder::default()
@@ -22,14 +23,23 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
-        .manage(crate::sidecar::SidecarState { child: std::sync::Mutex::new(None) })
+        .manage(crate::sidecar::SidecarState {
+            child: std::sync::Mutex::new(None),
+        })
+        .manage(crate::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
             // 初始化托盘 (封装)
             tray::setup_tray(app)?;
-            
+
             // 初始化配置
             let config = config::load_config(app.handle());
-            app.manage(config::ConfigState { config: std::sync::Mutex::new(config.clone()) });
+            app.manage(config::ConfigState {
+                config: std::sync::Mutex::new(config.clone()),
+            });
+
+            // Initialize Store Path
+            let store = app.state::<crate::store::TaskStore>();
+            store.init(app.handle());
 
             // 初始化 Aria2 Sidecar
             #[cfg(desktop)]
@@ -45,7 +55,7 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            add_download_task, 
+            add_download_task,
             get_tasks,
             pause_task,
             resume_task,
@@ -62,10 +72,14 @@ pub fn run() {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
                 let config = app.state::<config::ConfigState>();
-                
+
                 // 获取配置，如果锁获取失败则默认为 true (保持应用运行)
-                let close_to_tray = config.config.lock().map(|c| c.close_to_tray).unwrap_or(true);
-                
+                let close_to_tray = config
+                    .config
+                    .lock()
+                    .map(|c| c.close_to_tray)
+                    .unwrap_or(true);
+
                 if close_to_tray {
                     api.prevent_close();
                     let _ = window.hide();
@@ -89,7 +103,7 @@ pub fn run() {
                     let x = state.child.lock().unwrap().take();
                     x
                 };
-                
+
                 if let Some(child) = child {
                     log::info!("Killing aria2 sidecar process...");
                     let _ = child.kill();
@@ -97,7 +111,7 @@ pub fn run() {
             }
             #[cfg(target_os = "macos")]
             tauri::RunEvent::Reopen { .. } => {
-                 if let Some(window) = app.get_webview_window("main") {
+                if let Some(window) = app.get_webview_window("main") {
                     let _ = window.show();
                     let _ = window.set_focus();
                 }

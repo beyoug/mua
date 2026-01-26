@@ -4,11 +4,13 @@ import { invoke } from '@tauri-apps/api/core';
 export interface AppConfig {
     rpcPort: number;
     closeToTray: boolean;
+    autoResume: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
     rpcPort: 6800,
-    closeToTray: true
+    closeToTray: true,
+    autoResume: false
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

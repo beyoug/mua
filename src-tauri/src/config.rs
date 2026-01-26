@@ -10,13 +10,16 @@ pub struct AppConfig {
     pub rpc_port: u16,
     #[serde(rename = "closeToTray")]
     pub close_to_tray: bool,
+    #[serde(rename = "autoResume")]
+    pub auto_resume: bool,
 }
 
 impl Default for AppConfig {
     fn default() -> Self {
-        Self { 
+        Self {
             rpc_port: 6800,
             close_to_tray: true,
+            auto_resume: false,
         }
     }
 }
@@ -26,7 +29,10 @@ pub struct ConfigState {
 }
 
 pub fn get_config_path(app: &AppHandle) -> Option<PathBuf> {
-    app.path().app_config_dir().ok().map(|p| p.join("mua_config.json"))
+    app.path()
+        .app_config_dir()
+        .ok()
+        .map(|p| p.join("mua_config.json"))
 }
 
 pub fn load_config(app: &AppHandle) -> AppConfig {
