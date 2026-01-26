@@ -1,25 +1,28 @@
-use tauri::{AppHandle, Manager};
-use tauri_plugin_shell::ShellExt;
-use tauri_plugin_shell::process::CommandEvent;
 use std::time::Duration;
-
+use tauri::{AppHandle, Emitter, Manager};
+use tauri_plugin_shell::process::CommandEvent;
+use tauri_plugin_shell::ShellExt;
 
 fn find_available_port(start: u16) -> u16 {
     let mut port = start;
     loop {
         // 检查 0.0.0.0，因为 aria2c 使用 --rpc-listen-all=true
         if std::net::TcpListener::bind(("0.0.0.0", port)).is_ok() {
-             return port;
+            return port;
         }
         port += 1;
         // 限制搜索范围以防止死循环
         if port > start + 100 {
-            log::warn!("Could not find available port in range {}-{}, fallback to {}", start, start+100, start);
-            return start; 
+            log::warn!(
+                "Could not find available port in range {}-{}, fallback to {}",
+                start,
+                start + 100,
+                start
+            );
+            return start;
         }
     }
 }
-
 
 use std::sync::Mutex;
 use tauri_plugin_shell::process::CommandChild;
@@ -31,26 +34,29 @@ pub struct SidecarState {
 pub fn init_aria2_sidecar(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         loop {
-             let sidecar_command = match app.shell().sidecar("aria2c") {
+            let sidecar_command = match app.shell().sidecar("aria2c") {
                 Ok(cmd) => cmd,
                 Err(e) => {
-                    log::error!("Failed to create aria2 sidecar command: {}. Retrying in 5s...", e);
+                    log::error!(
+                        "Failed to create aria2 sidecar command: {}. Retrying in 5s...",
+                        e
+                    );
                     tokio::time::sleep(Duration::from_secs(5)).await;
                     continue;
                 }
             };
-            
+
             // 1. 从配置获取首选端口
             let mut preferred_port: u16 = 6800;
             if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
                 preferred_port = state.rpc_port;
             }
             log::info!("Preferred Aria2 port: {}", preferred_port);
-            
+
             // 2. 查找可用端口
             let port = find_available_port(preferred_port);
             log::info!("Selected port for Aria2: {}", port);
-            
+
             // 3. 更新全局客户端状态
             crate::aria2_client::set_aria2_port(port);
 
@@ -73,8 +79,8 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 // 1. 自定义配置
                 let conf_path = config_dir.join("aria2.conf");
                 if conf_path.exists() {
-                     log::info!("Found custom aria2 config: {:?}", conf_path);
-                     args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
+                    log::info!("Found custom aria2 config: {:?}", conf_path);
+                    args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
                 }
 
                 // 2. 会话文件 (持久化)
@@ -84,7 +90,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         log::error!("Failed to create session file: {}", e);
                     }
                 }
-                
+
                 let session_path_str = session_path.to_string_lossy();
                 args.push(format!("--input-file={}", session_path_str));
                 args.push(format!("--save-session={}", session_path_str));
@@ -105,6 +111,8 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
                     // 监控进程
                     let mut manually_exited = false;
+                    let mut stderr_buffer: Vec<String> = Vec::new();
+
                     while let Some(event) = rx.recv().await {
                         match event {
                             CommandEvent::Stdout(line) => {
@@ -114,18 +122,41 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                             CommandEvent::Stderr(line) => {
                                 let log = String::from_utf8_lossy(&line);
                                 log::warn!("Aria2 stderr: {}", log);
+                                stderr_buffer.push(log.to_string());
+                                if stderr_buffer.len() > 20 {
+                                    stderr_buffer.remove(0);
+                                }
                             }
                             CommandEvent::Terminated(payload) => {
                                 log::warn!("Aria2 terminated: {:?}", payload);
+
+                                // 如果是异常退出（非0状态码或被信号终止），发送事件到前端
+                                let is_error = payload.code.map(|c| c != 0).unwrap_or(true)
+                                    || payload.signal.is_some();
+
+                                if is_error {
+                                    log::error!("Aria2 crashed. Emitting error event.");
+                                    let stderr = stderr_buffer.join("");
+                                    let _ = app.emit(
+                                        "aria2-sidecar-error",
+                                        serde_json::json!({
+                                            "message": "Aria2 sidecar exited unexpectedly",
+                                            "code": payload.code,
+                                            "signal": payload.signal,
+                                            "stderr": stderr
+                                        }),
+                                    );
+                                }
+
                                 manually_exited = true;
                                 break;
                             }
                             _ => {}
                         }
                     }
-                    
+
                     if !manually_exited {
-                         log::warn!("Aria2 channel closed unexpectedly.");
+                        log::warn!("Aria2 channel closed unexpectedly.");
                     }
                 }
                 Err(e) => {
@@ -138,4 +169,3 @@ pub fn init_aria2_sidecar(app: AppHandle) {
         }
     });
 }
-
