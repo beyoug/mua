@@ -6,7 +6,7 @@ use std::sync::OnceLock;
 use std::sync::atomic::{AtomicU16, Ordering};
 
 static ARIA2_PORT: AtomicU16 = AtomicU16::new(6800);
-static ARIA2_SECRET: std::sync::Mutex<Option<String>> = std::sync::Mutex::new(None); // Store secret
+static ARIA2_SECRET: tokio::sync::Mutex<Option<String>> = tokio::sync::Mutex::const_new(None);
 
 static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
@@ -15,10 +15,9 @@ pub fn set_aria2_port(port: u16) {
     log::info!("Aria2 client configured to use port: {}", port);
 }
 
-pub fn set_aria2_secret(secret: String) {
-    if let Ok(mut s) = ARIA2_SECRET.lock() {
-        *s = Some(secret);
-    }
+pub async fn set_aria2_secret(secret: String) {
+    let mut s = ARIA2_SECRET.lock().await;
+    *s = Some(secret);
 }
 
 pub fn get_aria2_port() -> u16 {
@@ -73,13 +72,14 @@ where
     T: serde::de::DeserializeOwned,
 {
     let client = get_client();
-    
+
     // Inject Token if exists
     let mut final_params = params;
-    if let Ok(secret_guard) = ARIA2_SECRET.lock() {
+    {
+        let secret_guard = ARIA2_SECRET.lock().await;
         if let Some(secret) = secret_guard.as_ref() {
-             // Aria2 requires token:<secret> as the FIRST parameter
-             final_params.insert(0, json!(format!("token:{}", secret)));
+            // Aria2 requires token:<secret> as the FIRST parameter
+            final_params.insert(0, json!(format!("token:{}", secret)));
         }
     }
 
@@ -121,10 +121,7 @@ where
     }
 }
 
-pub async fn add_uri(
-    urls: Vec<String>,
-    options: Option<Value>,
-) -> Result<String, String> {
+pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> Result<String, String> {
     let mut params = vec![json!(urls)];
     if let Some(opts) = options {
         params.push(json!(opts));
@@ -136,19 +133,33 @@ pub async fn add_uri(
 pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
     let client = get_client();
 
-    // 构建 multicall 参数
+    // 获取 RPC Secret (如果配置了)
+    let token: Option<String> = {
+        let guard = ARIA2_SECRET.lock().await;
+        guard.as_ref().map(|s| format!("token:{}", s))
+    };
+
+    // 构建 multicall 参数，每个子方法都需要注入 token
     let params = vec![
         json!({
             "methodName": "aria2.tellActive",
-            "params": []
+            "params": if let Some(ref t) = token { vec![json!(t)] } else { vec![] }
         }),
         json!({
             "methodName": "aria2.tellWaiting",
-            "params": [0, 1000]
+            "params": if let Some(ref t) = token {
+                vec![json!(t), json!(0), json!(1000)]
+            } else {
+                vec![json!(0), json!(1000)]
+            }
         }),
         json!({
             "methodName": "aria2.tellStopped",
-            "params": [0, 1000]
+            "params": if let Some(ref t) = token {
+                vec![json!(t), json!(0), json!(1000)]
+            } else {
+                vec![json!(0), json!(1000)]
+            }
         }),
     ];
 

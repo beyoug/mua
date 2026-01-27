@@ -1,5 +1,3 @@
-
-
 pub fn resolve_path(path_str: &str) -> String {
     if path_str.starts_with("~") {
         if let Some(home) = dirs::home_dir() {
@@ -94,23 +92,22 @@ pub fn get_state_score(state: &str) -> i32 {
 
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
     if let Some(out) = filename {
-         if !out.is_empty() {
-             return out;
-         }
+        if !out.is_empty() {
+            return out;
+        }
     }
-    
+
     // Try to extract from URL
     if let Some(first_url) = urls.get(0) {
-        let _path = std::path::Path::new(first_url);
         // Simple heuristic: take last part of path
         if let Some(name) = first_url.split('/').last() {
             let clean_name = name.split('?').next().unwrap_or(name);
             if !clean_name.is_empty() {
-                 return clean_name.to_string();
+                return clean_name.to_string();
             }
         }
     }
-    
+
     "Unknown".to_string()
 }
 
@@ -123,7 +120,7 @@ pub fn build_aria2_options(
     proxy: Option<String>,
     max_download_limit: Option<String>,
 ) -> (serde_json::Value, String) {
-   let mut options = serde_json::Map::new();
+    let mut options = serde_json::Map::new();
 
     let save_path_str = if let Some(dir) = save_path {
         let p = resolve_path(&dir);
@@ -132,16 +129,16 @@ pub fn build_aria2_options(
     } else {
         "".to_string()
     };
-    
+
     if let Some(out) = filename {
         if !out.is_empty() {
-             options.insert("out".to_string(), serde_json::Value::String(out.clone()));
-             out
+            options.insert("out".to_string(), serde_json::Value::String(out.clone()));
+            out
         } else {
-             "".to_string()
+            "".to_string()
         }
     } else {
-         "".to_string()
+        "".to_string()
     };
 
     // Construct headers
@@ -156,17 +153,17 @@ pub fn build_aria2_options(
             options.insert("referer".to_string(), serde_json::Value::String(ref_url));
         }
     }
-    
+
     // Custom Headers and Cookie
     if let Some(h_str) = headers {
         for h in h_str.split(';') {
             let trim_h = h.trim();
-             if !trim_h.is_empty() {
-                 header_list.push(serde_json::Value::String(trim_h.to_string()));
-             }
+            if !trim_h.is_empty() {
+                header_list.push(serde_json::Value::String(trim_h.to_string()));
+            }
         }
     }
-    
+
     if !header_list.is_empty() {
         options.insert("header".to_string(), serde_json::Value::Array(header_list));
     }
@@ -179,10 +176,13 @@ pub fn build_aria2_options(
 
     if let Some(limit) = max_download_limit {
         if !limit.is_empty() {
-            options.insert("max-download-limit".to_string(), serde_json::Value::String(limit));
+            options.insert(
+                "max-download-limit".to_string(),
+                serde_json::Value::String(limit),
+            );
         }
     }
-    
+
     (serde_json::Value::Object(options), save_path_str)
 }
 

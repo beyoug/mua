@@ -6,6 +6,7 @@ export interface AppConfig {
     closeToTray: boolean;
     autoResume: boolean;
     rpcSecret?: string;
+    aria2SaveSessionInterval?: number;
 }
 
 const DEFAULT_CONFIG: AppConfig = {

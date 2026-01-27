@@ -61,14 +61,17 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
             // 3. 更新全局客户端状态
             crate::aria2_client::set_aria2_port(port);
-            
+
             // Get Secret from config
-            let mut rpc_secret_arg = String::new();
-            if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
-                if let Some(secret) = &state.rpc_secret {
-                     crate::aria2_client::set_aria2_secret(secret.clone());
-                     rpc_secret_arg = secret.clone();
-                }
+            let rpc_secret_arg: Option<String> = app
+                .state::<crate::config::ConfigState>()
+                .config
+                .lock()
+                .ok()
+                .and_then(|state| state.rpc_secret.clone());
+
+            if let Some(ref secret) = rpc_secret_arg {
+                crate::aria2_client::set_aria2_secret(secret.clone()).await;
             }
 
             let mut args = vec![
@@ -80,9 +83,9 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 "--log-level=warn".to_string(),
                 format!("--stop-with-process={}", std::process::id()), // Auto-shutdown when parent dies
             ];
-            
-            if !rpc_secret_arg.is_empty() {
-                args.push(format!("--rpc-secret={}", rpc_secret_arg));
+
+            if let Some(ref secret) = rpc_secret_arg {
+                args.push(format!("--rpc-secret={}", secret));
             }
 
             // 检查自定义配置文件

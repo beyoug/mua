@@ -45,6 +45,11 @@
 
 /* 深色模式 (默认) */
 :root {
+  /* ===== 布局尺寸 ===== */
+  --sidebar-width: 200px;
+  --layout-gap: 12px;
+  --sidebar-total-width: calc(var(--sidebar-width) + var(--layout-gap) * 2);
+
   /* ===== 基础色板 ===== */
   /* 背景层级 - 完全透明 */
   --bg-base: transparent;

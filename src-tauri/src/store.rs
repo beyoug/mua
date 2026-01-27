@@ -2,7 +2,9 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicU64, Ordering};
 use std::sync::Mutex;
+use std::time::{SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -19,9 +21,13 @@ pub struct PersistedTask {
     // Add other fields we want to persist if Aria2 loses them
 }
 
+/// Minimum interval between save operations (ms)
+const SAVE_DEBOUNCE_MS: u64 = 100;
+
 pub struct TaskStore {
     pub tasks: Mutex<HashMap<String, PersistedTask>>,
     file_path: Mutex<Option<PathBuf>>,
+    last_save_time: AtomicU64,
 }
 
 impl TaskStore {
@@ -29,6 +35,7 @@ impl TaskStore {
         Self {
             tasks: Mutex::new(HashMap::new()),
             file_path: Mutex::new(None),
+            last_save_time: AtomicU64::new(0),
         }
     }
 
@@ -55,9 +62,20 @@ impl TaskStore {
     }
 
     pub fn save(&self) {
+        // Debounce: skip if last save was too recent
+        let now = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .map(|d| d.as_millis() as u64)
+            .unwrap_or(0);
+        let last = self.last_save_time.load(Ordering::Relaxed);
+        if now.saturating_sub(last) < SAVE_DEBOUNCE_MS {
+            return;
+        }
+        self.last_save_time.store(now, Ordering::Relaxed);
+
         // 1. Snapshot Path (Fast lock)
         let path = if let Ok(path_opt) = self.file_path.lock() {
-             path_opt.clone()
+            path_opt.clone()
         } else {
             None
         };
@@ -65,7 +83,12 @@ impl TaskStore {
         if let Some(path) = path {
             // 2. Snapshot Data (Fast lock)
             let tasks = if let Ok(tasks_guard) = self.tasks.lock() {
-                Some(tasks_guard.values().cloned().collect::<Vec<PersistedTask>>())
+                Some(
+                    tasks_guard
+                        .values()
+                        .cloned()
+                        .collect::<Vec<PersistedTask>>(),
+                )
             } else {
                 None
             };
@@ -77,13 +100,19 @@ impl TaskStore {
                     list.sort_by(|a, b| b.added_at.cmp(&a.added_at));
 
                     if let Ok(json) = serde_json::to_string_pretty(&list) {
-                         if let Err(e) = crate::utils::atomic_write(&path, &json) {
-                             log::error!("Failed to save tasks: {}", e);
-                         }
+                        if let Err(e) = crate::utils::atomic_write(&path, &json) {
+                            log::error!("Failed to save tasks: {}", e);
+                        }
                     }
                 });
             }
         }
+    }
+
+    /// Force save without debounce (for critical operations like app exit)
+    pub fn force_save(&self) {
+        self.last_save_time.store(0, Ordering::Relaxed);
+        self.save();
     }
 
     pub fn add_task(&self, task: PersistedTask) {
@@ -117,7 +146,7 @@ impl TaskStore {
         }
         self.save();
     }
-    
+
     // Batch update all tasks (Performance Optimization)
     pub fn update_all(&self, updated_tasks: Vec<PersistedTask>) {
         if let Ok(mut tasks) = self.tasks.lock() {
@@ -126,7 +155,7 @@ impl TaskStore {
             // based on the list we passed back?
             // Actually, we should probably iterate and update.
             for task in updated_tasks {
-                 tasks.insert(task.gid.clone(), task);
+                tasks.insert(task.gid.clone(), task);
             }
         }
         self.save();
@@ -191,5 +220,32 @@ impl TaskStore {
             }
         }
         self.save();
+    }
+
+    /// 批量更新任务状态（不触发 save，调用方需显式调用 save()）
+    pub fn update_batch_state(&self, gids: &[String], state: &str) {
+        if let Ok(mut tasks) = self.tasks.lock() {
+            for gid in gids {
+                if let Some(t) = tasks.get_mut(gid) {
+                    t.state = state.to_string();
+                }
+            }
+        }
+        // 不调用 save()，由调用方统一处理
+    }
+
+    /// 批量删除任务（不触发 save，调用方需显式调用 save()）
+    /// 返回被成功删除的 GID 列表
+    pub fn remove_tasks_batch(&self, gids: &[String]) -> Vec<String> {
+        let mut removed = Vec::new();
+        if let Ok(mut tasks) = self.tasks.lock() {
+            for gid in gids {
+                if tasks.remove(gid).is_some() {
+                    removed.push(gid.clone());
+                }
+            }
+        }
+        // 不调用 save()，由调用方统一处理
+        removed
     }
 }

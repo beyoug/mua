@@ -191,7 +191,7 @@
 	/* 主内容区调整 */
 	.main-content {
 		flex: 1;
-		margin-left: 224px;
+		margin-left: var(--sidebar-total-width);
 		padding: 12px 12px 12px 0;
 		height: 100vh;
 		box-sizing: border-box;

@@ -1,6 +1,7 @@
 use crate::aria2_client;
 use crate::utils;
 
+use futures::future::join_all;
 use tauri::{AppHandle, Manager};
 
 use crate::store::{PersistedTask, TaskStore};
@@ -30,7 +31,7 @@ pub async fn add_download_task(
 
     // 1. Build Options (using helper from utils)
     let final_filename = utils::deduce_filename(filename.clone(), &urls);
-    
+
     // Now build aria2 options
     let (options, final_save_path) = utils::build_aria2_options(
         save_path,
@@ -39,7 +40,7 @@ pub async fn add_download_task(
         referer,
         headers,
         proxy,
-        max_download_limit
+        max_download_limit,
     );
 
     // Call Aria2
@@ -66,8 +67,10 @@ pub async fn add_download_task(
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> Result<String, String> {
+    // Call Aria2 first, only update store on success
+    let result = aria2_client::pause(gid.clone()).await?;
     state.update_task_state(&gid, "paused");
-    aria2_client::pause(gid).await
+    Ok(result)
 }
 
 #[tauri::command]
@@ -78,7 +81,10 @@ pub async fn resume_task(
 ) -> Result<String, String> {
     // 1. Check Store state first
     let should_smart_resume = if let Some(task) = state.get_task(&gid) {
-        task.state == "cancelled" || task.state == "error" || task.state == "completed" || task.state == "removed"
+        task.state == "cancelled"
+            || task.state == "error"
+            || task.state == "completed"
+            || task.state == "removed"
     } else {
         // If not in store, we can't do anything smart, try generic resume
         false
@@ -97,7 +103,7 @@ pub async fn resume_task(
         Err(e) => {
             // Check if GID is lost/not found (maybe state said paused but aria2 lost it)
             if e.to_lowercase().contains("not found") || e.to_lowercase().contains("error 1") {
-                 smart_resume_task(&state, gid).await
+                smart_resume_task(&state, gid).await
             } else {
                 Err(e)
             }
@@ -119,12 +125,20 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
             options.insert("dir".to_string(), serde_json::Value::String(p));
         }
         if !task.filename.is_empty() {
-             // Ensure we don't double-nest filename if it was inferred
-             options.insert("out".to_string(), serde_json::Value::String(task.filename.clone()));
+            // Ensure we don't double-nest filename if it was inferred
+            options.insert(
+                "out".to_string(),
+                serde_json::Value::String(task.filename.clone()),
+            );
         }
 
         // Re-add URI
-        match aria2_client::add_uri(vec![task.url.clone()], Some(serde_json::Value::Object(options))).await {
+        match aria2_client::add_uri(
+            vec![task.url.clone()],
+            Some(serde_json::Value::Object(options)),
+        )
+        .await
+        {
             Ok(new_gid) => {
                 log::info!(
                     "Smart Resume successful. Old GID: {}, New GID: {}",
@@ -137,16 +151,16 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
                 log::info!("Smart Resume: Removed old task {}? {}", gid, removed);
 
                 // Add new record
-                // We keep the original 'added_at' for history continuity? 
+                // We keep the original 'added_at' for history continuity?
                 // Or maybe update it? Let's update it to now so it bumps to top.
                 let new_task = PersistedTask {
                     gid: new_gid.clone(),
                     state: "waiting".to_string(),
-                    added_at: Local::now().to_rfc3339(), 
+                    added_at: Local::now().to_rfc3339(),
                     total_length: "0".to_string(), // Reset progress
                     completed_length: "0".to_string(),
                     download_speed: "0".to_string(),
-                    ..task 
+                    ..task
                 };
                 state.add_task(new_task);
 
@@ -167,25 +181,26 @@ pub async fn cancel_task(
     state: tauri::State<'_, TaskStore>,
     gid: String,
 ) -> Result<String, String> {
+    // Call Aria2 first, only update store on success
+    let result = aria2_client::remove(gid.clone()).await?;
     state.update_task_state(&gid, "cancelled");
-    aria2_client::remove(gid).await
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
-    // 1. Update all valid tasks in store to 'paused'
+    // Call Aria2 first, only update store on success
+    let result = aria2_client::pause_all().await?;
     state.update_all_active_to_paused();
-    // 2. Call aria2
-    aria2_client::pause_all().await
+    Ok(result)
 }
 
 #[tauri::command]
 pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
-    // 1. Update all paused tasks to 'waiting' (or whatever logic)
-    // Actually aria2 unpauseAll just unpauses. State sync will catch up.
-    // But we can optimistic update.
+    // Call Aria2 first, only update store on success
+    let result = aria2_client::unpause_all().await?;
     state.update_all_paused_to_waiting();
-    aria2_client::unpause_all().await
+    Ok(result)
 }
 
 #[tauri::command]
@@ -193,10 +208,17 @@ pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
 ) -> Result<String, String> {
-    for gid in &gids {
-         state.update_task_state(gid, "cancelled");
-         let _ = aria2_client::remove(gid.clone()).await;
-    }
+    // 1. 批量更新状态（只触发一次 save）
+    state.update_batch_state(&gids, "cancelled");
+    state.save();
+
+    // 2. 并发调用 Aria2 取消任务
+    let futures: Vec<_> = gids
+        .iter()
+        .map(|gid| aria2_client::remove(gid.clone()))
+        .collect();
+    let _ = join_all(futures).await;
+
     Ok("OK".to_string())
 }
 
@@ -206,15 +228,67 @@ pub async fn remove_tasks(
     gids: Vec<String>,
     delete_file: bool,
 ) -> Result<String, String> {
-    for gid in &gids {
-        // Reuse logic from single remove_task_record but avoid borrowing issues if we extracted it.
-        // For now, inline logic or call inner helper. 
-        // Calling async fn in loop is fine.
-        let _ = remove_task_inner(&state, gid.clone(), delete_file).await;
+    // 0. 获取所有任务信息用于文件删除和状态判断
+    let tasks_info: Vec<_> = gids.iter().filter_map(|gid| state.get_task(gid)).collect();
+
+    // 1. 分类：活跃任务和非活跃任务
+    let (active_gids, _inactive_gids): (Vec<_>, Vec<_>) =
+        tasks_info.iter().map(|t| t.gid.clone()).partition(|gid| {
+            tasks_info
+                .iter()
+                .find(|t| &t.gid == gid)
+                .map(|t| t.state == "downloading" || t.state == "waiting" || t.state == "paused")
+                .unwrap_or(false)
+        });
+
+    // 2. 批量从 Store 删除
+    state.remove_tasks_batch(&gids);
+    state.save();
+
+    // 3. 并发处理 Aria2
+    // 活跃任务：remove (停止)
+    let active_futures: Vec<_> = active_gids
+        .iter()
+        .map(|gid| aria2_client::remove(gid.clone()))
+        .collect();
+    let _ = join_all(active_futures).await;
+
+    // 所有任务：purge (清理结果)
+    let purge_futures: Vec<_> = gids
+        .iter()
+        .map(|gid| aria2_client::purge(gid.clone()))
+        .collect();
+    let _ = join_all(purge_futures).await;
+
+    // 4. 删除文件（如果需要）
+    if delete_file {
+        for task in &tasks_info {
+            let filepath = if !task.save_path.is_empty() && !task.filename.is_empty() {
+                if task.save_path.ends_with('/') {
+                    Some(format!("{}{}", task.save_path, task.filename))
+                } else {
+                    Some(format!("{}/{}", task.save_path, task.filename))
+                }
+            } else {
+                None
+            };
+
+            if let Some(path) = filepath {
+                let resolved_path = utils::resolve_path(&path);
+                if std::path::Path::new(&resolved_path).exists() {
+                    if let Err(e) = std::fs::remove_file(&resolved_path) {
+                        log::error!("Failed to delete file {}: {}", resolved_path, e);
+                    }
+                }
+                // 清理 .aria2 控制文件
+                let aria2_file_path = format!("{}.aria2", resolved_path);
+                let _ = std::fs::remove_file(&aria2_file_path);
+            }
+        }
     }
+
     Ok("OK".to_string())
 }
-
 
 #[tauri::command]
 pub async fn remove_task_record(
@@ -229,11 +303,11 @@ pub async fn remove_task_record(
 async fn remove_task_inner(
     state: &TaskStore,
     gid: String,
-    delete_file: bool
+    delete_file: bool,
 ) -> Result<String, String> {
     // 0. Get task info BEFORE removal to know path
     let task_opt = state.get_task(&gid);
-    
+
     // Check if task is active
     let is_active = if let Some(ref t) = task_opt {
         t.state == "downloading" || t.state == "waiting" || t.state == "paused"
@@ -241,7 +315,7 @@ async fn remove_task_inner(
         false
     };
 
-    // 1. Remove from Store 
+    // 1. Remove from Store
     state.remove_task(&gid);
 
     // 2. Remove from Aria2
@@ -262,7 +336,7 @@ async fn remove_task_inner(
             // Unsafe to delete file if it was just active and we only signaled 'remove'.
             // Aria2 might still hold the lock for a split second.
             // But we will try anyway, logging warning on failure.
-            
+
             let filepath = if !task.save_path.is_empty() && !task.filename.is_empty() {
                 if task.save_path.ends_with('/') {
                     Some(format!("{}{}", task.save_path, task.filename))
@@ -321,8 +395,6 @@ pub async fn show_task_in_folder(
 
 // Frontend DTO imported from sync module
 use crate::sync::FrontendTask;
-
-
 
 #[tauri::command]
 pub async fn get_tasks(

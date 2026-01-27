@@ -1,8 +1,6 @@
 <script lang="ts">
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
-	import { queryClient } from '$lib/config/query';
-	import { QueryClientProvider } from '@tanstack/svelte-query';
 	import { onMount } from 'svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { currentTheme, effectiveColorMode, particlesEnabled } from '$lib/stores/theme';
@@ -27,32 +25,38 @@
 		document.documentElement.style.colorScheme = mode;
 	});
 
-	onMount(async () => {
+	onMount(() => {
 		// 禁用右键菜单
 		document.addEventListener('contextmenu', (e) => e.preventDefault());
 
-		let unlisten_sidecar: () => void | undefined;
+		let unlisten_sidecar: (() => void) | undefined;
 
-		try {
-			const appWindow = getCurrentWindow();
-			await appWindow.show();
-			await appWindow.setFocus();
+		const init = async () => {
+			try {
+				const appWindow = getCurrentWindow();
+				await appWindow.show();
+				await appWindow.setFocus();
 
-			// 监听 Aria2 Sidecar 错误
-			unlisten_sidecar = await listen('aria2-sidecar-error', async (event: any) => {
-				const payload = event.payload;
-				console.error('Aria2 Sidecar Error:', payload);
-				// 简单的防抖或限流可以在这里做，但目前直接弹窗
-				await message(`Aria2 Service Error: ${payload.message}\n\nCode: ${payload.code}\nSignal: ${payload.signal}\n\nLog:\n${payload.stderr}`, {
-					title: 'Aria2 Sidecar Error',
-					kind: 'error'
+				// 监听 Aria2 Sidecar 错误
+				unlisten_sidecar = await listen('aria2-sidecar-error', async (event: any) => {
+					const payload = event.payload;
+					console.error('Aria2 Sidecar Error:', payload);
+					// 简单的防抖或限流可以在这里做，但目前直接弹窗
+					await message(
+						`Aria2 Service Error: ${payload.message}\n\nCode: ${payload.code}\nSignal: ${payload.signal}\n\nLog:\n${payload.stderr}`,
+						{
+							title: 'Aria2 Sidecar Error',
+							kind: 'error'
+						}
+					);
 				});
-			});
+			} catch (e) {
+				// 非 Tauri 环境忽略
+				console.warn('Non-Tauri environment or cleanup error', e);
+			}
+		};
 
-		} catch (e) {
-			// 非 Tauri 环境忽略
-			console.warn('Non-Tauri environment or cleanup error', e);
-		}
+		init();
 
 		return () => {
 			if (unlisten_sidecar) unlisten_sidecar();
@@ -68,11 +72,9 @@
 	<ParticleBackground />
 {/if}
 
-<QueryClientProvider client={queryClient}>
-	<div class="app-layout">
-		{@render children()}
-	</div>
-</QueryClientProvider>
+<div class="app-layout">
+	{@render children()}
+</div>
 
 <style>
 	.app-layout {

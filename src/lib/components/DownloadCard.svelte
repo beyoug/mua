@@ -7,6 +7,7 @@
 	import { fade } from 'svelte/transition';
 	import ProgressBar from './ProgressBar.svelte';
     import DownloadCardMenu from './DownloadCardMenu.svelte';
+    import TaskDetailsModal from './TaskDetailsModal.svelte';
 	import type { DownloadState } from '$lib/types/download';
 
 	interface Props {
@@ -48,6 +49,7 @@
 	}: Props = $props();
 
 	let showMenu = $state(false);
+	let showDetailsModal = $state(false);
 
 	function toggleMenu(e: MouseEvent) {
 		e.stopPropagation();
@@ -62,7 +64,6 @@
 		if (!url) return;
 		try {
 			await navigator.clipboard.writeText(url);
-			// TODO: Show toast
 			closeMenu();
 		} catch (e) {
 			console.error('Failed to copy', e);
@@ -76,7 +77,7 @@
 	}
 
 	function showDetails() {
-		alert(`文件名: ${filename}\nURL: ${url}\n状态: ${downloadState}`);
+		showDetailsModal = true;
 		closeMenu();
 	}
 </script>
@@ -190,6 +191,15 @@
 		{/if}
 	</div>
 </article>
+
+<!-- 任务详情弹窗 -->
+<TaskDetailsModal 
+	open={showDetailsModal}
+	{filename}
+	{url}
+	state={downloadState}
+	onClose={() => showDetailsModal = false}
+/>
 
 <style>
 	.download-card {

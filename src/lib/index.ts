@@ -5,21 +5,15 @@
 // Utils
 export { cn } from './utils';
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
-export { parseSpeedToBytes, formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
+export { formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
 export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';
 export { isValidDownloadUrl, validateUrl, validateDownloadConfig } from './utils/validators';
 export {
     DownloadStateGroups,
     isActiveTask,
     isCompletedTask,
-    isDownloading,
-    isRemovableTask,
-    canResume,
-    getStateScore
+    isRemovableTask
 } from './utils/downloadStates';
-
-// Config
-export { queryClient } from './config/query';
 
 // Stores
 export {

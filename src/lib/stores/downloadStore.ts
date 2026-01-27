@@ -44,6 +44,7 @@ const { subscribe: subscribeTasks, set: setTasks, update: updateTasks } = writab
 
 // 状态变更锁：ID -> Timestamp
 // 用于在此时间内忽略后端的旧状态，防止 UI 闪烁
+const STATE_LOCK_TIMEOUT_MS = 400;
 const pendingStateChanges = new Map<string, number>();
 
 // Event Listener for Backend Push
@@ -53,9 +54,10 @@ import type { UnlistenFn } from '@tauri-apps/api/event';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 
 let unlistenFn: UnlistenFn | null = null;
+let unlistenNotificationFn: UnlistenFn | null = null;
 
 async function setupEventListener() {
-    if (unlistenFn) return;
+    if (unlistenFn && unlistenNotificationFn) return;
 
     // Initial fetch to populate data immediately (before first event)
     try {
@@ -72,15 +74,12 @@ async function setupEventListener() {
         });
 
         // Listen for completion notifications
-        const unlistenNotification = await listen<DownloadTask>('task-completed', async (event) => {
+        unlistenNotificationFn = await listen<DownloadTask>('task-completed', async (event) => {
             const task = event.payload;
 
-            // Check permission
-            let permissionGranted = false;
-            if (isPermissionGranted) {
-                permissionGranted = await isPermissionGranted();
-            } else {
-                // Fallback or request?
+            // Check and request notification permission
+            let permissionGranted = await isPermissionGranted();
+            if (!permissionGranted) {
                 const permission = await requestPermission();
                 permissionGranted = permission === 'granted';
             }
@@ -92,9 +91,6 @@ async function setupEventListener() {
                 });
             }
         });
-
-        // Note: we're only tracking unlistenFn for tasks-update now for simplicity in example
-        // In real app we should track all unlisteners.
     } catch (e) {
         console.error("Failed to setup event listener:", e);
     }
@@ -110,7 +106,7 @@ function handleTasksUpdate(backendTasks: DownloadTask[]) {
             // Check for pending state locks
             if (pendingStateChanges.has(task.id)) {
                 const lockTime = pendingStateChanges.get(task.id)!;
-                if (Date.now() - lockTime < 400) {
+                if (Date.now() - lockTime < STATE_LOCK_TIMEOUT_MS) {
                     // Lock active: try to find existing local state to prevent jitter
                     const existing = currentTasks.find(t => t.id === task.id);
                     if (existing) {
@@ -187,12 +183,6 @@ export const downloadStats: Readable<DownloadStats> = derived(
     }
 );
 
-// ============ 工具函数 ============
-
-// ============ 任务操作方法 ============
-
-// ============ 工具函数 ============
-
 // ============ 任务操作方法 ============
 
 
@@ -241,17 +231,36 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
  * 暂停任务
  */
 export async function pauseTask(id: string): Promise<void> {
+    // 保存原始状态用于回滚
+    let originalState: DownloadState | undefined;
+
     try {
         // 锁定状态以避免抖动
         pendingStateChanges.set(id, Date.now());
 
+        // 获取并保存原始状态
+        updateTasks(tasks => {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                originalState = task.state;
+            }
+            // 乐观更新
+            return tasks.map(t =>
+                t.id === id ? { ...t, state: 'paused', speed: '0 B/s' } : t
+            );
+        });
+
         await pauseTaskCmd(id);
-        updateTasks(tasks => tasks.map(t =>
-            t.id === id ? { ...t, state: 'paused', speed: '0 B/s' } : t
-        ));
     } catch (e) {
         console.error(`Failed to pause task ${id}:`, e);
-        pendingStateChanges.delete(id); // 发生错误时解锁
+        pendingStateChanges.delete(id);
+
+        // 回滚状态
+        if (originalState) {
+            updateTasks(tasks => tasks.map(t =>
+                t.id === id ? { ...t, state: originalState! } : t
+            ));
+        }
     }
 }
 
@@ -317,22 +326,35 @@ export async function resumeTask(id: string): Promise<void> {
  * 取消任务（软删除/移除下载）
  */
 export async function cancelTask(id: string): Promise<void> {
+    // 保存原始状态用于回滚
+    let originalState: DownloadState | undefined;
+
     try {
         // 锁定状态以避免抖动 (防止轮询在 Aria2 处理完成前覆盖本地状态)
         pendingStateChanges.set(id, Date.now());
 
+        // 获取原始状态并乐观更新
+        updateTasks(tasks => {
+            const task = tasks.find(t => t.id === id);
+            if (task) {
+                originalState = task.state;
+            }
+            return tasks.map(t =>
+                t.id === id ? { ...t, state: 'cancelled' } : t
+            );
+        });
+
         await cancelTaskCmd(id);
-        // 对于取消，aria2 将状态更改为已移除或错误。轮询将获取它。
-        // 但我们可以乐观地将其标记为已取消或根据需要将其从活动列表中移除。
-        // UI 通常期望在 'active' 视图中进行软删除的 'cancelled' 状态？
-        // 实际上，'cancel_task' 调用 'aria2.remove'。
-        // 我们将让轮询处理状态更改或在本地更新。
-        updateTasks(tasks => tasks.map(t =>
-            t.id === id ? { ...t, state: 'cancelled' } : t
-        ));
     } catch (e) {
         console.error(`Failed to cancel task ${id}:`, e);
-        pendingStateChanges.delete(id); // 解锁
+        pendingStateChanges.delete(id);
+
+        // 回滚状态
+        if (originalState) {
+            updateTasks(tasks => tasks.map(t =>
+                t.id === id ? { ...t, state: originalState! } : t
+            ));
+        }
     }
 }
 

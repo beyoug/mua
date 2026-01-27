@@ -103,8 +103,8 @@
 
 <style>
 	.sidebar {
-		width: 200px;
-		height: calc(100vh - 24px);
+		width: var(--sidebar-width);
+		height: calc(100vh - var(--layout-gap) * 2);
 		background: var(--glass-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
