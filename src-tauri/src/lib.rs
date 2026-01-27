@@ -1,19 +1,13 @@
 #![cfg_attr(mobile, tauri::mobile_entry_point)]
 
-pub mod aria2_client;
-pub mod commands;
-pub mod config;
-pub mod sidecar;
-pub mod store;
-pub mod tray;
+pub mod aria2;
+pub mod core;
+pub mod ui;
+pub mod utils;
 
-pub mod utils; // Register new module
-pub mod sync; // Register sync module
-
-use commands::*;
-
+use core::commands::*;
 use tauri::Manager;
-use tray::update_tray_icon_with_speed;
+use ui::tray::{self, update_tray_icon_with_speed};
 
 pub fn run() {
     tauri::Builder::default()
@@ -27,27 +21,27 @@ pub fn run() {
                 let _ = window.set_focus();
             }
         }))
-        .manage(crate::sidecar::SidecarState {
+        .manage(crate::aria2::sidecar::SidecarState {
             child: std::sync::Mutex::new(None),
         })
-        .manage(crate::store::TaskStore::new()) // Initialize TaskStore
+        .manage(crate::core::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
             // 初始化托盘 (封装)
             tray::setup_tray(app)?;
 
             // 初始化配置
-            let config = config::load_config(app.handle());
-            app.manage(config::ConfigState {
+            let config = core::config::load_config(app.handle());
+            app.manage(core::config::ConfigState {
                 config: std::sync::Mutex::new(config.clone()),
             });
 
             // Initialize Store Path
-            let store = app.state::<crate::store::TaskStore>();
+            let store = app.state::<crate::core::store::TaskStore>();
             store.init(app.handle());
 
             // 初始化 Aria2 Sidecar
             #[cfg(desktop)]
-            sidecar::init_aria2_sidecar(app.handle().clone());
+            crate::aria2::sidecar::init_aria2_sidecar(app.handle().clone());
 
             if cfg!(debug_assertions) {
                 app.handle().plugin(
@@ -58,7 +52,7 @@ pub fn run() {
             }
 
             // --- Auto Resume Logic ---
-            let config_state = app.state::<crate::config::ConfigState>();
+            let config_state = app.state::<crate::core::config::ConfigState>();
             let auto_resume = config_state.config.lock().unwrap().auto_resume;
 
             if auto_resume {
@@ -66,7 +60,7 @@ pub fn run() {
                 let app_handle_resume = app.handle().clone();
 
                 tauri::async_runtime::spawn(async move {
-                    let state = app_handle_resume.state::<crate::store::TaskStore>();
+                    let state = app_handle_resume.state::<crate::core::store::TaskStore>();
                     let store_tasks = state.get_all();
 
                     for task in store_tasks {
@@ -75,14 +69,14 @@ pub fn run() {
                             || task.state == "downloading"
                         {
                             log::info!("Auto-resuming task: {}", task.gid);
-                            let _ = commands::resume_task(state.clone(), task.gid).await;
+                            let _ = core::commands::resume_task(state.clone(), task.gid).await;
                         }
                     }
                 });
             }
 
             // --- Background Sync Loop ---
-            crate::sync::start_background_sync(app.handle().clone());
+            crate::core::sync::start_background_sync(app.handle().clone());
 
             Ok(())
         })
@@ -108,7 +102,7 @@ pub fn run() {
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
                 let app = window.app_handle();
-                let config = app.state::<config::ConfigState>();
+                let config = app.state::<crate::core::config::ConfigState>();
 
                 // 获取配置，如果锁获取失败则默认为 true (保持应用运行)
                 let close_to_tray = config
@@ -136,7 +130,7 @@ pub fn run() {
         .run(|app, event| match event {
             tauri::RunEvent::Exit => {
                 let child = {
-                    let state = app.state::<crate::sidecar::SidecarState>();
+                    let state = app.state::<crate::aria2::sidecar::SidecarState>();
                     let x = state.child.lock().unwrap().take();
                     x
                 };

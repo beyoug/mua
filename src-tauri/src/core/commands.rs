@@ -1,10 +1,9 @@
-use crate::aria2_client;
+use crate::aria2::client as aria2_client;
 use crate::utils;
-
 use futures::future::join_all;
 use tauri::{AppHandle, Manager};
 
-use crate::store::{PersistedTask, TaskStore};
+use crate::core::store::{PersistedTask, TaskStore};
 use chrono::Local;
 
 #[tauri::command]
@@ -394,14 +393,14 @@ pub async fn show_task_in_folder(
 }
 
 // Frontend DTO imported from sync module
-use crate::sync::FrontendTask;
+use crate::core::sync::FrontendTask;
 
 #[tauri::command]
 pub async fn get_tasks(
     state: tauri::State<'_, TaskStore>,
     app_handle: AppHandle,
 ) -> Result<Vec<FrontendTask>, String> {
-    crate::sync::sync_tasks(&state, &app_handle).await
+    crate::core::sync::sync_tasks(&state, &app_handle).await
 }
 
 #[tauri::command]
@@ -438,17 +437,17 @@ pub async fn import_aria2_config(app: AppHandle, path: String) -> Result<String,
 }
 
 #[tauri::command]
-pub async fn get_app_config(app: AppHandle) -> Result<crate::config::AppConfig, String> {
-    Ok(crate::config::load_config(&app))
+pub async fn get_app_config(app: AppHandle) -> Result<crate::core::config::AppConfig, String> {
+    Ok(crate::core::config::load_config(&app))
 }
 
 #[tauri::command]
 pub async fn save_app_config(
     app: AppHandle,
-    config: crate::config::AppConfig,
+    config: crate::core::config::AppConfig,
 ) -> Result<(), String> {
     // 1. 保存到磁盘
-    crate::config::save_config(&app, &config)?;
+    crate::core::config::save_config(&app, &config)?;
 
     // 2. 我们可能想要重启 aria2 或者只是让用户重启应用。
     // 动态重启 sidecar 比较复杂。提示重启更好。

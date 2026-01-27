@@ -98,9 +98,11 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
     // 3. 创建托盘图标
     #[cfg(desktop)]
     {
-        use tauri::menu::{Menu, MenuItem};
-        use tauri::tray::{MouseButton, TrayIconBuilder, TrayIconEvent};
-
+        use tauri::{
+            menu::{Menu, MenuItem},
+            tray::{MouseButton, TrayIconBuilder, TrayIconEvent},
+            Manager,
+        };
         let quit_i = MenuItem::with_id(app, "quit", "退出", true, None::<&str>)?;
         let show_i = MenuItem::with_id(app, "show", "显示 Mua", true, None::<&str>)?;
         let pause_all_i = MenuItem::with_id(app, "pause_all", "暂停所有", true, None::<&str>)?;
@@ -113,7 +115,11 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
         )?;
 
         let _ = TrayIconBuilder::with_id("tray")
-            .icon(app.default_window_icon().ok_or("Default window icon not found")?.clone())
+            .icon(
+                app.default_window_icon()
+                    .ok_or("Default window icon not found")?
+                    .clone(),
+            )
             .menu(&menu)
             .show_menu_on_left_click(false)
             .on_menu_event(|app, event| match event.id.as_ref() {
@@ -126,12 +132,13 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
                 }
                 "pause_all" => {
                     tauri::async_runtime::spawn(async {
-                        let _ = crate::aria2_client::pause_all().await;
+                        let _ = crate::aria2::client::pause_all().await;
                     });
                 }
                 "resume_all" => {
                     tauri::async_runtime::spawn(async {
-                        let _ = crate::aria2_client::unpause_all().await;
+                        log::info!("Tray: Resume All clicked");
+                        let _ = crate::aria2::client::unpause_all().await;
                     });
                 }
                 _ => {}

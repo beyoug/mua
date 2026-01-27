@@ -46,32 +46,36 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 }
             };
 
-            // 1. 从配置获取首选端口
-            let mut preferred_port: u16 = 6800;
-            let mut save_session_interval = 30;
-            if let Some(state) = app.state::<crate::config::ConfigState>().config.lock().ok() {
-                preferred_port = state.rpc_port;
-                save_session_interval = state.save_session_interval;
-            }
+            // 1. Check existing config
+            // 1. Check existing config
+            let (preferred_port, save_session_interval, existing_secret) = {
+                if let Some(state) = app
+                    .state::<crate::core::config::ConfigState>()
+                    .config
+                    .lock()
+                    .ok()
+                {
+                    (
+                        state.rpc_port,
+                        state.save_session_interval,
+                        state.rpc_secret.clone(),
+                    )
+                } else {
+                    (6800, 30, None)
+                }
+            };
             log::info!("Preferred Aria2 port: {}", preferred_port);
 
             // 2. 查找可用端口
             let port = find_available_port(preferred_port);
             log::info!("Selected port for Aria2: {}", port);
 
-            // 3. 更新全局客户端状态
-            crate::aria2_client::set_aria2_port(port);
+            // 3. Update Client Config (Port + Secret)
+            crate::aria2::client::set_aria2_port(port);
 
-            // Get Secret from config
-            let rpc_secret_arg: Option<String> = app
-                .state::<crate::config::ConfigState>()
-                .config
-                .lock()
-                .ok()
-                .and_then(|state| state.rpc_secret.clone());
-
-            if let Some(ref secret) = rpc_secret_arg {
-                crate::aria2_client::set_aria2_secret(secret.clone()).await;
+            // 如果已有配置的 Secret，也要同步给 Client
+            if let Some(ref secret) = existing_secret {
+                crate::aria2::client::set_aria2_secret(secret.clone()).await;
             }
 
             let mut args = vec![
@@ -84,7 +88,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 format!("--stop-with-process={}", std::process::id()), // Auto-shutdown when parent dies
             ];
 
-            if let Some(ref secret) = rpc_secret_arg {
+            if let Some(ref secret) = existing_secret {
                 args.push(format!("--rpc-secret={}", secret));
             }
 

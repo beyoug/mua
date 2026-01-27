@@ -1,5 +1,5 @@
-use crate::aria2_client::{self, Aria2Task};
-use crate::store::TaskStore;
+use crate::aria2::client::{self as aria2_client, Aria2Task};
+use crate::core::store::TaskStore;
 use std::collections::HashMap;
 use std::sync::atomic::{AtomicBool, Ordering};
 use tauri::AppHandle;
@@ -51,7 +51,7 @@ pub async fn sync_tasks(
                 LAST_CONNECTION_STATUS.store(false, Ordering::Relaxed);
             }
             // If already false, we stay silent (quiet mode)
-            
+
             return Err(format!("Aria2 unreachable: {}", e));
         }
     };
@@ -65,7 +65,7 @@ pub async fn sync_tasks(
     let mut result: Vec<FrontendTask> = Vec::new();
     let mut total_dl = 0u64;
     let total_ul = 0u64;
-    
+
     // Track if we need to save changes to disk
     let mut dirty = false;
 
@@ -74,10 +74,11 @@ pub async fn sync_tasks(
         // Sync with Aria2 if available
         if let Some(aria_task) = aria2_map.get(&task.gid) {
             // Detect changes
-            if task.state != aria_task.status || task.completed_length != aria_task.completed_length {
+            if task.state != aria_task.status || task.completed_length != aria_task.completed_length
+            {
                 dirty = true;
             }
-            
+
             task.state = aria_task.status.clone();
             task.total_length = aria_task.total_length.clone();
             task.completed_length = aria_task.completed_length.clone();
@@ -85,23 +86,26 @@ pub async fn sync_tasks(
 
             // Try to resolve filename if empty
             if task.filename.is_empty() {
-                 if let Some(file) = aria_task.files.get(0) {
-                      if !file.path.is_empty() {
-                           // Extract basename
-                           let path = std::path::Path::new(&file.path);
-                           if let Some(name) = path.file_name() {
-                                if let Some(name_str) = name.to_str() {
-                                     task.filename = name_str.to_string();
-                                     dirty = true;
-                                }
-                           }
-                      }
-                 }
+                if let Some(file) = aria_task.files.get(0) {
+                    if !file.path.is_empty() {
+                        // Extract basename
+                        let path = std::path::Path::new(&file.path);
+                        if let Some(name) = path.file_name() {
+                            if let Some(name_str) = name.to_str() {
+                                task.filename = name_str.to_string();
+                                dirty = true;
+                            }
+                        }
+                    }
+                }
             }
-            
         } else {
             // Handle missing tasks (transition or validation)
-            if task.state != "error" && task.state != "removed" && task.state != "completed" && task.state != "cancelled" {
+            if task.state != "error"
+                && task.state != "removed"
+                && task.state != "completed"
+                && task.state != "cancelled"
+            {
                 match aria2_client::tell_status(
                     task.gid.clone(),
                     vec![
@@ -113,7 +117,7 @@ pub async fn sync_tasks(
                         "uploadLength",
                         "uploadSpeed",
                         "dir",
-                        "files"
+                        "files",
                     ],
                 )
                 .await
@@ -124,33 +128,38 @@ pub async fn sync_tasks(
                         task.completed_length = aria_task.completed_length.clone();
                         task.download_speed = aria_task.download_speed.clone();
                         dirty = true;
-                         
-                         // Try to resolve filename if empty
-                         if task.filename.is_empty() {
+
+                        // Try to resolve filename if empty
+                        if task.filename.is_empty() {
                             if let Some(file) = aria_task.files.get(0) {
                                 if !file.path.is_empty() {
                                     let path = std::path::Path::new(&file.path);
                                     if let Some(name) = path.file_name() {
-                                            if let Some(name_str) = name.to_str() {
-                                                task.filename = name_str.to_string();
-                                            }
+                                        if let Some(name_str) = name.to_str() {
+                                            task.filename = name_str.to_string();
+                                        }
                                     }
                                 }
                             }
-                         }
+                        }
                     }
                     Err(e) => {
                         // Only mark as error if explicitly not found (Error 1) OR HTTP Error (Aria2 rejected request)
                         let lower_msg = e.to_lowercase();
-                        if lower_msg.contains("not found") 
+                        if lower_msg.contains("not found")
                             || lower_msg.contains("error 1")
-                            || lower_msg.contains("http error") // 400 Bad Request, etc.
+                            || lower_msg.contains("http error")
+                        // 400 Bad Request, etc.
                         {
-                             task.state = "error".to_string();
-                             task.download_speed = "0".to_string();
-                             dirty = true;
+                            task.state = "error".to_string();
+                            task.download_speed = "0".to_string();
+                            dirty = true;
                         } else {
-                            log::warn!("Failed to fetch status for {}: {}. Keeping last known state.", task.gid, e);
+                            log::warn!(
+                                "Failed to fetch status for {}: {}. Keeping last known state.",
+                                task.gid,
+                                e
+                            );
                         }
                     }
                 }
@@ -197,7 +206,7 @@ pub async fn sync_tasks(
             save_path: task.save_path.clone(),
         });
     }
-    
+
     // Batch Commit
     if dirty {
         state.update_all(store_tasks);
@@ -217,7 +226,8 @@ pub async fn sync_tasks(
     });
 
     // Update Tray
-    let _ = crate::tray::update_tray_icon_with_speed(app_handle.clone(), total_dl, total_ul).await;
+    let _ =
+        crate::ui::tray::update_tray_icon_with_speed(app_handle.clone(), total_dl, total_ul).await;
 
     Ok(result)
 }
@@ -225,7 +235,7 @@ pub async fn sync_tasks(
 pub fn start_background_sync(app_handle: AppHandle) {
     use tauri::Emitter;
     use tauri::Manager;
-    
+
     // Notification State Tracker: GID -> State
     let mut previous_states: std::collections::HashMap<String, String> =
         std::collections::HashMap::new();
@@ -236,7 +246,7 @@ pub fn start_background_sync(app_handle: AppHandle) {
 
         loop {
             // Get State (thread-safe retrieval)
-            let state = app_handle.state::<crate::store::TaskStore>();
+            let state = app_handle.state::<crate::core::store::TaskStore>();
             let mut has_active_tasks = false;
 
             // Run Sync
@@ -245,7 +255,10 @@ pub fn start_background_sync(app_handle: AppHandle) {
                     // Check for Completions & Activity
                     for task in &tasks {
                         // Adaptive Polling Check
-                        if task.state == "active" || task.state == "waiting" || task.state == "downloading" {
+                        if task.state == "active"
+                            || task.state == "waiting"
+                            || task.state == "downloading"
+                        {
                             has_active_tasks = true;
                         }
 
@@ -254,14 +267,10 @@ pub fn start_background_sync(app_handle: AppHandle) {
                             .cloned()
                             .unwrap_or("unknown".to_string());
 
-                        if task.state == "completed"
-                            && prev != "completed"
-                            && prev != "unknown"
-                        {
+                        if task.state == "completed" && prev != "completed" && prev != "unknown" {
                             // Transition detected!
                             log::info!("Task completed: {}", task.filename);
-                            if let Err(e) = app_handle.emit("task-completed", task.clone())
-                            {
+                            if let Err(e) = app_handle.emit("task-completed", task.clone()) {
                                 log::warn!("Failed to emit task-completed: {}", e);
                             }
                         }
