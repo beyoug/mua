@@ -53,11 +53,11 @@ pub fn format_duration(seconds: u64) -> String {
         return "".to_string();
     }
     if seconds > 3600 {
-        format!("{:.1}h", seconds as f64 / 3600.0)
+        format!("{:.1}小时", seconds as f64 / 3600.0)
     } else if seconds > 60 {
-        format!("{:.1}m", seconds as f64 / 60.0)
+        format!("{:.0}分钟", seconds as f64 / 60.0)
     } else {
-        format!("{}s", seconds)
+        format!("{}秒", seconds)
     }
 }
 

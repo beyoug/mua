@@ -102,20 +102,64 @@ function handleTasksUpdate(backendTasks: DownloadTask[]) {
         // Backend is the Single Source of Truth.
         // We only apply local overrides if there's a pending state change lock (to prevent UI jitter).
 
-        return backendTasks.map(task => {
-            // Check for pending state locks
-            if (pendingStateChanges.has(task.id)) {
-                const lockTime = pendingStateChanges.get(task.id)!;
-                if (Date.now() - lockTime < STATE_LOCK_TIMEOUT_MS) {
-                    // Lock active: try to find existing local state to prevent jitter
-                    const existing = currentTasks.find(t => t.id === task.id);
-                    if (existing) {
-                        // Return existing/local state but maybe update progress if reasonable?
-                        // For simplicity, just return existing to keep UI stable during transition
-                        return existing;
+        // Check if any state locks are active - if so, preserve current order
+        const hasActiveLocks = Array.from(pendingStateChanges.entries()).some(
+            ([_, lockTime]) => Date.now() - lockTime < STATE_LOCK_TIMEOUT_MS
+        );
+
+        // Clean up expired locks
+        const now = Date.now();
+        for (const [id, lockTime] of pendingStateChanges.entries()) {
+            if (now - lockTime >= STATE_LOCK_TIMEOUT_MS) {
+                pendingStateChanges.delete(id);
+            }
+        }
+
+        // Create backend task map for quick lookup
+        const backendMap = new Map<string, DownloadTask>();
+        for (const task of backendTasks) {
+            backendMap.set(task.id, task);
+        }
+
+        if (hasActiveLocks && currentTasks.length > 0) {
+            // Preserve current order, only update data
+            const result: DownloadTask[] = [];
+            const processedIds = new Set<string>();
+
+            // Update existing tasks in their current order
+            for (const currentTask of currentTasks) {
+                const backendTask = backendMap.get(currentTask.id);
+                if (backendTask) {
+                    // Check if this specific task is locked
+                    if (pendingStateChanges.has(currentTask.id)) {
+                        // Keep local state and order
+                        result.push(currentTask);
+                    } else {
+                        // Use backend data but keep position
+                        result.push(backendTask);
                     }
-                } else {
-                    pendingStateChanges.delete(task.id);
+                    processedIds.add(currentTask.id);
+                }
+                // If task not in backend anymore, skip it (removed)
+            }
+
+            // Add any new tasks from backend (at end)
+            for (const backendTask of backendTasks) {
+                if (!processedIds.has(backendTask.id)) {
+                    result.push(backendTask);
+                }
+            }
+
+            return result;
+        }
+
+        // No active locks - use backend order directly
+        return backendTasks.map(task => {
+            // Still check individual locks for state preservation
+            if (pendingStateChanges.has(task.id)) {
+                const existing = currentTasks.find(t => t.id === task.id);
+                if (existing) {
+                    return existing;
                 }
             }
             return task;
@@ -432,12 +476,21 @@ export async function cancelTasks(ids: Set<string>): Promise<void> {
  */
 export async function pauseAll(): Promise<void> {
     try {
-        // 乐观更新：所有 active -> paused
-        updateTasks(tasks => tasks.map(t =>
-            (t.state === 'downloading' || t.state === 'waiting')
-                ? { ...t, state: 'paused' }
-                : t
-        ));
+        // 获取所有需要暂停的任务 ID 并锁定状态
+        const now = Date.now();
+        updateTasks(tasks => {
+            tasks.forEach(t => {
+                if (t.state === 'downloading' || t.state === 'waiting') {
+                    pendingStateChanges.set(t.id, now);
+                }
+            });
+            // 乐观更新：所有 active -> paused
+            return tasks.map(t =>
+                (t.state === 'downloading' || t.state === 'waiting')
+                    ? { ...t, state: 'paused', speed: '0 B/s' }
+                    : t
+            );
+        });
 
         await pauseAllTasks();
     } catch (e) {
@@ -450,12 +503,21 @@ export async function pauseAll(): Promise<void> {
  */
 export async function resumeAll(): Promise<void> {
     try {
-        // 乐观更新：所有 paused -> waiting (或 downloading)
-        updateTasks(tasks => tasks.map(t =>
-            t.state === 'paused'
-                ? { ...t, state: 'waiting' }
-                : t
-        ));
+        // 获取所有需要恢复的任务 ID 并锁定状态
+        const now = Date.now();
+        updateTasks(tasks => {
+            tasks.forEach(t => {
+                if (t.state === 'paused') {
+                    pendingStateChanges.set(t.id, now);
+                }
+            });
+            // 乐观更新：所有 paused -> waiting
+            return tasks.map(t =>
+                t.state === 'paused'
+                    ? { ...t, state: 'waiting' }
+                    : t
+            );
+        });
 
         await resumeAllTasks();
     } catch (e) {

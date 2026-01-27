@@ -7,7 +7,6 @@
 	import { fade } from 'svelte/transition';
 	import ProgressBar from './ProgressBar.svelte';
     import DownloadCardMenu from './DownloadCardMenu.svelte';
-    import TaskDetailsModal from './TaskDetailsModal.svelte';
 	import type { DownloadState } from '$lib/types/download';
 
 	interface Props {
@@ -27,6 +26,7 @@
 		onSelect?: () => void;
 		addedAt?: string;
 		onOpenFolder?: () => void;
+		onShowDetails?: () => void;
 	}
 
 	let {
@@ -45,11 +45,11 @@
 		selected = false,
 		onSelect,
 		addedAt = '',
-		onOpenFolder
+		onOpenFolder,
+		onShowDetails
 	}: Props = $props();
 
 	let showMenu = $state(false);
-	let showDetailsModal = $state(false);
 
 	function toggleMenu(e: MouseEvent) {
 		e.stopPropagation();
@@ -77,7 +77,7 @@
 	}
 
 	function showDetails() {
-		showDetailsModal = true;
+		onShowDetails?.();
 		closeMenu();
 	}
 </script>
@@ -166,40 +166,37 @@
 
 	<!-- 状态信息 -->
 	<div class="card-footer">
-		{#if downloadState === 'downloading'}
-			<span class="speed">{speed}</span>
-			<span class="size">{downloaded} / {total}</span>
-			{#if remaining}
-				<span class="remaining">剩余 {remaining}</span>
+		<div class="footer-left">
+			{#if downloadState === 'downloading'}
+				<span class="speed" class:hidden={!speed || speed === '0 B/s'}>{speed || '--'}</span>
+				{#if remaining}
+					<span class="remaining">剩余 {remaining}</span>
+				{/if}
+			{:else if downloadState === 'paused'}
+				<span class="status paused">已暂停</span>
+			{:else if downloadState === 'completed'}
+				<span class="status completed">已完成</span>
+			{:else if downloadState === 'waiting'}
+				<span class="status waiting">等待中...</span>
+			{:else if downloadState === 'cancelled'}
+				<span class="status cancelled">已取消</span>
+			{:else if downloadState === 'error'}
+				<span class="status error">下载失败</span>
 			{/if}
-		{:else if downloadState === 'paused'}
-			<span class="status paused">已暂停</span>
-			<span class="size">{downloaded} / {total}</span>
-		{:else if downloadState === 'completed'}
-			<span class="status completed">已完成</span>
-			<span class="size">{total}</span>
-		{:else if downloadState === 'waiting'}
-			<span class="status waiting">等待中...</span>
-		{:else if downloadState === 'cancelled'}
-			<span class="status cancelled">已取消</span>
-		{:else if downloadState === 'error'}
-			<span class="status error">下载失败</span>
-		{/if}
+		</div>
 		
-		{#if addedAt}
-			<span class="added-at">{addedAt}</span>
-		{/if}
+		<div class="footer-right">
+			{#if downloadState === 'downloading' || downloadState === 'paused'}
+				<span class="size">{downloaded} / {total}</span>
+			{:else if downloadState === 'completed'}
+				<span class="size">{total}</span>
+			{/if}
+			{#if addedAt}
+				<span class="added-at">{addedAt}</span>
+			{/if}
+		</div>
 	</div>
 </article>
-
-<!-- 任务详情弹窗 -->
-<TaskDetailsModal 
-	open={showDetailsModal}
-	{filename}
-	{url}
-	state={downloadState}
-	onClose={() => showDetailsModal = false}
-/>
 
 <style>
 	.download-card {
@@ -341,16 +338,40 @@
 	.card-footer {
 		display: flex;
 		align-items: center;
-		gap: 14px;
+		justify-content: space-between;
 		margin-top: 10px;
 		font-size: 11px;
 		font-weight: 400;
 		color: var(--text-muted);
 	}
 
+	.footer-left {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
+	.footer-right {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+	}
+
 	.speed {
-		color: var(--text-primary);
-		font-weight: 500;
+		color: var(--accent-text);
+		font-weight: 600;
+		font-family: var(--font-mono);
+		font-size: 11px;
+		min-width: 75px;
+	}
+
+	.speed.hidden {
+		visibility: hidden;
+	}
+
+	.size {
+		color: var(--text-secondary);
+		font-family: var(--font-mono);
 	}
 
 	.status.completed {

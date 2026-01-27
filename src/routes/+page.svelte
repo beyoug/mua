@@ -5,8 +5,9 @@
 	import AddTaskDialog from '$lib/components/AddTaskDialog.svelte';
 	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
 	import ClearConfirmDialog from '$lib/components/ClearConfirmDialog.svelte';
+	import TaskDetailsModal from '$lib/components/TaskDetailsModal.svelte';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
-	import type { DownloadConfig } from '$lib/types/download';
+	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 
 		activeTasks, 
 		completedTasks, 
@@ -29,6 +30,10 @@
 	// ============ 界面状态 ============
 	let showAddDialog = $state(false);
 	let showSettings = $state(false);
+	
+	// 任务详情弹窗状态
+	let detailsTask = $state<DownloadTask | null>(null);
+	let showDetailsModal = $derived(detailsTask !== null);
 
 	// ============ Derived States ============
 
@@ -118,6 +123,10 @@
 	function handleAddTask(config: DownloadConfig) {
 		addDownloadTask(config);
 	}
+	
+	function handleShowDetails(task: DownloadTask) {
+		detailsTask = task;
+	}
 </script>
 
 <!-- 侧边栏 -->
@@ -156,6 +165,7 @@
 			onResume={resumeTask}
 			onCancel={(id) => controller.handleCancelTask(id)}
 			onOpenFolder={(id) => controller.handleOpenFolder(id)}
+			onShowDetails={handleShowDetails}
 		/>
 	</div>
 </main>
@@ -186,6 +196,18 @@
 	}}
 	onConfirm={(del) => controller.performClear(del)}
 />
+
+<!-- 任务详情弹窗 (页面级别渲染以解决 z-index 问题) -->
+{#if detailsTask}
+	<TaskDetailsModal
+		open={showDetailsModal}
+		filename={detailsTask.filename}
+		url={detailsTask.url}
+		state={detailsTask.state}
+		savePath={detailsTask.savePath}
+		onClose={() => detailsTask = null}
+	/>
+{/if}
 
 <style>
 	/* 主内容区调整 */

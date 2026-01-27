@@ -48,7 +48,7 @@
 {#if open}
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div 
-		class="modal-overlay" 
+		class="task-details-modal-overlay" 
 		in:fade={{ duration: 150 }} 
 		out:fade={{ duration: 100 }}
 		onkeydown={handleKeydown}
@@ -56,7 +56,7 @@
 	>
 		<!-- svelte-ignore a11y_click_events_have_key_events -->
 		<div 
-			class="modal" 
+			class="task-details-modal" 
 			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
 			out:fade={{ duration: 80 }}
 			onclick={(e) => e.stopPropagation()}
@@ -127,17 +127,18 @@
 {/if}
 
 <style>
-	.modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.5));
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
+	/* Use unique class names and global to escape stacking context */
+	:global(.task-details-modal-overlay) {
+		position: fixed !important;
+		inset: 0 !important;
+		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.5)) !important;
+		display: flex !important;
+		align-items: center !important;
+		justify-content: center !important;
+		z-index: 9999 !important;
 	}
 
-	.modal {
+	:global(.task-details-modal) {
 		width: 90%;
 		max-width: 480px;
 		background: var(--dialog-bg);
@@ -147,6 +148,7 @@
 		border-radius: 16px;
 		box-shadow: var(--glass-shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
 		overflow: hidden;
+		z-index: 10000;
 	}
 
 	.modal-header {
