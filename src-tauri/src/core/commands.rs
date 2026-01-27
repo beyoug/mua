@@ -29,12 +29,34 @@ pub async fn add_download_task(
     }
 
     // 1. Build Options (using helper from utils)
-    let final_filename = utils::deduce_filename(filename.clone(), &urls);
+    let deduced_name = utils::deduce_filename(filename.clone(), &urls);
 
-    // Now build aria2 options
+    // Smart Filename Resolution
+    // Resolve save path locally to check for existence
+    let resolved_save_path = if let Some(ref path) = save_path {
+        utils::resolve_path(path)
+    } else {
+        // Default download dir? For now let's assume current dir if not set, or handled by aria2
+        // But for existence check we need a path.
+        // If save_path is None, Aria2 uses its default. We might not be able to check collision easily without knowing Aria2 default.
+        // However, Mua might have a default setting.
+        // For SAFETY, if save_path is provided, we check. If not, we might skip or best effort.
+        // Let's assume most usages provide save_path (settings).
+        ".".to_string()
+    };
+
+    // Get active filenames to prevent collision with running tasks
+    let active_names = state.get_active_filenames();
+
+    // Generate Unique Name
+    let unique_filename =
+        utils::get_unique_filename(&resolved_save_path, &deduced_name, &active_names);
+
+    // Now build aria2 options, forcing 'out' to be unique_filename
+    // We pass 'Some(unique_filename)' as filename overrides what user sent if it collided
     let (options, final_save_path) = utils::build_aria2_options(
         save_path,
-        filename, // Pass original optional filename to set "out" ONLY if user specified it explicitly
+        Some(unique_filename.clone()),
         user_agent,
         referer,
         headers,
@@ -48,11 +70,11 @@ pub async fn add_download_task(
             // Persist to Store
             let task = PersistedTask {
                 gid: gid.clone(),
-                filename: final_filename, // Use deduced filename
+                filename: unique_filename, // Use unique name
                 url: urls.get(0).cloned().unwrap_or_default(),
                 save_path: final_save_path,
                 added_at: Local::now().to_rfc3339(),
-                state: "waiting".to_string(), // Initial state
+                state: "waiting".to_string(),
                 total_length: "0".to_string(),
                 completed_length: "0".to_string(),
                 download_speed: "0".to_string(),

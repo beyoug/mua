@@ -14,7 +14,10 @@ pub struct AppConfig {
     pub auto_resume: bool,
     #[serde(rename = "rpcSecret")]
     pub rpc_secret: Option<String>,
-    #[serde(rename = "aria2SaveSessionInterval", default = "default_session_interval")]
+    #[serde(
+        rename = "aria2SaveSessionInterval",
+        default = "default_session_interval"
+    )]
     pub save_session_interval: u64,
 }
 
@@ -52,17 +55,17 @@ pub fn load_config(app: &AppHandle) -> AppConfig {
                 if let Ok(mut config) = serde_json::from_str::<AppConfig>(&content) {
                     // Ensure secret exists
                     if config.rpc_secret.is_none() {
-                         let secret = uuid::Uuid::new_v4().to_string();
-                         config.rpc_secret = Some(secret);
-                         // Save back
-                         let _ = save_config(app, &config);
+                        let secret = uuid::Uuid::new_v4().to_string();
+                        config.rpc_secret = Some(secret);
+                        // Save back
+                        let _ = save_config(app, &config);
                     }
                     return config;
                 }
             }
         }
     }
-    
+
     // Default with new secret
     let mut config = AppConfig::default();
     config.rpc_secret = Some(uuid::Uuid::new_v4().to_string());

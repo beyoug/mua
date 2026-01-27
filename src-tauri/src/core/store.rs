@@ -248,4 +248,17 @@ impl TaskStore {
         // 不调用 save()，由调用方统一处理
         removed
     }
+
+    /// Get all filenames currently known to the store (to prevent duplicates)
+    pub fn get_active_filenames(&self) -> Vec<String> {
+        if let Ok(tasks) = self.tasks.lock() {
+            tasks
+                .values()
+                .map(|t| t.filename.clone())
+                .filter(|n| !n.is_empty())
+                .collect()
+        } else {
+            vec![]
+        }
+    }
 }

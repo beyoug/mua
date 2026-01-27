@@ -130,7 +130,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
                     // 在状态中存储子进程
                     let state = app.state::<SidecarState>();
-                    *state.child.lock().unwrap() = Some(child);
+                    if let Ok(mut child_guard) = state.child.lock() {
+                        *child_guard = Some(child);
+                    } else {
+                        log::error!("Failed to lock SidecarState to store child process");
+                    }
 
                     // 监控进程
                     let mut manually_exited = false;

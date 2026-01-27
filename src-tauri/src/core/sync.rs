@@ -84,14 +84,19 @@ pub async fn sync_tasks(
             task.completed_length = aria_task.completed_length.clone();
             task.download_speed = aria_task.download_speed.clone();
 
-            // Try to resolve filename if empty
-            if task.filename.is_empty() {
-                if let Some(file) = aria_task.files.get(0) {
-                    if !file.path.is_empty() {
-                        // Extract basename
-                        let path = std::path::Path::new(&file.path);
-                        if let Some(name) = path.file_name() {
-                            if let Some(name_str) = name.to_str() {
+            // Always sync filename from Aria2 to handle auto-renaming (e.g. file.1.mp4)
+            if let Some(file) = aria_task.files.get(0) {
+                if !file.path.is_empty() {
+                    let path = std::path::Path::new(&file.path);
+                    if let Some(name) = path.file_name() {
+                        if let Some(name_str) = name.to_str() {
+                            if task.filename != name_str {
+                                log::info!(
+                                    "Sync: Filename changed for GID {} ({} -> {})",
+                                    task.gid,
+                                    task.filename,
+                                    name_str
+                                );
                                 task.filename = name_str.to_string();
                                 dirty = true;
                             }
@@ -129,14 +134,15 @@ pub async fn sync_tasks(
                         task.download_speed = aria_task.download_speed.clone();
                         dirty = true;
 
-                        // Try to resolve filename if empty
-                        if task.filename.is_empty() {
-                            if let Some(file) = aria_task.files.get(0) {
-                                if !file.path.is_empty() {
-                                    let path = std::path::Path::new(&file.path);
-                                    if let Some(name) = path.file_name() {
-                                        if let Some(name_str) = name.to_str() {
+                        // Always sync filename from Aria2
+                        if let Some(file) = aria_task.files.get(0) {
+                            if !file.path.is_empty() {
+                                let path = std::path::Path::new(&file.path);
+                                if let Some(name) = path.file_name() {
+                                    if let Some(name_str) = name.to_str() {
+                                        if task.filename != name_str {
                                             task.filename = name_str.to_string();
+                                            // No need to set dirty here as we set dirty=true above for status update
                                         }
                                     }
                                 }

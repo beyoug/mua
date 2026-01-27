@@ -53,7 +53,11 @@ pub fn run() {
 
             // --- Auto Resume Logic ---
             let config_state = app.state::<crate::core::config::ConfigState>();
-            let auto_resume = config_state.config.lock().unwrap().auto_resume;
+            let auto_resume = config_state
+                .config
+                .lock()
+                .map(|c| c.auto_resume)
+                .unwrap_or(false);
 
             if auto_resume {
                 log::info!("Auto Resume enabled. Attempting to resume tasks...");
@@ -131,8 +135,7 @@ pub fn run() {
             tauri::RunEvent::Exit => {
                 let child = {
                     let state = app.state::<crate::aria2::sidecar::SidecarState>();
-                    let x = state.child.lock().unwrap().take();
-                    x
+                    state.child.lock().ok().and_then(|mut c| c.take())
                 };
 
                 if let Some(child) = child {

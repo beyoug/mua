@@ -84,7 +84,8 @@ pub fn map_status(aria2_status: &str) -> String {
 
 pub fn get_state_score(state: &str) -> i32 {
     match state {
-        "downloading" | "waiting" => 2,
+        "downloading" => 3,
+        "waiting" => 2,
         "paused" => 1,
         _ => 0,
     }
@@ -109,6 +110,49 @@ pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
     }
 
     "Unknown".to_string()
+}
+
+pub fn get_unique_filename(save_path: &str, filename: &str, reserved_names: &[String]) -> String {
+    let path = std::path::Path::new(save_path);
+    let mut name = filename.to_string();
+    let mut counter = 1;
+
+    // Split extension
+    let (stem, ext) = if let Some(idx) = filename.rfind('.') {
+        // Handle no extension
+        if idx == 0 {
+            (filename, "")
+        } else {
+            (&filename[..idx], &filename[idx..])
+        }
+    } else {
+        (filename, "")
+    };
+
+    loop {
+        let full_path = path.join(&name);
+
+        // Check 1: File system existence
+        let exists_on_disk = full_path.exists();
+
+        // Check 2: Active tasks collision
+        let exists_in_store = reserved_names.contains(&name);
+
+        if !exists_on_disk && !exists_in_store {
+            break;
+        }
+
+        // Collision! Try next number: "file (1).ext"
+        name = format!("{} ({}){}", stem, counter, ext);
+        counter += 1;
+
+        // Loop safety break (unlikely to hit this)
+        if counter > 10000 {
+            break;
+        }
+    }
+
+    name
 }
 
 pub fn build_aria2_options(
