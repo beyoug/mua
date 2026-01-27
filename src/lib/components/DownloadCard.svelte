@@ -164,35 +164,56 @@
 		<ProgressBar {progress} state={downloadState} />
 	{/if}
 
-	<!-- 状态信息 -->
+	<!-- 状态信息栏 - 现代化设计 -->
 	<div class="card-footer">
-		<div class="footer-left">
+		<!-- 左区域：动态状态信息 -->
+		<div class="footer-status">
 			{#if downloadState === 'downloading'}
-				<span class="speed" class:hidden={!speed || speed === '0 B/s'}>{speed || '--'}</span>
+				<span class="status-indicator downloading">
+					<span class="status-icon">↓</span>
+					<span class="speed-value">{speed || '0 B/s'}</span>
+				</span>
 				{#if remaining}
-					<span class="remaining">剩余 {remaining}</span>
+					<span class="separator">•</span>
+					<span class="time-remaining">{remaining}</span>
 				{/if}
 			{:else if downloadState === 'paused'}
-				<span class="status paused">已暂停</span>
+				<span class="status-indicator paused">
+					<span class="status-icon">⏸</span>
+					<span class="status-text">已暂停</span>
+				</span>
 			{:else if downloadState === 'completed'}
-				<span class="status completed">已完成</span>
+				<span class="status-indicator completed">
+					<span class="status-icon">✓</span>
+					<span class="status-text">已完成</span>
+				</span>
 			{:else if downloadState === 'waiting'}
-				<span class="status waiting">等待中...</span>
+				<span class="status-indicator waiting">
+					<span class="status-icon">◦</span>
+					<span class="status-text">等待中</span>
+				</span>
 			{:else if downloadState === 'cancelled'}
-				<span class="status cancelled">已取消</span>
+				<span class="status-indicator cancelled">
+					<span class="status-icon">✕</span>
+					<span class="status-text">已取消</span>
+				</span>
 			{:else if downloadState === 'error'}
-				<span class="status error">下载失败</span>
+				<span class="status-indicator error">
+					<span class="status-icon">⚠</span>
+					<span class="status-text">下载失败</span>
+				</span>
 			{/if}
 		</div>
 		
-		<div class="footer-right">
+		<!-- 右区域：文件大小和时间 -->
+		<div class="footer-meta">
 			{#if downloadState === 'downloading' || downloadState === 'paused'}
-				<span class="size">{downloaded} / {total}</span>
+				<span class="size-info">{downloaded} / {total}</span>
 			{:else if downloadState === 'completed'}
-				<span class="size">{total}</span>
+				<span class="size-info">{total}</span>
 			{/if}
 			{#if addedAt}
-				<span class="added-at">{addedAt}</span>
+				<span class="time-added">{addedAt}</span>
 			{/if}
 		</div>
 	</div>
@@ -341,69 +362,89 @@
 		justify-content: space-between;
 		margin-top: 10px;
 		font-size: 11px;
-		font-weight: 400;
-		color: var(--text-muted);
+		font-variant-numeric: tabular-nums;
 	}
 
-	.footer-left {
+	/* 左区域 - 状态信息 */
+	.footer-status {
 		display: flex;
 		align-items: center;
-		gap: 12px;
+		gap: 6px;
+		min-width: 0;
 	}
 
-	.footer-right {
-		display: flex;
+	.status-indicator {
+		display: inline-flex;
 		align-items: center;
-		gap: 12px;
+		gap: 5px;
+		font-weight: 500;
 	}
 
-	.speed {
-		color: var(--accent-text);
-		font-weight: 600;
-		font-family: var(--font-mono);
-		font-size: 11px;
-		min-width: 75px;
-	}
-
-	.speed.hidden {
-		visibility: hidden;
-	}
-
-	.size {
-		color: var(--text-secondary);
-		font-family: var(--font-mono);
-	}
-
-	.status.completed {
-		color: var(--accent-text);
-	}
-
-	.status.paused {
-		color: var(--warning-color);
-	}
-
-	.status.waiting {
-		color: var(--text-muted);
-	}
-
-	.status.error {
-		color: #f87171;
-	}
-
-	.status.cancelled {
-		color: var(--text-muted);
-	}
-
-	.remaining {
-		color: var(--text-muted);
-	}
-	
-	.added-at {
-		margin-left: auto;
+	.status-icon {
 		font-size: 12px;
+		line-height: 1;
+	}
+
+	.status-indicator.downloading {
+		color: var(--accent-text);
+	}
+
+	.status-indicator.paused {
+		color: var(--warning-color, #f59e0b);
+	}
+
+	.status-indicator.completed {
+		color: var(--semantic-success, #10b981);
+	}
+
+	.status-indicator.waiting {
+		color: var(--text-muted);
+	}
+
+	.status-indicator.cancelled {
+		color: var(--text-muted);
+	}
+
+	.status-indicator.error {
+		color: var(--semantic-danger, #ef4444);
+	}
+
+	.speed-value {
+		font-weight: 600;
+		min-width: 70px;
+	}
+
+	.separator {
+		color: var(--text-muted);
+		opacity: 0.5;
+	}
+
+	.time-remaining {
+		color: var(--text-secondary);
+	}
+
+	.status-text {
+		color: inherit;
+	}
+
+	/* 右区域 - 文件信息 */
+	.footer-meta {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		flex-shrink: 0;
+	}
+
+	.size-info {
+		color: var(--text-secondary);
+		min-width: 110px;
+		text-align: right;
+	}
+
+	.time-added {
+		font-size: 10px;
 		color: var(--text-muted);
 		opacity: 0.7;
-		font-family: var(--font-mono);
 	}
 
 	.checkbox-wrapper {
