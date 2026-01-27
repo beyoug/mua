@@ -3,7 +3,7 @@
  */
 
 // Utils
-export { cn } from './utils';
+export { cn } from './utils/cn';
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
 export { formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
 export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';

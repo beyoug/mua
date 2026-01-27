@@ -1,11 +1,11 @@
 <script lang="ts">
-	import Sidebar from '$lib/components/Sidebar.svelte';
-	import TaskListHeader from '$lib/components/TaskListHeader.svelte';
-	import TaskList from '$lib/components/TaskList.svelte';
-	import AddTaskDialog from '$lib/components/AddTaskDialog.svelte';
-	import SettingsPanel from '$lib/components/SettingsPanel.svelte';
-	import ClearConfirmDialog from '$lib/components/ClearConfirmDialog.svelte';
-	import TaskDetailsModal from '$lib/components/TaskDetailsModal.svelte';
+	import Sidebar from '$lib/components/layout/Sidebar.svelte';
+	import TaskListHeader from '$lib/components/layout/TaskListHeader.svelte';
+	import TaskList from '$lib/components/layout/TaskList.svelte';
+	import AddTaskDialog from '$lib/components/dialogs/AddTaskDialog.svelte';
+	import SettingsPanel from '$lib/components/settings/SettingsPanel.svelte';
+	import ClearConfirmDialog from '$lib/components/dialogs/ClearConfirmDialog.svelte';
+	import TaskDetailsModal from '$lib/components/dialogs/TaskDetailsModal.svelte';
 	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
 	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 

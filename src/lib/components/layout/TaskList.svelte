@@ -5,7 +5,7 @@
 <script lang="ts">
 	import { Download } from '@lucide/svelte';
 	import { flip } from 'svelte/animate';
-	import DownloadCard from './DownloadCard.svelte';
+	import DownloadCard from '$lib/components/download/DownloadCard.svelte';
 	import type { DownloadTask } from '$lib/types/download';
 
 	interface Props {

@@ -4,7 +4,7 @@
 	import { onMount } from 'svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { currentTheme, effectiveColorMode, particlesEnabled } from '$lib/stores/theme';
-	import ParticleBackground from '$lib/components/ParticleBackground.svelte';
+	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
 
 	import { listen } from '@tauri-apps/api/event';
 	import { message } from '@tauri-apps/plugin-dialog';

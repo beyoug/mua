@@ -8,8 +8,8 @@
     import { loadAria2Config } from '$lib/stores/aria2Config';
     import { loadAppSettings } from '$lib/stores/settings';
 	import { createScrollLockEffect } from '$lib';
-    import BasicSettings from './settings/BasicSettings.svelte';
-    import AdvancedSettings from './settings/AdvancedSettings.svelte';
+    import BasicSettings from './BasicSettings.svelte';
+    import AdvancedSettings from './AdvancedSettings.svelte';
 
 	interface Props {
 		open: boolean;
