@@ -7,12 +7,14 @@ export interface AppConfig {
     autoResume: boolean;
     rpcSecret?: string;
     aria2SaveSessionInterval?: number;
+    useCustomAria2: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
     rpcPort: 6800,
     closeToTray: true,
-    autoResume: false
+    autoResume: false,
+    useCustomAria2: false
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

@@ -1,10 +1,64 @@
 <script lang="ts">
-    import { Check, FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle } from '@lucide/svelte';
+    import { Check, FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
     import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/stores/aria2Config';
     import { appSettings, saveAppSettings } from '$lib/stores/settings';
+    import { onMount } from 'svelte';
+    import { importCustomBinary, getAria2VersionInfo } from '$lib/api/cmd';
+    import type { Aria2VersionInfo } from '$lib/api/cmd';
+    import { open as openDialog } from '@tauri-apps/plugin-dialog';
+    import { relaunch } from '@tauri-apps/plugin-process';
 
     let isDirty = $state(false);
     let showSecret = $state(false);
+    let aria2Version = $state<Aria2VersionInfo | null>(null);
+    let isImportingKernel = $state(false);
+
+    onMount(() => {
+        loadVersionInfo();
+    });
+
+    async function loadVersionInfo() {
+        try {
+            aria2Version = await getAria2VersionInfo();
+        } catch (e) {
+            console.error(e);
+        }
+    }
+
+    async function importKernel() {
+        isImportingKernel = true;
+        try {
+            const selected = await openDialog({
+                filters: [{
+                    name: 'Executable',
+                    extensions: window.navigator.userAgent.includes('Win') ? ['exe'] : []
+                }],
+                multiple: false
+            });
+
+            if (selected) {
+                 const path = typeof selected === 'string' ? selected : (selected as any).path;
+                 if (path) {
+                     const version = await importCustomBinary(path);
+                     alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
+                     // $appSettings.useCustomAria2 = true; // User requested manual enable
+                     await saveSettings();
+                     await loadVersionInfo();
+                 }
+            }
+        } catch (e) {
+            console.error(e);
+            alert('导入失败: ' + e);
+        } finally {
+            isImportingKernel = false;
+        }
+    }
+
+    async function restartApp() {
+        if (confirm('确定要重启应用以应用更改吗？')) {
+            await relaunch();
+        }
+    }
 
     function onPortChange() {
         isDirty = true;
@@ -83,6 +137,69 @@
             <button class="mini-btn" onclick={generateSecret} title="重新生成"><RefreshCw size={14} /></button>
           </div>
         </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="settings-section">
+    <h4 class="section-title">内核管理</h4>
+    
+    <div class="kernel-card">
+      <div class="kernel-header">
+         <div class="kernel-info">
+             <div class="kernel-label">当前内核版本</div>
+             <div class="kernel-value">
+                 {#if aria2Version}
+                     <span class="version-text">{aria2Version.version}</span>
+                     {#if aria2Version.is_custom}
+                        <span class="badge warning">自定义</span>
+                     {:else}
+                        <span class="badge gray">内置</span>
+                     {/if}
+                 {:else}
+                     <span class="loading-text">检测中...</span>
+                 {/if}
+             </div>
+             {#if aria2Version?.path}
+                <div class="kernel-path" title={aria2Version.path}>{aria2Version.path}</div>
+             {/if}
+         </div>
+      </div>
+      
+      <div class="kernel-actions">
+           <div class="toggle-row">
+               <span class="toggle-label">启用自定义内核</span>
+               <label class="switch">
+                 <input 
+                    type="checkbox" 
+                    bind:checked={$appSettings.useCustomAria2} 
+                    disabled={!aria2Version?.custom_binary_exists}
+                    onchange={async () => {
+                        await saveSettings();
+                        loadVersionInfo();
+                    }}
+                 />
+                 <span class="slider round"></span>
+               </label>
+               
+               <button class="mini-btn" onclick={restartApp} title="重启应用">
+                   <RotateCcw size={14} />
+               </button>
+           </div>
+           
+           <button class="secondary-btn" onclick={importKernel} disabled={isImportingKernel}>
+              {#if isImportingKernel}
+                  <RefreshCw size={14} class="spin" />
+              {:else}
+                  <FileUp size={14} />
+              {/if}
+              <span>导入新内核...</span>
+           </button>
+      </div>
+      
+      <div class="kernel-tip">
+          <AlertCircle size={12} />
+          <span>支持导入外部 aria2c 可执行文件 (v1.35.0+)。需要重启应用生效。</span>
       </div>
     </div>
   </section>
@@ -318,5 +435,149 @@
 
   .secondary-btn:hover {
     background: var(--surface-active);
+  }
+  
+  /* Kernel Card */
+  .kernel-card {
+    background: var(--input-bg);
+    border: 1px solid var(--border-normal);
+    border-radius: 12px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  
+  .kernel-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+  }
+  
+  .kernel-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      overflow: hidden;
+  }
+  
+  .kernel-label {
+      font-size: 11px;
+      color: var(--text-muted);
+  }
+  
+  .kernel-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+  
+  .version-text {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+  }
+  
+  .kernel-path {
+      font-size: 10px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      max-width: 300px;
+      opacity: 0.7;
+  }
+  
+  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+  
+  .kernel-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+  }
+  
+  .toggle-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+  }
+  
+  .toggle-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+  }
+  
+  .kernel-tip {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 10px;
+      color: var(--text-tertiary);
+      padding: 8px 12px;
+      background: var(--surface-ground);
+      border-radius: 6px;
+  }
+  
+  /* Switch Toggle */
+  .switch {
+    position: relative;
+    display: inline-block;
+    width: 36px;
+    height: 20px;
+  }
+
+  .switch input { 
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  .slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--surface-active);
+    transition: .3s;
+  }
+
+  .slider:before {
+    position: absolute;
+    content: "";
+    height: 16px;
+    width: 16px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s;
+  }
+
+  input:checked + .slider {
+    background-color: var(--accent-primary);
+  }
+
+  input:checked + .slider:before {
+    transform: translateX(16px);
+  }
+
+  .slider.round {
+    border-radius: 20px;
+  }
+
+  .slider.round:before {
+    border-radius: 50%;
+  }
+  
+  :global(.spin) {
+      animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+      100% { transform: rotate(360deg); }
   }
 </style>

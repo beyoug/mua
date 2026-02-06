@@ -502,3 +502,113 @@ pub fn stop_log_stream(app: AppHandle) {
         state.0.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
+
+#[tauri::command]
+pub async fn import_custom_binary(app: AppHandle, file_path: String) -> Result<String, String> {
+    use std::fs;
+    use std::path::Path;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+
+    // 1. Prepare target path
+    let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let bin_dir = config_dir.join("custom-bin");
+    if !bin_dir.exists() {
+        fs::create_dir_all(&bin_dir).map_err(|e| e.to_string())?;
+    }
+    
+    let target_name = if cfg!(windows) { "aria2c.exe" } else { "aria2c" };
+    let target_path = bin_dir.join(target_name);
+
+    // 2. Scan constraints
+    let source_path = Path::new(&file_path);
+    if !source_path.exists() {
+        return Err("Source file does not exist".to_string());
+    }
+
+    // 3. Copy file
+    fs::copy(source_path, &target_path).map_err(|e| format!("Copy failed: {}", e))?;
+
+    // 4. Set permissions (Unix)
+    #[cfg(unix)]
+    {
+        let mut perms = fs::metadata(&target_path).map_err(|e| e.to_string())?.permissions();
+        perms.set_mode(0o755);
+        fs::set_permissions(&target_path, perms).map_err(|e| e.to_string())?;
+    }
+
+    // 5. Validation (Dry Run)
+    let output = std::process::Command::new(&target_path)
+        .arg("--version")
+        .output()
+        .map_err(|e| format!("Validation failed (exec error): {}", e))?;
+
+    if !output.status.success() {
+        // Cleanup bad file
+        let _ = fs::remove_file(&target_path);
+        return Err("Validation failed: integrity check returned non-zero exit code".to_string());
+    }
+
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    if !stdout.contains("aria2 version") {
+        let _ = fs::remove_file(&target_path);
+        return Err("Validation failed: Not a valid aria2 binary".to_string());
+    }
+    
+    // Parse version (simplistic)
+    // "aria2 version 1.36.0"
+    let version_line = stdout.lines().next().unwrap_or("Unknown");
+    
+    Ok(version_line.to_string())
+}
+
+#[derive(serde::Serialize)]
+pub struct Aria2VersionInfo {
+    pub version: String,
+    pub is_custom: bool,
+    pub path: String,
+    pub custom_binary_exists: bool,
+    pub custom_binary_version: Option<String>,
+}
+
+#[tauri::command]
+pub async fn get_aria2_version_info(app: AppHandle) -> Result<Aria2VersionInfo, String> {
+    let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
+    let target_name = if cfg!(windows) { "aria2c.exe" } else { "aria2c" };
+    let custom_path = config_dir.join("custom-bin").join(target_name);
+    
+    // Check if custom binary exists and get its version
+    let (has_custom, custom_ver) = if custom_path.exists() {
+        match std::process::Command::new(&custom_path).arg("--version").output() {
+            Ok(output) if output.status.success() => {
+               let stdout = String::from_utf8_lossy(&output.stdout);
+               let ver = stdout.lines().next().unwrap_or("Unknown").to_string();
+               (true, Some(ver))
+            },
+            _ => (false, None)
+        }
+    } else {
+        (false, None)
+    };
+    
+    let config = crate::core::config::load_config(&app);
+    
+    // Determine info about the *Active* kernel
+    if config.use_custom_aria2 && has_custom {
+        Ok(Aria2VersionInfo {
+            version: custom_ver.clone().unwrap_or_default(),
+            is_custom: true,
+            path: custom_path.to_string_lossy().to_string(),
+            custom_binary_exists: true,
+            custom_binary_version: custom_ver,
+        })
+    } else {
+        Ok(Aria2VersionInfo {
+            version: "Built-in (1.36.0)".to_string(), 
+            is_custom: false,
+            path: "Embedded Sidecar".to_string(),
+            custom_binary_exists: has_custom,
+            custom_binary_version: custom_ver,
+        })
+    }
+}

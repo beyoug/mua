@@ -13,6 +13,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
+        .plugin(tauri_plugin_process::init())
+        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             use tauri::Manager;
@@ -23,13 +25,18 @@ pub fn run() {
         }))
         .manage(crate::aria2::sidecar::SidecarState {
             child: std::sync::Mutex::new(None),
+            native_child: std::sync::Mutex::new(None),
             recent_logs: std::sync::Mutex::new(Vec::new()),
         })
+        .manage(crate::aria2::sidecar::ShutdownState(
+            std::sync::atomic::AtomicBool::new(false),
+        ))
         .manage(crate::aria2::sidecar::LogStreamEnabled(
             std::sync::atomic::AtomicBool::new(false),
         ))
         .manage(crate::core::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
+            // ... (setup is fine) ...
             // 初始化托盘 (封装)
             tray::setup_tray(app)?;
 
@@ -107,7 +114,9 @@ pub fn run() {
             remove_tasks,
             cancel_tasks,
             start_log_stream,
-            stop_log_stream
+            stop_log_stream,
+            import_custom_binary,
+            get_aria2_version_info
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {
@@ -139,14 +148,27 @@ pub fn run() {
         .expect("error while building tauri application")
         .run(|app, event| match event {
             tauri::RunEvent::Exit => {
-                let child = {
+                // Signal shutdown to sidecar loop
+                if let Some(state) = app.try_state::<crate::aria2::sidecar::ShutdownState>() {
+                    state.0.store(true, std::sync::atomic::Ordering::SeqCst);
+                }
+
+                let (child, native_child) = {
                     let state = app.state::<crate::aria2::sidecar::SidecarState>();
-                    state.child.lock().ok().and_then(|mut c| c.take())
+                    (
+                        state.child.lock().ok().and_then(|mut c| c.take()),
+                        state.native_child.lock().ok().and_then(|mut c| c.take())
+                    )
                 };
 
                 if let Some(child) = child {
                     log::info!("Killing aria2 sidecar process...");
                     let _ = child.kill();
+                }
+                
+                if let Some(mut child) = native_child {
+                     log::info!("Killing custom aria2 process...");
+                     let _ = child.kill();
                 }
             }
             #[cfg(target_os = "macos")]

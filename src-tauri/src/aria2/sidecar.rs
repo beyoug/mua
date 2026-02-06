@@ -3,6 +3,8 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 use chrono::Local;
+use std::sync::Mutex;
+use tauri_plugin_shell::process::CommandChild;
 
 fn find_available_port(start: u16) -> u16 {
     let mut port = start;
@@ -25,19 +27,25 @@ fn find_available_port(start: u16) -> u16 {
     }
 }
 
-use std::sync::Mutex;
-use tauri_plugin_shell::process::CommandChild;
-
 pub struct SidecarState {
     pub child: Mutex<Option<CommandChild>>,
+    pub native_child: Mutex<Option<std::process::Child>>,
     pub recent_logs: Mutex<Vec<String>>,
 }
 
-pub struct LogStreamEnabled(pub std::sync::atomic::AtomicBool);
+pub struct ShutdownState(pub std::sync::atomic::AtomicBool);
 
 pub fn init_aria2_sidecar(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
         loop {
+            // Check for shutdown before starting (in case it happened fast)
+            if let Some(state) = app.try_state::<ShutdownState>() {
+                if state.0.load(std::sync::atomic::Ordering::SeqCst) {
+                    log::info!("App is shutting down. Stopping sidecar loop.");
+                    break;
+                }
+            }
+            
             let sidecar_command = match app.shell().sidecar("aria2c") {
                 Ok(cmd) => cmd,
                 Err(e) => {
@@ -50,7 +58,6 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 }
             };
 
-            // 1. Check existing config
             // 1. Check existing config
             let (preferred_port, save_session_interval, existing_secret) = {
                 if let Some(state) = app
@@ -125,26 +132,110 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             }
 
             log::info!("Starting Aria2 sidecar...");
-            let command = sidecar_command.args(&args);
-
-            match command.spawn() {
-                Ok((mut rx, child)) => {
-                    let pid = child.pid();
-                    log::info!("Aria2 sidecar started with PID: {}", pid);
-
-                    // 在状态中存储子进程
-                    let state = app.state::<SidecarState>();
-                    if let Ok(mut child_guard) = state.child.lock() {
-                        *child_guard = Some(child);
+            
+            // --- Custom Binary Logic ---
+            let config_state = app.state::<crate::core::config::ConfigState>();
+            let use_custom = config_state.config.lock().map(|c| c.use_custom_aria2).unwrap_or(false);
+            
+            let custom_command = if use_custom {
+                if let Ok(config_dir) = app.path().app_config_dir() {
+                    let target_name = if cfg!(windows) { "aria2c.exe" } else { "aria2c" };
+                    let bin_path = config_dir.join("custom-bin").join(target_name);
+                    if bin_path.exists() {
+                        log::info!("Using CUSTOM Aria2 binary at: {:?}", bin_path);
+                        Some(std::process::Command::new(bin_path))
                     } else {
-                        log::error!("Failed to lock SidecarState to store child process");
+                        log::warn!("Custom Aria2 enabled but file not found. Falling back to built-in.");
+                        None
                     }
+                } else {
+                    None
+                }
+            } else {
+                None
+            };
 
-                    // 监控进程
-                    let mut manually_exited = false;
-                    let mut stderr_buffer: Vec<String> = Vec::new();
+            let (mut rx, child_pid) = if let Some(mut cmd) = custom_command {
+                 // --- Native Spawning ---
+                 use std::process::Stdio;
+                 use std::io::{BufRead, BufReader};
+                 
+                 cmd.stdout(Stdio::piped())
+                    .stderr(Stdio::piped())
+                    .args(&args);
+                 
+                 match cmd.spawn() {
+                     Ok(mut child) => {
+                         let pid = child.id();
+                         let (tx, rx) = tokio::sync::mpsc::channel(128);
+                         
+                         // Bridge Stdout
+                         if let Some(stdout) = child.stdout.take() {
+                             let tx = tx.clone();
+                             std::thread::spawn(move || {
+                                 let reader = BufReader::new(stdout);
+                                 for line in reader.lines() {
+                                     if let Ok(l) = line {
+                                         let _ = tx.blocking_send(CommandEvent::Stdout(l.into_bytes()));
+                                     }
+                                 }
+                             });
+                         }
+                         
+                         // Bridge Stderr
+                         if let Some(stderr) = child.stderr.take() {
+                             let tx = tx.clone();
+                             std::thread::spawn(move || {
+                                 let reader = BufReader::new(stderr);
+                                 for line in reader.lines() {
+                                     if let Ok(l) = line {
+                                         let _ = tx.blocking_send(CommandEvent::Stderr(l.into_bytes()));
+                                     }
+                                 }
+                             });
+                         }
+                         
+                         // Store native child
+                         let state = app.state::<SidecarState>();
+                         if let Ok(mut guard) = state.native_child.lock() {
+                             *guard = Some(child);
+                         }
+                         
+                         (rx, pid)
+                     }
+                     Err(e) => {
+                         log::error!("Failed to spawn custom binary: {}", e);
+                         tokio::time::sleep(Duration::from_secs(5)).await;
+                         continue; 
+                     }
+                 }
+            } else {
+                 // --- Built-in Sidecar ---
+                 let command = sidecar_command.args(&args);
+                 match command.spawn() {
+                     Ok((rx, child)) => {
+                         let pid = child.pid();
+                         // Store tauri child
+                         let state = app.state::<SidecarState>();
+                         if let Ok(mut guard) = state.child.lock() {
+                             *guard = Some(child);
+                         }
+                         (rx, pid)
+                     }
+                     Err(e) => {
+                         log::error!("Failed to spawn sidecar: {}", e);
+                         continue;
+                     }
+                 }
+            };
 
-                    while let Some(event) = rx.recv().await {
+            log::info!("Aria2 started with PID: {}", child_pid);
+
+            // 监控进程
+            let mut manually_exited = false;
+            let mut stderr_buffer: Vec<String> = Vec::new();
+
+            while let Some(event) = rx.recv().await {
                         match event {
                             CommandEvent::Stdout(line) => {
                                 let log = String::from_utf8_lossy(&line);
@@ -168,7 +259,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                                 }
 
                                 // Stream logs if enabled
-                                if let Some(state) = app.try_state::<LogStreamEnabled>() {
+                                if let Some(state) = app.try_state::<crate::aria2::sidecar::LogStreamEnabled>() {
                                     if state.0.load(std::sync::atomic::Ordering::Relaxed) {
                                         let _ = app.emit("aria2-stdout", log_str);
                                     }
@@ -195,13 +286,22 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                                 }
 
                                 // Stream logs if enabled
-                                if let Some(state) = app.try_state::<LogStreamEnabled>() {
+                                if let Some(state) = app.try_state::<crate::aria2::sidecar::LogStreamEnabled>() {
                                     if state.0.load(std::sync::atomic::Ordering::Relaxed) {
                                         let _ = app.emit("aria2-stdout", log_str);
                                     }
                                 }
                             }
                             CommandEvent::Terminated(payload) => {
+                                // First check if we are shutting down
+                                if let Some(state) = app.try_state::<ShutdownState>() {
+                                    if state.0.load(std::sync::atomic::Ordering::SeqCst) {
+                                        log::info!("Aria2 terminated as expected during app shutdown.");
+                                        manually_exited = true;
+                                        break;
+                                    }
+                                }
+
                                 log::warn!("Aria2 terminated: {:?}", payload);
 
                                 // 如果是异常退出（非0状态码或被信号终止），发送事件到前端
@@ -232,9 +332,12 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     if !manually_exited {
                         log::warn!("Aria2 channel closed unexpectedly.");
                     }
-                }
-                Err(e) => {
-                    log::error!("Failed to spawn aria2 sidecar: {}", e);
+
+            // Check shutdown state before restarting
+            if let Some(state) = app.try_state::<ShutdownState>() {
+                if state.0.load(std::sync::atomic::Ordering::SeqCst) {
+                    log::info!("App is shutting down. Not restarting sidecar.");
+                    break;
                 }
             }
 
@@ -243,3 +346,5 @@ pub fn init_aria2_sidecar(app: AppHandle) {
         }
     });
 }
+
+pub struct LogStreamEnabled(pub std::sync::atomic::AtomicBool);

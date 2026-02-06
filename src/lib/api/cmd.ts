@@ -117,3 +117,19 @@ export async function importAria2Config(path: string): Promise<string> {
 export async function showTaskInFolder(gid: string): Promise<void> {
     return invoke('show_task_in_folder', { gid });
 }
+
+export interface Aria2VersionInfo {
+    version: string;
+    is_custom: boolean;
+    path: string;
+    custom_binary_exists: boolean;
+    custom_binary_version?: string;
+}
+
+export async function importCustomBinary(path: string): Promise<string> {
+    return invoke<string>('import_custom_binary', { filePath: path });
+}
+
+export async function getAria2VersionInfo(): Promise<Aria2VersionInfo> {
+    return invoke<Aria2VersionInfo>('get_aria2_version_info');
+}

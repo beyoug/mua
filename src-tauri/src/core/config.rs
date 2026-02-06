@@ -14,15 +14,18 @@ pub struct AppConfig {
     pub auto_resume: bool,
     #[serde(rename = "rpcSecret")]
     pub rpc_secret: Option<String>,
-    #[serde(
-        rename = "aria2SaveSessionInterval",
-        default = "default_session_interval"
-    )]
+    #[serde(rename = "aria2SaveSessionInterval", default = "default_session_interval")]
     pub save_session_interval: u64,
+    #[serde(rename = "useCustomAria2", default = "default_result_false")]
+    pub use_custom_aria2: bool,
 }
 
 fn default_session_interval() -> u64 {
     30
+}
+
+fn default_result_false() -> bool {
+    false
 }
 
 impl Default for AppConfig {
@@ -33,6 +36,7 @@ impl Default for AppConfig {
             auto_resume: false,
             rpc_secret: None,
             save_session_interval: 30,
+            use_custom_aria2: false,
         }
     }
 }

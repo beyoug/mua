@@ -84,6 +84,7 @@
             onclick={handleToggle}
             role="switch" 
             aria-checked={enabled}
+            aria-label="Toggle Log Stream"
           >
             <div class="toggle-track"></div>
             <div class="toggle-thumb"></div>

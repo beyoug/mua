@@ -1,7 +1,7 @@
 use crate::aria2::client::{self as aria2_client, Aria2Task};
 use crate::core::store::TaskStore;
 use std::collections::HashMap;
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::Ordering;
 use tauri::AppHandle;
 
 // Status tracker for connection logging
