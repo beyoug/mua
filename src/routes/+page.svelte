@@ -121,7 +121,8 @@
 	// ============ Event Handlers ============
 
 	function handleAddTask(config: DownloadConfig) {
-		addDownloadTask(config);
+		controller.handleAddTask(config, addDownloadTask);
+        showAddDialog = false; // 直接在这里关闭，体验更连贯
 	}
 	
 	function handleShowDetails(task: DownloadTask) {
@@ -144,14 +145,15 @@
 		<TaskListHeader
 			title={pageTitle()}
 			taskCount={filteredTasks().length}
-			{hasDownloading}
-			{hasPaused}
+			hasDownloading={controller.activeNav === 'active' && hasDownloading}
+			hasPaused={controller.activeNav === 'active' && hasPaused}
 			{hasRemovable}
 			isSelectionMode={controller.isSelectionMode}
 			selectedCount={controller.selectedIds.size}
 			onGlobalPause={pauseAll}
 			onGlobalResume={resumeAll}
 			onTrashClick={() => controller.handleTrashClick(filteredTasks())}
+			onExitSelection={() => controller.exitSelectionMode()}
 		/>
 
 		<TaskList
@@ -162,10 +164,11 @@
 			selectedIds={controller.selectedIds}
 			onSelect={(id) => controller.toggleSelection(id)}
 			onPause={pauseTask}
-			onResume={resumeTask}
-			onCancel={(id) => controller.handleCancelTask(id)}
+			onResume={(id) => controller.handleResumeTask(id, resumeTask)}
+			onCancel={(task) => controller.handleCancelTask(task)}
 			onOpenFolder={(id) => controller.handleOpenFolder(id)}
 			onShowDetails={handleShowDetails}
+			groupByDate={controller.activeNav === 'history'}
 		/>
 	</div>
 </main>
@@ -205,6 +208,7 @@
 		url={detailsTask.url}
 		state={detailsTask.state}
 		savePath={detailsTask.savePath}
+		errorMessage={detailsTask.errorMessage}
 		onClose={() => detailsTask = null}
 	/>
 {/if}

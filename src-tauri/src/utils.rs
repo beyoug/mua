@@ -35,7 +35,7 @@ pub fn show_in_file_manager(path: &str) {
     }
 }
 
-pub fn format_bytes(bytes: u64) -> String {
+pub fn format_size(bytes: u64) -> String {
     if bytes == 0 {
         return "0 B".to_string();
     }
@@ -48,14 +48,53 @@ pub fn format_bytes(bytes: u64) -> String {
     format!("{:.2} {}", (bytes as f64) / k.powf(i as f64), sizes[i])
 }
 
+pub fn format_speed(bytes_per_sec: u64) -> String {
+    if bytes_per_sec == 0 {
+        return "0.00|B/s".to_string();
+    }
+    let k = 1024.0;
+    let sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+    let i = (bytes_per_sec as f64).log(k).floor() as usize;
+    let unit = if i < sizes.len() {
+        format!("{}/s", sizes[i])
+    } else {
+        "B/s".to_string()
+    };
+    format!("{:.2}|{}", (bytes_per_sec as f64) / k.powf(i as f64), unit)
+}
+
 pub fn format_duration(seconds: u64) -> String {
     if seconds == 0 {
         return "".to_string();
     }
-    if seconds > 3600 {
-        format!("{:.1}小时", seconds as f64 / 3600.0)
-    } else if seconds > 60 {
-        format!("{:.0}分钟", seconds as f64 / 60.0)
+    // Easter Egg: If > 30 days, just say "Thinking of you" (A long time)
+    if seconds > 2592000 {
+        return "很久很久".to_string();
+    }
+    if seconds >= 86400 {
+        let days = seconds / 86400;
+        let hours = (seconds % 86400) / 3600;
+        if hours > 0 {
+            format!("{}天{}小时", days, hours)
+        } else {
+            format!("{}天", days)
+        }
+    } else if seconds >= 3600 {
+        let hours = seconds / 3600;
+        let mins = (seconds % 3600) / 60;
+        if mins > 0 {
+            format!("{}小时{}分钟", hours, mins)
+        } else {
+            format!("{}小时", hours)
+        }
+    } else if seconds >= 60 {
+        let mins = seconds / 60;
+        let secs = seconds % 60;
+        if secs > 0 {
+            format!("{}分钟{}秒", mins, secs)
+        } else {
+            format!("{}分钟", mins)
+        }
     } else {
         format!("{}秒", seconds)
     }
@@ -244,14 +283,23 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
 
     // Ensure parent dir exists
     if let Some(parent) = path.parent() {
-        std::fs::create_dir_all(parent)?;
+        if let Err(e) = std::fs::create_dir_all(parent) {
+             log::error!("Failed to create directory {:?}: {}", parent, e);
+             return Err(e);
+        }
     }
 
     // Write content
-    std::fs::write(&tmp_path, content)?;
+    if let Err(e) = std::fs::write(&tmp_path, content) {
+        log::error!("Failed to write temp file {:?}: {}", tmp_path, e);
+        return Err(e);
+    }
 
     // 2. Rename (Atomic replace)
-    std::fs::rename(&tmp_path, path)?;
-
+    if let Err(e) = std::fs::rename(&tmp_path, path) {
+        log::error!("Failed to rename {:?} to {:?}: {}", tmp_path, path, e);
+        return Err(e);
+    }
+    
     Ok(())
 }

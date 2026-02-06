@@ -23,7 +23,11 @@ pub fn run() {
         }))
         .manage(crate::aria2::sidecar::SidecarState {
             child: std::sync::Mutex::new(None),
+            recent_logs: std::sync::Mutex::new(Vec::new()),
         })
+        .manage(crate::aria2::sidecar::LogStreamEnabled(
+            std::sync::atomic::AtomicBool::new(false),
+        ))
         .manage(crate::core::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
             // 初始化托盘 (封装)
@@ -101,7 +105,9 @@ pub fn run() {
             pause_all_tasks,
             resume_all_tasks,
             remove_tasks,
-            cancel_tasks
+            cancel_tasks,
+            start_log_stream,
+            stop_log_stream
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

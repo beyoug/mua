@@ -11,7 +11,8 @@ export type DownloadState =
 	| 'completed'
 	| 'error'
 	| 'waiting'
-	| 'cancelled';
+	| 'cancelled'
+	| 'missing';
 
 /**
  * 下载任务接口
@@ -31,6 +32,7 @@ export interface DownloadTask {
 	state: DownloadState;
 	addedAt: string;
 	savePath: string;
+	errorMessage?: string;
 }
 
 /**

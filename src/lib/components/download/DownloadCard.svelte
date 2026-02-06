@@ -3,7 +3,7 @@
   下载任务卡片 - 使用主题 CSS 变量 + 精致效果
 -->
 <script lang="ts">
-	import { Pause, Play, X, MoreVertical, File, CheckCircle, AlertCircle, Check } from '@lucide/svelte';
+	import { Pause, Play, X, MoreVertical, File, CheckCircle, AlertCircle, Check, RefreshCw } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import ProgressBar from './ProgressBar.svelte';
     import DownloadCardMenu from './DownloadCardMenu.svelte';
@@ -24,7 +24,7 @@
 		selectionMode?: boolean;
 		selected?: boolean;
 		onSelect?: () => void;
-		addedAt?: string;
+		errorMessage?: string;
 		onOpenFolder?: () => void;
 		onShowDetails?: () => void;
 	}
@@ -44,7 +44,7 @@
 		selectionMode = false,
 		selected = false,
 		onSelect,
-		addedAt = '',
+		errorMessage = '',
 		onOpenFolder,
 		onShowDetails
 	}: Props = $props();
@@ -134,8 +134,12 @@
 				<button class="action-btn resume" onclick={() => onResume?.()} title="继续">
 					<Play size={15} />
 				</button>
+            {:else if ['completed', 'error', 'missing'].includes(downloadState)}
+                <button class="action-btn resume" onclick={() => onResume?.()} title="重新下载">
+					<RefreshCw size={15} />
+				</button>
 			{/if}
-			{#if downloadState !== 'completed'}
+			{#if downloadState !== 'completed' && downloadState !== 'missing'}
 				<button class="action-btn cancel" onclick={() => onCancel?.()} title="取消">
 					<X size={15} />
 				</button>
@@ -154,6 +158,7 @@
                     onOpenFolder={openFolder}
                     onDetails={showDetails}
                     onCancelOrDelete={() => { onCancel?.(); closeMenu(); }}
+                    onRedownload={onResume}
                 />
 			</div>
 		</div>
@@ -169,12 +174,14 @@
 		<!-- 左区域：动态状态信息 -->
 		<div class="footer-status">
 			{#if downloadState === 'downloading'}
+                {@const sParts = (speed || '0|B/s').split('|')}
 				<span class="status-indicator downloading">
 					<span class="status-icon">↓</span>
-					<span class="speed-value">{speed || '0 B/s'}</span>
+                    <span class="speed-num">{sParts[0]}</span>
+                    <span class="speed-unit-text">{sParts[1]}</span>
 				</span>
 				{#if remaining}
-					<span class="separator">•</span>
+					<span class="separator">·</span>
 					<span class="time-remaining">{remaining}</span>
 				{/if}
 			{:else if downloadState === 'paused'}
@@ -202,6 +209,17 @@
 					<span class="status-icon">⚠</span>
 					<span class="status-text">下载失败</span>
 				</span>
+                {#if errorMessage}
+                    <span class="separator">·</span>
+                    <span class="error-inline" title={errorMessage}>
+                       {errorMessage}
+                    </span>
+                {/if}
+            {:else if downloadState === 'missing'}
+				<span class="status-indicator missing">
+					<span class="status-icon">⚠</span>
+					<span class="status-text">本地文件不存在</span>
+				</span>
 			{/if}
 		</div>
 		
@@ -212,11 +230,9 @@
 			{:else if downloadState === 'completed'}
 				<span class="size-info">{total}</span>
 			{/if}
-			{#if addedAt}
-				<span class="time-added">{addedAt}</span>
-			{/if}
 		</div>
 	</div>
+
 </article>
 
 <style>
@@ -371,6 +387,8 @@
 		align-items: center;
 		gap: 6px;
 		min-width: 0;
+        flex: 1; /* Allow it to grow to push against meta, and shrink for truncation */
+        overflow: hidden; /* Essential for child truncation */
 	}
 
 	.status-indicator {
@@ -409,18 +427,40 @@
 		color: var(--semantic-danger, #ef4444);
 	}
 
-	.speed-value {
-		font-weight: 600;
-		min-width: 70px;
+	.status-indicator.missing {
+		color: #d97706; /* 琥珀色，用于表示本地文件丢失，比错误红更柔和且更专业 */
+		opacity: 0.85;
 	}
+
+	.speed-num {
+		font-weight: 600;
+		display: inline-block;
+		text-align: right;
+		min-width: 3.2em; /* 刚好容纳 0.00 */
+		font-variant-numeric: tabular-nums;
+		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+	}
+
+    .speed-unit-text {
+        font-weight: 600;
+        margin-left: 2px;
+        display: inline-block;
+        color: var(--text-secondary);
+        opacity: 0.9;
+    }
 
 	.separator {
 		color: var(--text-muted);
 		opacity: 0.5;
+		margin: 0 6px;
+		flex-shrink: 0;
 	}
 
 	.time-remaining {
 		color: var(--text-secondary);
+		display: inline-flex;
+		justify-content: flex-start;
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 	}
 
 	.status-text {
@@ -441,11 +481,6 @@
 		text-align: right;
 	}
 
-	.time-added {
-		font-size: 10px;
-		color: var(--text-muted);
-		opacity: 0.7;
-	}
 
 	.checkbox-wrapper {
 		display: flex;
@@ -457,8 +492,8 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 6px;
-		border: 1px solid var(--border-color);
-		background: var(--bg-hover);
+		border: 1px solid rgba(255, 255, 255, 0.2);
+		background: rgba(0, 0, 0, 0.2);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -468,16 +503,31 @@
 	}
 
 	.checkbox:hover {
-		border-color: var(--text-muted);
+		border-color: rgba(255, 255, 255, 0.4);
+        background: rgba(255, 255, 255, 0.05);
 	}
 
 	.checkbox.checked {
 		background: var(--accent-primary);
 		border-color: var(--accent-primary);
+        box-shadow: 0 0 10px var(--accent-glow);
 	}
 
 	/* 下拉菜单样式 */
 	.menu-container {
 		position: relative;
 	}
+
+
+    .error-inline {
+        color: var(--semantic-danger);
+        font-size: 11px;
+        opacity: 0.9;
+        font-family: var(--font-mono);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        flex: 1; /* Fill remaining space in footer-status */
+        min-width: 0; /* Allow flex item to shrink below content size */
+    }
 </style>

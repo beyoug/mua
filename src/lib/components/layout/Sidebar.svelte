@@ -78,10 +78,10 @@
 
 	<!-- 统计面板 -->
 	<div class="stats-panel">
-		<div class="stat-item">
-			<TrendingDown size={16} />
-			<span class="stat-value">{stats.totalSpeed}</span>
-		</div>
+        <div class="stat-item" title="总下载速度">
+            <TrendingDown size={16} />
+            <span class="stat-value">{stats.totalSpeed?.replace('|', ' ') || '0 B/s'}</span>
+        </div>
 		<div class="stat-row">
 			<span class="stat-label">活跃</span>
 			<span class="stat-count">{stats.activeCount}</span>
@@ -244,6 +244,12 @@
 		font-weight: 500;
 		margin-bottom: 6px;
 	}
+
+    .stat-value {
+        font-family: var(--font-mono);
+        color: var(--text-secondary);
+        font-size: 11px;
+    }
 
 	.stat-row {
 		display: flex;

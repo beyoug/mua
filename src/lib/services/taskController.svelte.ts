@@ -3,6 +3,7 @@ import {
     removeTasks,
     cancelTask,
     cancelTasks,
+    isActiveTask,
     type DownloadTask
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
@@ -75,7 +76,19 @@ export class TaskController {
             return;
         }
 
-        // 其他页面（已完成/历史）：需要弹窗确认 + 删除文件选项
+        // 历史/已完成页面：
+        // 检查选中任务中是否包含"已完成"的任务
+        // 如果选中的全是 失败/取消/缺失/进行中 等非完成状态，则直接删除不弹窗
+        const selectedTasks = currentTasks.filter(t => this.selectedIds.has(t.id));
+        const hasCompletedTask = selectedTasks.some(t => t.state === 'completed');
+
+        if (!hasCompletedTask) {
+            // 全是非完成任务 -> 直接删除（含文件）
+            this.performClear(true);
+            return;
+        }
+
+        // 包含已完成任务 -> 弹窗确认
         const count = this.selectedIds.size;
         let title = '';
         let description = '';
@@ -117,19 +130,22 @@ export class TaskController {
         this.showClearDialog = false;
     }
 
-    handleCancelTask(id: string) {
-        if (this.activeNav === 'active') {
-            // 进行中：软删除（取消），无需确认
-            cancelTask(id);
-        } else {
-            // 历史记录：需要确认是否删除文件
-            this.itemToDelete = id;
+    handleCancelTask(task: DownloadTask) {
+        if (isActiveTask(task.state)) {
+            // 活跃任务（下载/等待/暂停）：软删除（仅取消并保留在历史），无需确认
+            cancelTask(task.id);
+        } else if (task.state === 'completed') {
+            // 已完成任务：物理删除记录，需要确认
+            this.itemToDelete = task.id;
             this.clearDialogProps = {
                 title: '删除任务',
                 description: '确定要删除这条任务记录吗？',
                 confirmText: '删除'
             };
             this.showClearDialog = true;
+        } else {
+            // 失败/取消/缺失 等未完成状态：直接物理删除且清理文件，无需确认
+            removeTask(task.id, true);
         }
     }
 
@@ -139,5 +155,21 @@ export class TaskController {
         } catch (e) {
             console.error('Failed to open folder', e);
         }
+    }
+
+    /**
+     * 接管添加下载逻辑，添加后自动跳转至进行中
+     */
+    handleAddTask(config: any, addTaskFn: (config: any) => void) {
+        addTaskFn(config);
+        this.handleNavChange('active');
+    }
+
+    /**
+     * 接管恢复/重新下载逻辑，操作后自动跳转至进行中
+     */
+    handleResumeTask(id: string, resumeFn: (id: string) => void) {
+        resumeFn(id);
+        this.handleNavChange('active');
     }
 }

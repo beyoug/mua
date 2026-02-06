@@ -47,9 +47,9 @@ export const themes: Record<ThemeId, Theme> = {
 export type ColorMode = 'dark' | 'light' | 'auto';
 
 export const colorModes: { id: ColorMode; name: string }[] = [
-	{ id: 'dark', name: '深色' },
+	{ id: 'auto', name: '跟随系统' },
 	{ id: 'light', name: '浅色' },
-	{ id: 'auto', name: '跟随系统' }
+	{ id: 'dark', name: '深色' }
 ];
 
 // ============ Storage Keys ============

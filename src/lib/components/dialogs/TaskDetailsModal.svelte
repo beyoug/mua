@@ -3,7 +3,7 @@
   任务详情弹窗 - 显示任务详细信息
 -->
 <script lang="ts">
-	import { X, File, Link, CheckCircle } from '@lucide/svelte';
+	import { X, File, Link, CheckCircle, AlertCircle } from '@lucide/svelte';
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadState } from '$lib/types/download';
 
@@ -13,10 +13,11 @@
 		url: string;
 		state: DownloadState;
 		savePath?: string;
+		errorMessage?: string;
 		onClose: () => void;
 	}
 
-	let { open = false, filename, url, state, savePath = '', onClose }: Props = $props();
+	let { open = false, filename, url, state, savePath = '', errorMessage = '', onClose }: Props = $props();
 
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
@@ -104,6 +105,19 @@
 						<span class="state-badge state-{state}">{getStateLabel(state)}</span>
 					</div>
 				</div>
+
+				<!-- 错误信息 (仅当出错时显示) -->
+				{#if state === 'error' && errorMessage}
+					<div class="detail-row">
+						<div class="detail-label">
+							<AlertCircle size={14} />
+							<span>失败原因</span>
+						</div>
+						<div class="detail-value error-message">
+							{errorMessage}
+						</div>
+					</div>
+				{/if}
 
 				<!-- 保存路径 -->
 				{#if savePath}
@@ -252,8 +266,16 @@
 
 	.detail-value.path {
 		font-family: var(--font-mono);
-		font-size: 12px;
 		color: var(--text-secondary);
+	}
+
+	.detail-value.error-message {
+		color: var(--semantic-danger);
+		font-family: var(--font-mono);
+		background: var(--semantic-danger-bg);
+		padding: 8px 12px;
+		border-radius: 8px;
+		border: 1px solid rgba(239, 68, 68, 0.2);
 	}
 
 	.state-badge {

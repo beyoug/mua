@@ -251,7 +251,7 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
                 filename: config.filename || extractFilenameFromUrl(primaryUrl),
                 url: primaryUrl,
                 progress: 0,
-                speed: '0 B/s',
+                speed: '0.00|B/s',
                 speed_u64: 0,
                 downloaded: '0 B',
                 downloaded_u64: 0,
@@ -290,7 +290,7 @@ export async function pauseTask(id: string): Promise<void> {
             }
             // 乐观更新
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'paused', speed: '0 B/s' } : t
+                t.id === id ? { ...t, state: 'paused', speed: '0.00|B/s' } : t
             );
         });
 
@@ -335,7 +335,7 @@ export async function resumeTask(id: string): Promise<void> {
                     id: newGid,
                     state: 'waiting', // or downloading
                     progress: 0,
-                    speed: '0 B/s',
+                    speed: '0.00|B/s',
                     speed_u64: 0,
                     remaining: '',
                     // Reset stats as it's a fresh download
@@ -487,7 +487,7 @@ export async function pauseAll(): Promise<void> {
             // 乐观更新：所有 active -> paused
             return tasks.map(t =>
                 (t.state === 'downloading' || t.state === 'waiting')
-                    ? { ...t, state: 'paused', speed: '0 B/s' }
+                    ? { ...t, state: 'paused', speed: '0.00|B/s' }
                     : t
             );
         });

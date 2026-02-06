@@ -3,7 +3,7 @@
   任务列表头部组件 - 显示标题、统计和全局操作按钮
 -->
 <script lang="ts">
-	import { Play, Pause, Trash2 } from '@lucide/svelte';
+	import { Play, Pause, Trash2, X } from '@lucide/svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 
 	interface Props {
@@ -16,7 +16,9 @@
 		selectedCount: number;
 		onGlobalPause?: () => void;
 		onGlobalResume?: () => void;
+		onGlobalResume?: () => void;
 		onTrashClick?: () => void;
+		onExitSelection?: () => void;
 	}
 
 	let {
@@ -29,7 +31,8 @@
 		selectedCount,
 		onGlobalPause,
 		onGlobalResume,
-		onTrashClick
+		onTrashClick,
+		onExitSelection
 	}: Props = $props();
 
 	const trashTooltip = $derived(() => {
@@ -63,6 +66,12 @@
 					<Play size={18} fill="currentColor" />
 				</button>
 			{/if}
+		{/if}
+
+		{#if isSelectionMode}
+			<button class="icon-btn" onclick={onExitSelection} title="退出选择">
+				<X size={18} />
+			</button>
 		{/if}
 
 		{#if hasRemovable || taskCount > 0}

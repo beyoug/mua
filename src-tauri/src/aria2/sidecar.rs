@@ -2,6 +2,7 @@ use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
+use chrono::Local;
 
 fn find_available_port(start: u16) -> u16 {
     let mut port = start;
@@ -29,7 +30,10 @@ use tauri_plugin_shell::process::CommandChild;
 
 pub struct SidecarState {
     pub child: Mutex<Option<CommandChild>>,
+    pub recent_logs: Mutex<Vec<String>>,
 }
+
+pub struct LogStreamEnabled(pub std::sync::atomic::AtomicBool);
 
 pub fn init_aria2_sidecar(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
@@ -149,13 +153,52 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                                 } else {
                                     log::info!("Aria2 stdout: {}", log);
                                 }
+                                
+                                let now = Local::now().format("%H:%M:%S"); 
+                                let log_str = format!("[{}] [INFO] {}", now, log.trim());
+                                
+                                // Buffer
+                                if let Some(state) = app.try_state::<SidecarState>() {
+                                    if let Ok(mut logs) = state.recent_logs.lock() {
+                                        logs.push(log_str.clone());
+                                        if logs.len() > 100 {
+                                            logs.remove(0);
+                                        }
+                                    }
+                                }
+
+                                // Stream logs if enabled
+                                if let Some(state) = app.try_state::<LogStreamEnabled>() {
+                                    if state.0.load(std::sync::atomic::Ordering::Relaxed) {
+                                        let _ = app.emit("aria2-stdout", log_str);
+                                    }
+                                }
                             }
                             CommandEvent::Stderr(line) => {
                                 let log = String::from_utf8_lossy(&line);
+                                let now = Local::now().format("%H:%M:%S");
+                                let log_str = format!("[{}] [ERROR] {}", now, log.trim());
                                 log::warn!("Aria2 stderr: {}", log);
                                 stderr_buffer.push(log.to_string());
                                 if stderr_buffer.len() > 20 {
                                     stderr_buffer.remove(0);
+                                }
+
+                                // Buffer
+                                if let Some(state) = app.try_state::<SidecarState>() {
+                                    if let Ok(mut logs) = state.recent_logs.lock() {
+                                        logs.push(log_str.clone());
+                                        if logs.len() > 100 {
+                                            logs.remove(0);
+                                        }
+                                    }
+                                }
+
+                                // Stream logs if enabled
+                                if let Some(state) = app.try_state::<LogStreamEnabled>() {
+                                    if state.0.load(std::sync::atomic::Ordering::Relaxed) {
+                                        let _ = app.emit("aria2-stdout", log_str);
+                                    }
                                 }
                             }
                             CommandEvent::Terminated(payload) => {

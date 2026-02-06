@@ -19,6 +19,8 @@ pub struct PersistedTask {
     pub completed_length: String,
     pub download_speed: String,
     // Add other fields we want to persist if Aria2 loses them
+    #[serde(default)]
+    pub error_message: String,
 }
 
 /// Minimum interval between save operations (ms)

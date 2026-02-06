@@ -17,9 +17,10 @@
 		onSelect?: (id: string) => void;
 		onPause?: (id: string) => void;
 		onResume?: (id: string) => void;
-		onCancel?: (id: string) => void;
+		onCancel?: (task: DownloadTask) => void;
 		onOpenFolder?: (id: string) => void;
 		onShowDetails?: (task: DownloadTask) => void;
+		groupByDate?: boolean;
 	}
 
 	let {
@@ -33,15 +34,58 @@
 		onResume,
 		onCancel,
 		onOpenFolder,
-		onShowDetails
+		onShowDetails,
+		groupByDate = false
 	}: Props = $props();
+	// Helper to format date for grouping
+	// Helper to format date for grouping with natural language
+	function getTaskDate(dateStr: string): string {
+		if (!dateStr) return '';
+		try {
+			const date = new Date(dateStr);
+			const now = new Date();
+			
+			// Reset time part for accurate date comparison
+			const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+			const target = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+			
+			const diffTime = today.getTime() - target.getTime();
+			const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+
+			if (diffDays === 0) return '今天';
+			if (diffDays === 1) return '昨天';
+			if (diffDays === 2) return '前天';
+			
+			// Format: "M月D日 周X"
+			const weekDays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六'];
+			const weekDay = weekDays[date.getDay()];
+			
+			if (today.getFullYear() === target.getFullYear()) {
+				return `${date.getMonth() + 1}月${date.getDate()}日 ${weekDay}`;
+			}
+			
+			return `${date.getFullYear()}年${date.getMonth() + 1}月${date.getDate()}日`;
+		} catch (e) {
+			return '';
+		}
+	}
 </script>
 
 <div class="scroll-container">
 {#if tasks.length > 0}
 	<section class="downloads-list">
-		{#each tasks as download (download.id)}
+		{#each tasks as download, i (download.id)}
+			{@const currentDate = groupByDate ? getTaskDate(download.addedAt) : ''}
+			{@const prevDate = groupByDate && i > 0 ? getTaskDate(tasks[i - 1].addedAt) : ''}
+			
 			<div animate:flip={{ duration: 400 }}>
+				{#if groupByDate && currentDate && currentDate !== prevDate}
+					<div class="date-divider">
+						<span>{currentDate}</span>
+						<div class="line"></div>
+					</div>
+				{/if}
+
 				<DownloadCard
 					filename={download.filename}
 					url={download.url}
@@ -56,10 +100,10 @@
 					onSelect={() => onSelect?.(download.id)}
 					onPause={() => onPause?.(download.id)}
 					onResume={() => onResume?.(download.id)}
-					onCancel={() => onCancel?.(download.id)}
+					onCancel={() => onCancel?.(download)}
 					onOpenFolder={() => onOpenFolder?.(download.id)}
 					onShowDetails={() => onShowDetails?.(download)}
-					addedAt={download.addedAt}
+					errorMessage={download.errorMessage}
 				/>
 			</div>
 		{/each}
@@ -155,5 +199,34 @@
 		font-size: 14px;
 		color: var(--text-muted);
 		margin: 0 0 24px;
+	}
+
+	.date-divider {
+		display: flex;
+		align-items: center;
+		gap: 12px;
+		margin-top: 32px; /* Increased spacing for better separation */
+		margin-bottom: 12px;
+		width: 100%;
+		padding-left: 4px; /* Slight indent */
+	}
+	
+	/* Remove margin for the very first divider if it's at the top */
+	.date-divider:first-child {
+		margin-top: 0;
+	}
+
+	.date-divider span {
+		font-size: 13px;
+		font-weight: 600; /* Slightly bolder */
+		color: var(--text-primary); /* Darker text for better readability */
+		opacity: 0.8;
+	}
+
+	.date-divider .line {
+		flex: 1;
+		height: 1px;
+		background: linear-gradient(to right, var(--border-color) 0%, transparent 100%); /* Fade out line */
+		opacity: 0.6;
 	}
 </style>

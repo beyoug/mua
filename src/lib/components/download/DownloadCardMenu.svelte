@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { X, Copy, Folder, Info } from '@lucide/svelte';
+	import { X, Copy, Folder, Info, RefreshCw } from '@lucide/svelte';
 	import { scale } from 'svelte/transition';
 
     interface Props {
@@ -11,6 +11,7 @@
         onOpenFolder: () => void;
         onDetails: () => void;
         onCancelOrDelete: () => void;
+        onRedownload?: () => void;
     }
 
     let { 
@@ -21,7 +22,8 @@
         onCopy, 
         onOpenFolder, 
         onDetails, 
-        onCancelOrDelete 
+        onCancelOrDelete,
+        onRedownload
     }: Props = $props();
 </script>
 
@@ -34,6 +36,12 @@
         class="dropdown-menu" 
         transition:scale={{ duration: 150, start: 0.95 }}
     >
+        {#if ['completed', 'cancelled', 'error', 'missing'].includes(downloadState)}
+            <button class="menu-item" onclick={() => { onRedownload?.(); onClose(); }}>
+                <RefreshCw size={14} />
+                <span>重新下载</span>
+            </button>
+        {/if}
         <button class="menu-item" onclick={onCopy} disabled={!url}>
             <Copy size={14} />
             <span>复制链接</span>

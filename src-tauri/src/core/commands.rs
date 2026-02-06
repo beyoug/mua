@@ -1,7 +1,7 @@
 use crate::aria2::client as aria2_client;
 use crate::utils;
 use futures::future::join_all;
-use tauri::{AppHandle, Manager};
+use tauri::{AppHandle, Emitter, Manager};
 
 use crate::core::store::{PersistedTask, TaskStore};
 use chrono::Local;
@@ -77,7 +77,8 @@ pub async fn add_download_task(
                 state: "waiting".to_string(),
                 total_length: "0".to_string(),
                 completed_length: "0".to_string(),
-                download_speed: "0".to_string(),
+                download_speed: "0 B/s".to_string(),
+                error_message: "".to_string(),
             };
             state.add_task(task);
             Ok(gid)
@@ -106,6 +107,7 @@ pub async fn resume_task(
             || task.state == "error"
             || task.state == "completed"
             || task.state == "removed"
+            || task.state == "missing"
     } else {
         // If not in store, we can't do anything smart, try generic resume
         false
@@ -152,6 +154,9 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
                 serde_json::Value::String(task.filename.clone()),
             );
         }
+
+        // 0. Purge old task result if it exists in Aria2 to prevent GID conflict or stale data
+        let _ = aria2_client::purge(gid.clone()).await;
 
         // Re-add URI
         match aria2_client::add_uri(
@@ -262,11 +267,7 @@ pub async fn remove_tasks(
                 .unwrap_or(false)
         });
 
-    // 2. 批量从 Store 删除
-    state.remove_tasks_batch(&gids);
-    state.save();
-
-    // 3. 并发处理 Aria2
+    // 1. 并发处理 Aria2
     // 活跃任务：remove (停止)
     let active_futures: Vec<_> = active_gids
         .iter()
@@ -280,6 +281,10 @@ pub async fn remove_tasks(
         .map(|gid| aria2_client::purge(gid.clone()))
         .collect();
     let _ = join_all(purge_futures).await;
+
+    // 2. 批量从 Store 删除 (Aria2 处理后再删记录，防止通知失败导致孤儿任务)
+    state.remove_tasks_batch(&gids);
+    state.save();
 
     // 4. 删除文件（如果需要）
     if delete_file {
@@ -336,20 +341,19 @@ async fn remove_task_inner(
         false
     };
 
-    // 1. Remove from Store
-    state.remove_task(&gid);
-
-    // 2. Remove from Aria2
+    // 1. Remove from Aria2 First
     if is_active {
         // If active, we must cancel it first. "remove" in aria2 triggers stop.
-        // We cannot "purge" an active task.
         let _ = aria2_client::remove(gid.clone()).await;
-        // We try to purge too, just in case (will likely fail, but fine)
+        // We try to purge too, just in case
         let _ = aria2_client::purge(gid.clone()).await;
     } else {
         // If stopped/completed, we purge the result
         let _ = aria2_client::purge(gid.clone()).await;
     }
+
+    // 2. Remove from Store Only after Aria2 was notified
+    state.remove_task(&gid);
 
     // 3. Delete File if requested
     if delete_file {
@@ -474,4 +478,27 @@ pub async fn save_app_config(
     // 2. 我们可能想要重启 aria2 或者只是让用户重启应用。
     // 动态重启 sidecar 比较复杂。提示重启更好。
     Ok(())
+}
+
+#[tauri::command]
+pub fn start_log_stream(app: AppHandle) {
+    if let Some(state) = app.try_state::<crate::aria2::sidecar::LogStreamEnabled>() {
+        state.0.store(true, std::sync::atomic::Ordering::Relaxed);
+    }
+    
+    // Send buffered logs immediately
+    if let Some(state) = app.try_state::<crate::aria2::sidecar::SidecarState>() {
+        if let Ok(logs) = state.recent_logs.lock() {
+            for log in logs.iter() {
+                let _ = app.emit("aria2-stdout", log);
+            }
+        }
+    }
+}
+
+#[tauri::command]
+pub fn stop_log_stream(app: AppHandle) {
+    if let Some(state) = app.try_state::<crate::aria2::sidecar::LogStreamEnabled>() {
+        state.0.store(false, std::sync::atomic::Ordering::Relaxed);
+    }
 }

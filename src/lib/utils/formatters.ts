@@ -32,15 +32,26 @@ export function parseSpeedToBytes(speedStr: string): number {
  * @returns 格式化的速度字符串，如 "12.5 MB/s"
  */
 export function formatSpeed(bytesPerSecond: number): string {
-    if (bytesPerSecond === 0) return '0 B/s';
-    if (bytesPerSecond < 1024) return `${bytesPerSecond} B/s`;
-    if (bytesPerSecond < 1024 * 1024) {
-        return `${(bytesPerSecond / 1024).toFixed(1)} KB/s`;
-    }
-    if (bytesPerSecond < 1024 * 1024 * 1024) {
-        return `${(bytesPerSecond / (1024 * 1024)).toFixed(1)} MB/s`;
-    }
-    return `${(bytesPerSecond / (1024 * 1024 * 1024)).toFixed(2)} GB/s`;
+    if (bytesPerSecond === 0) return '0.00|B/s';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
+    const val = (bytesPerSecond / Math.pow(k, i)).toFixed(2);
+    const unit = i < sizes.length ? `${sizes[i]}/s` : 'B/s';
+    return `${val}|${unit}`;
+}
+
+/**
+ * 格式化字节为人类可读的大小（无管道符，无/s）
+ */
+export function formatBytes(bytes: number): string {
+    if (bytes === 0) return '0 B';
+    const k = 1024;
+    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    const val = (bytes / Math.pow(k, i)).toFixed(2);
+    const unit = i < sizes.length ? sizes[i] : 'B';
+    return `${val} ${unit}`;
 }
 
 /**
