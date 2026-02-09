@@ -13,6 +13,9 @@ import type { DownloadTask, DownloadConfig, DownloadStats, DownloadState } from 
 import {
     isActiveTask,
     isCompletedTask,
+    isDownloadingTask,
+    isWaitingTask,
+    isPausedTask,
 } from '$lib/utils/downloadStates';
 import {
     formatSpeed,
@@ -135,7 +138,7 @@ export const downloadStats: Readable<DownloadStats> = derived(
     { subscribe: subscribeTasks },
     ($tasks) => {
         const activeDownloads = $tasks.filter(d =>
-            ['downloading', 'waiting'].includes(d.state)
+            isDownloadingTask(d.state) || isWaitingTask(d.state)
         );
         const completedDownloads = $tasks.filter(d => isCompletedTask(d.state));
 
@@ -409,7 +412,7 @@ export async function pauseAll(): Promise<void> {
         // 获取所有需要暂停的任务 ID 并锁定状态
         updateTasks(tasks => {
             tasks.forEach(t => {
-                if (t.state === 'downloading' || t.state === 'waiting') {
+                if (isDownloadingTask(t.state) || isWaitingTask(t.state)) {
                     pendingStateChanges.add(t.id);
                 }
             });
@@ -435,13 +438,13 @@ export async function resumeAll(): Promise<void> {
         // 获取所有需要恢复的任务 ID 并锁定状态
         updateTasks(tasks => {
             tasks.forEach(t => {
-                if (t.state === 'paused') {
+                if (isPausedTask(t.state)) {
                     pendingStateChanges.add(t.id);
                 }
             });
             // 乐观更新：所有 paused -> waiting
             return tasks.map(t =>
-                t.state === 'paused'
+                isPausedTask(t.state)
                     ? { ...t, state: 'waiting' }
                     : t
             );
@@ -457,12 +460,12 @@ export async function resumeAll(): Promise<void> {
  * 判断是否有正在下载的任务
  */
 export function hasDownloadingTasks(tasks: DownloadTask[]): boolean {
-    return tasks.some(t => t.state === 'downloading' || t.state === 'waiting');
+    return tasks.some(t => isDownloadingTask(t.state) || isWaitingTask(t.state));
 }
 
 /**
  * 判断是否有暂停的任务
  */
 export function hasPausedTasks(tasks: DownloadTask[]): boolean {
-    return tasks.some(t => t.state === 'paused');
+    return tasks.some(t => isPausedTask(t.state));
 }
