@@ -7,7 +7,30 @@ on:
       - 'v*'
 
 jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/v')
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Create and push release branch
+        run: |
+          TAG_NAME=${GITHUB_REF#refs/tags/}
+          BRANCH_NAME="release/$TAG_NAME"
+          
+          # 检查分支是否已存在
+          if git ls-remote --exit-code --heads origin "$BRANCH_NAME"; then
+            echo "Branch $BRANCH_NAME already exists, skipping creation."
+          else
+            git checkout -b "$BRANCH_NAME"
+            git push origin "$BRANCH_NAME"
+          fi
+
   publish:
+    needs: create-release-branch
     permissions:
       contents: write
     strategy:
