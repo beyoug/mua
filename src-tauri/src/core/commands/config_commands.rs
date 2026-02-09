@@ -1,10 +1,11 @@
 //! 配置相关命令
 //! 包含应用配置的读写操作
 
+use crate::core::error::AppResult;
 use tauri::{AppHandle, Manager};
 
 #[tauri::command]
-pub async fn get_app_config(app: AppHandle) -> Result<crate::core::config::AppConfig, String> {
+pub async fn get_app_config(app: AppHandle) -> AppResult<crate::core::config::AppConfig> {
     Ok(crate::core::config::load_config(&app))
 }
 
@@ -12,7 +13,7 @@ pub async fn get_app_config(app: AppHandle) -> Result<crate::core::config::AppCo
 pub async fn save_app_config(
     app: AppHandle,
     config: crate::core::config::AppConfig,
-) -> Result<(), String> {
+) -> AppResult<()> {
     // 1. 保存到磁盘
     crate::core::config::save_config(&app, &config)?;
 

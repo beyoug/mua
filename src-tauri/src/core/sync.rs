@@ -1,4 +1,5 @@
 use crate::aria2::client::{self as aria2_client, Aria2Task};
+use crate::core::error::{AppError, AppResult};
 use crate::core::store::TaskStore;
 use crate::core::types::TaskState;
 use std::collections::HashMap;
@@ -95,7 +96,7 @@ pub struct FrontendTask {
 pub async fn sync_tasks(
     state: &TaskStore,
     app_handle: &AppHandle,
-) -> Result<Vec<FrontendTask>, String> {
+) -> AppResult<Vec<FrontendTask>> {
     // 1. 从 Store 获取所有任务
     let mut store_tasks = state.get_all();
 
@@ -117,7 +118,7 @@ pub async fn sync_tasks(
             }
             // 如果已经是 false，则保持沉默（静默模式）
 
-            return Err(format!("无法连接到 Aria2: {}", e));
+            return Err(AppError::aria2(format!("无法连接到 Aria2: {}", e)));
         }
     };
 
@@ -239,7 +240,7 @@ pub async fn sync_tasks(
                     }
                 }
                 Err(e) => {
-                    let lower_msg = e.to_lowercase();
+                    let lower_msg = e.to_string().to_lowercase();
                     if lower_msg.contains("not found")
                         || lower_msg.contains("error 1")
                         || lower_msg.contains("http error")

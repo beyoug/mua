@@ -2,6 +2,7 @@
 //! 包含下载任务的 CRUD 操作
 
 use crate::aria2::client as aria2_client;
+use crate::core::error::{AppError, AppResult};
 use crate::core::types::TaskState;
 use crate::utils;
 use futures::future::join_all;
@@ -23,13 +24,13 @@ pub async fn add_download_task(
     headers: Option<String>,
     proxy: Option<String>,
     max_download_limit: Option<String>,
-) -> Result<String, String> {
+) -> AppResult<String> {
     log::info!("add_download_task called with urls: {:?}", urls);
 
     // 验证
     for url in &urls {
         if !utils::is_valid_url(url) {
-            return Err(format!("无效的 URL: {}", url));
+            return Err(AppError::validation(format!("无效的 URL: {}", url)));
         }
     }
 
@@ -95,7 +96,7 @@ pub async fn add_download_task(
 }
 
 #[tauri::command]
-pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> Result<String, String> {
+pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
     let result = aria2_client::pause(gid.clone()).await?;
     state.update_task_state(&gid, "paused");
     Ok(result)
@@ -105,7 +106,7 @@ pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> Resu
 pub async fn resume_task(
     state: tauri::State<'_, TaskStore>,
     gid: String,
-) -> Result<String, String> {
+) -> AppResult<String> {
     // 1. 首先检查 Store 状态
     let should_smart_resume = if let Some(task) = state.get_task(&gid) {
         TaskState::from(task.state.as_str()).is_terminal()
@@ -124,7 +125,8 @@ pub async fn resume_task(
             Ok(res)
         }
         Err(e) => {
-            if e.to_lowercase().contains("not found") || e.to_lowercase().contains("error 1") {
+            let msg = e.to_string().to_lowercase();
+            if msg.contains("not found") || msg.contains("error 1") {
                 smart_resume_task(&state, gid).await
             } else {
                 Err(e)
@@ -134,7 +136,7 @@ pub async fn resume_task(
 }
 
 // 用于重新提交任务的辅助函数
-async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, String> {
+async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> {
     log::info!("正在为 GID {} 尝试智能恢复 (Smart Resume)", gid);
 
     if let Some(task) = state.get_task(&gid) {
@@ -193,11 +195,11 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
             }
             Err(add_err) => {
                 log::error!("智能恢复重新添加任务失败: {}", add_err);
-                Err(format!("智能恢复失败: {}", add_err))
+                Err(AppError::aria2(format!("智能恢复失败: {}", add_err)))
             }
         }
     } else {
-        Err("存储中未找到任务，无法恢复".to_string())
+        Err(AppError::task_not_found(gid))
     }
 }
 
@@ -205,21 +207,21 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
 pub async fn cancel_task(
     state: tauri::State<'_, TaskStore>,
     gid: String,
-) -> Result<String, String> {
+) -> AppResult<String> {
     let result = aria2_client::remove(gid.clone()).await?;
     state.update_task_state(&gid, "cancelled");
     Ok(result)
 }
 
 #[tauri::command]
-pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
+pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<String> {
     let result = aria2_client::pause_all().await?;
     state.update_all_active_to_paused();
     Ok(result)
 }
 
 #[tauri::command]
-pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
+pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<String> {
     let result = aria2_client::unpause_all().await?;
     state.update_all_paused_to_waiting();
     Ok(result)
@@ -229,7 +231,7 @@ pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<Stri
 pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
-) -> Result<String, String> {
+) -> AppResult<String> {
     state.update_batch_state(&gids, "cancelled");
     state.save();
 
@@ -247,7 +249,7 @@ pub async fn remove_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
     delete_file: bool,
-) -> Result<String, String> {
+) -> AppResult<String> {
     let tasks_info: Vec<_> = gids.iter().filter_map(|gid| state.get_task(gid)).collect();
 
     let (active_gids, _inactive_gids): (Vec<_>, Vec<_>) =
@@ -296,7 +298,7 @@ pub async fn remove_task_record(
     state: tauri::State<'_, TaskStore>,
     gid: String,
     delete_file: bool,
-) -> Result<String, String> {
+) -> AppResult<String> {
     remove_task_inner(&state, gid, delete_file).await
 }
 
@@ -304,7 +306,7 @@ async fn remove_task_inner(
     state: &TaskStore,
     gid: String,
     delete_file: bool,
-) -> Result<String, String> {
+) -> AppResult<String> {
     let task_opt = state.get_task(&gid);
 
     let is_active = task_opt
@@ -347,13 +349,13 @@ async fn remove_task_inner(
 pub async fn show_task_in_folder(
     state: tauri::State<'_, TaskStore>,
     gid: String,
-) -> Result<(), String> {
+) -> AppResult<()> {
     if let Some(task) = state.get_task(&gid) {
         let full_path = utils::get_full_path(&task.save_path, &task.filename);
         utils::show_in_file_manager(&full_path);
         Ok(())
     } else {
-        Err("未找到任务".to_string())
+        Err(AppError::task_not_found(gid))
     }
 }
 
@@ -361,6 +363,6 @@ pub async fn show_task_in_folder(
 pub async fn get_tasks(
     state: tauri::State<'_, TaskStore>,
     app_handle: AppHandle,
-) -> Result<Vec<FrontendTask>, String> {
+) -> AppResult<Vec<FrontendTask>> {
     crate::core::sync::sync_tasks(&state, &app_handle).await
 }

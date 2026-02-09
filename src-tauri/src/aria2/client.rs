@@ -5,6 +5,8 @@ use std::sync::OnceLock;
 
 use std::sync::atomic::{AtomicU16, Ordering};
 
+use crate::core::error::{AppError, AppResult};
+
 static ARIA2_PORT: AtomicU16 = AtomicU16::new(6800);
 static ARIA2_SECRET: tokio::sync::Mutex<Option<String>> = tokio::sync::Mutex::const_new(None);
 
@@ -67,7 +69,7 @@ pub struct Aria2Uri {
     pub status: String,
 }
 
-async fn send_rpc_request<T>(method: &str, params: Vec<Value>) -> Result<T, String>
+async fn send_rpc_request<T>(method: &str, params: Vec<Value>) -> AppResult<T>
 where
     T: serde::de::DeserializeOwned,
 {
@@ -100,28 +102,27 @@ where
         .json(&payload)
         .send()
         .await
-        .map_err(|e| e.to_string())?;
+        .map_err(|e| AppError::aria2(e.to_string()))?;
 
     if !response.status().is_success() {
-        return Err(format!("HTTP Error: {}", response.status()));
+        return Err(AppError::aria2(format!("HTTP Error: {}", response.status())));
     }
 
-    let body: Value = response.json().await.map_err(|e| e.to_string())?;
+    let body: Value = response.json().await.map_err(|e| AppError::aria2(e.to_string()))?;
 
     if let Some(error) = body.get("error") {
-        return Err(error.to_string());
+        return Err(AppError::aria2(error.to_string()));
     }
 
     if let Some(result) = body.get("result") {
-        serde_json::from_value(result.clone()).map_err(|e| format!("Failed to parse result: {}", e))
+        serde_json::from_value(result.clone()).map_err(|e| AppError::aria2(format!("Failed to parse result: {}", e)))
     } else {
         // Void 返回通常只是 null 或 "OK"，具体取决于方法，但对于 JSON-RPC 2.0，成功时必须包含 result。
-        // 如果 result 为 null，我们尝试从 null 反序列化 T。
-        serde_json::from_value(Value::Null).map_err(|e| format!("Missing result: {}", e))
+        serde_json::from_value(Value::Null).map_err(|e| AppError::aria2(format!("Missing result: {}", e)))
     }
 }
 
-pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> Result<String, String> {
+pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> AppResult<String> {
     let mut params = vec![json!(urls)];
     if let Some(opts) = options {
         params.push(json!(opts));
@@ -130,7 +131,7 @@ pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> Result<String
     send_rpc_request::<String>("aria2.addUri", params).await
 }
 
-pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
+pub async fn get_all_tasks() -> AppResult<Vec<Aria2Task>> {
     let client = get_client();
 
     // 获取 RPC Secret (如果配置了)
@@ -177,7 +178,7 @@ pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
     match client.post(&url).json(&payload).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                let body: Value = response.json().await.map_err(|e| e.to_string())?;
+                let body: Value = response.json().await.map_err(|e| AppError::aria2(e.to_string()))?;
 
                 if let Some(results) = body.get("result") {
                     if let Some(results_array) = results.as_array() {
@@ -200,22 +201,22 @@ pub async fn get_all_tasks() -> Result<Vec<Aria2Task>, String> {
 
                         Ok(all_tasks)
                     } else {
-                        Err("Result is not an array".to_string())
+                        Err(AppError::aria2("Result is not an array"))
                     }
                 } else if let Some(error) = body.get("error") {
-                    Err(error.to_string())
+                    Err(AppError::aria2(error.to_string()))
                 } else {
-                    Err("Unknown response format".to_string())
+                    Err(AppError::aria2("Unknown response format"))
                 }
             } else {
-                Err(format!("HTTP Error: {}", response.status()))
+                Err(AppError::aria2(format!("HTTP Error: {}", response.status())))
             }
         }
-        Err(e) => Err(e.to_string()),
+        Err(e) => Err(AppError::aria2(e.to_string())),
     }
 }
 
-pub async fn tell_active(keys: Vec<&str>) -> Result<Vec<Aria2Task>, String> {
+pub async fn tell_active(keys: Vec<&str>) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>("aria2.tellActive", vec![json!(keys)]).await
 }
 
@@ -223,7 +224,7 @@ pub async fn tell_waiting(
     offset: usize,
     num: usize,
     keys: Vec<&str>,
-) -> Result<Vec<Aria2Task>, String> {
+) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>(
         "aria2.tellWaiting",
         vec![json!(offset), json!(num), json!(keys)],
@@ -235,7 +236,7 @@ pub async fn tell_stopped(
     offset: usize,
     num: usize,
     keys: Vec<&str>,
-) -> Result<Vec<Aria2Task>, String> {
+) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>(
         "aria2.tellStopped",
         vec![json!(offset), json!(num), json!(keys)],
@@ -243,34 +244,34 @@ pub async fn tell_stopped(
     .await
 }
 
-pub async fn tell_status(gid: String, keys: Vec<&str>) -> Result<Aria2Task, String> {
+pub async fn tell_status(gid: String, keys: Vec<&str>) -> AppResult<Aria2Task> {
     send_rpc_request::<Aria2Task>("aria2.tellStatus", vec![json!(gid), json!(keys)]).await
 }
 
-pub async fn pause(gid: String) -> Result<String, String> {
+pub async fn pause(gid: String) -> AppResult<String> {
     send_rpc_request::<String>("aria2.pause", vec![json!(gid)]).await
 }
 
-pub async fn resume(gid: String) -> Result<String, String> {
+pub async fn resume(gid: String) -> AppResult<String> {
     send_rpc_request::<String>("aria2.unpause", vec![json!(gid)]).await
 }
 
-pub async fn remove(gid: String) -> Result<String, String> {
+pub async fn remove(gid: String) -> AppResult<String> {
     send_rpc_request::<String>("aria2.remove", vec![json!(gid)]).await
 }
 
-pub async fn purge(gid: String) -> Result<String, String> {
+pub async fn purge(gid: String) -> AppResult<String> {
     send_rpc_request::<String>("aria2.removeDownloadResult", vec![json!(gid)]).await
 }
 
-pub async fn pause_all() -> Result<String, String> {
+pub async fn pause_all() -> AppResult<String> {
     send_rpc_request::<String>("aria2.pauseAll", vec![]).await
 }
 
-pub async fn unpause_all() -> Result<String, String> {
+pub async fn unpause_all() -> AppResult<String> {
     send_rpc_request::<String>("aria2.unpauseAll", vec![]).await
 }
 
-pub async fn change_global_option(options: Value) -> Result<String, String> {
+pub async fn change_global_option(options: Value) -> AppResult<String> {
     send_rpc_request::<String>("aria2.changeGlobalOption", vec![options]).await
 }
