@@ -52,6 +52,36 @@ Mua 是基于 Tauri 2.0 开发的，你需要安装以下环境：
 - **前端**: 使用 Prettier 进行格式化。
 - **后端**: 使用 `cargo fmt` 进行格式化。
 
+## 🌍 多平台支持与 Sidecar 集成
+
+Mua 依赖 `aria2c` 作为下载内核。为了支持跨平台运行，我们需要在 `src-tauri/binaries` 目录下放置对应平台的二进制文件。
+
+### 二进制文件规范
+
+Tauri 会根据 **Target Triple** 寻找对应的 sidecar 文件。文件名格式必须为：
+`aria2c-<target-triple>[.exe]`
+
+| 平台 | Target Triple | 最终文件名 |
+|------|---------------|------------|
+| macOS (Intel) | `x86_64-apple-darwin` | `aria2c-x86_64-apple-darwin` |
+| macOS (Apple Silicon) | `aarch64-apple-darwin` | `aria2c-aarch64-apple-darwin` |
+| Windows (x64) | `x86_64-pc-windows-msvc` | `aria2c-x86_64-pc-windows-msvc.exe` |
+| Linux (x64) | `x86_64-unknown-linux-gnu` | `aria2c-x86_64-unknown-linux-gnu` |
+
+### 如何获得二进制文件？
+
+1.  **直接下载**: 从 [aria2 Releases](https://github.com/aria2/aria2/releases) 或社区静态构建（如 [P3TERX/aria2-static-build](https://github.com/P3TERX/aria2-static-build)）下载。
+2.  **自行编译**:
+    在目标平台上克隆 [aria2 源码](https://github.com/aria2/aria2) 并在本地编译以获得最佳性能：
+    ```bash
+    # 以 macOS 为例
+    ./configure --with-appletls --with-libxml2 --with-sqlite3
+    make
+    cp src/aria2c <项目根目录>/src-tauri/binaries/aria2c-aarch64-apple-darwin
+    ```
+
+---
+
 ## 🚀 贡献流程
 
 1.  创建一个新的分支 (`git checkout -b feature/your-feature`)。
