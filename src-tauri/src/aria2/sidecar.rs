@@ -254,10 +254,17 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 match event {
                     CommandEvent::Stdout(line) => {
                         let log = String::from_utf8_lossy(&line);
-                        if log.contains("Serialized session to") {
-                            log::debug!("Aria2 stdout: {}", log);
+                        let log_trimmed = log.trim();
+                        
+                        // 跳过空行
+                        if log_trimmed.is_empty() {
+                            continue;
+                        }
+                        
+                        if log_trimmed.contains("Serialized session to") {
+                            log::debug!("Aria2 stdout: {}", log_trimmed);
                         } else {
-                            log::info!("Aria2 stdout: {}", log);
+                            log::info!("Aria2 stdout: {}", log_trimmed);
                         }
 
                         let now = Local::now().format("%H:%M:%S");
