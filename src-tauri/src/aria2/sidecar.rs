@@ -231,6 +231,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     }
                     Err(e) => {
                         log::error!("生成 sidecar 进程失败: {}", e);
+                        tokio::time::sleep(Duration::from_secs(5)).await;
                         continue;
                     }
                 }

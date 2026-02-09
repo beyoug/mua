@@ -14,7 +14,7 @@
       "identifier": "shell:allow-spawn",
       "allow": [
         {
-          "name": "aria2c",
+          "name": "binaries/aria2c",
           "sidecar": true,
           "args": true
         }
