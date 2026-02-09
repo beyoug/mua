@@ -1,5 +1,6 @@
 use crate::aria2::client::{self as aria2_client, Aria2Task};
 use crate::core::store::TaskStore;
+use crate::core::types::TaskState;
 use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use tauri::AppHandle;
@@ -35,14 +36,15 @@ fn calculate_eta(
             .or_insert((raw_speed as f64, 0, String::new()));
 
     // 更新 EMA 速度
-    if state == "downloading" {
+    let task_state = TaskState::from(state);
+    if task_state == TaskState::Downloading {
         *ema_speed = (raw_speed as f64 * 0.2) + (*ema_speed * 0.8);
     } else {
         *ema_speed = 0.0;
     }
 
     // 计算剩余时间
-    if state == "downloading" && *ema_speed > 0.1 && total > completed {
+    if task_state == TaskState::Downloading && *ema_speed > 0.1 && total > completed {
         if now > *last_update {
             let seconds = ((total - completed) as f64 / *ema_speed) as u64;
             let new_remaining = crate::utils::format_duration(seconds);
@@ -148,7 +150,7 @@ pub async fn sync_tasks(
         // 终态时的文件存在性检查
         // "missing" 只适用于已完成但文件被删除的情况
         // "error" 状态保持不变（下载失败本来就没有文件）
-        if mapped_state == "completed" {
+        if TaskState::from(mapped_state.as_str()) == TaskState::Completed {
             let full_path = std::path::Path::new(&task.save_path).join(&task.filename);
             if !full_path.exists() {
                 mapped_state = "missing".to_string();
@@ -263,7 +265,7 @@ pub async fn sync_tasks(
             0.0
         };
 
-        if task.state == "downloading" {
+        if TaskState::from(task.state.as_str()) == TaskState::Downloading {
             total_dl += raw_speed;
         }
 
@@ -356,9 +358,9 @@ pub fn start_background_sync(app_handle: AppHandle) {
                     // 检查完成情况和活跃状态
                     for task in &tasks {
                         // 自适应轮询检查
-                        if task.state == "active"
-                            || task.state == "waiting"
-                            || task.state == "downloading"
+                        let task_state = TaskState::from(task.state.as_str());
+                        if task_state == TaskState::Downloading
+                            || task_state == TaskState::Waiting
                         {
                             has_active_tasks = true;
                         }
@@ -368,7 +370,7 @@ pub fn start_background_sync(app_handle: AppHandle) {
                             .cloned()
                             .unwrap_or("unknown".to_string());
 
-                        if task.state == "completed" && prev != "completed" && prev != "unknown" {
+                        if task_state == TaskState::Completed && prev != "completed" && prev != "unknown" {
                             // 检测到状态转变！
                             log::info!("任务已完成: {}", task.filename);
                             if let Err(e) = app_handle.emit("task-completed", task.clone()) {

@@ -117,31 +117,22 @@ pub fn is_valid_url(url: &str) -> bool {
         || lower.starts_with("ftp://")
         || lower.starts_with("ftps://")
 }
+use crate::core::types::TaskState;
 
+/// 将 Aria2 状态映射为应用状态字符串
+/// 内部使用 TaskState 枚举，返回字符串保持 API 兼容
 pub fn map_status(aria2_status: &str) -> String {
-    match aria2_status {
-        "active" => "downloading".to_string(),
-        "waiting" => "waiting".to_string(),
-        "paused" => "paused".to_string(),
-        "complete" => "completed".to_string(),
-        "error" => "error".to_string(),
-        "removed" | "cancelled" => "cancelled".to_string(),
-        _ => "waiting".to_string(),
-    }
+    TaskState::from_aria2_status(aria2_status).to_string()
 }
 
+/// 获取状态排序分数（用于任务列表排序）
 pub fn get_state_score(state: &str) -> i32 {
-    match state {
-        "downloading" => 3,
-        "waiting" => 2,
-        "paused" => 1,
-        _ => 0,
-    }
+    TaskState::from(state).score()
 }
 
-/// 判断是否为活跃任务状态（与前端 downloadStates.ts 保持一致）
+/// 判断是否为活跃任务状态（下载中、等待中、已暂停）
 pub fn is_active_state(state: &str) -> bool {
-    matches!(state, "downloading" | "waiting" | "paused")
+    TaskState::from(state).is_active()
 }
 
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {

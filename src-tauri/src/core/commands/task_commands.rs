@@ -2,6 +2,7 @@
 //! 包含下载任务的 CRUD 操作
 
 use crate::aria2::client as aria2_client;
+use crate::core::types::TaskState;
 use crate::utils;
 use futures::future::join_all;
 use tauri::AppHandle;
@@ -107,11 +108,7 @@ pub async fn resume_task(
 ) -> Result<String, String> {
     // 1. 首先检查 Store 状态
     let should_smart_resume = if let Some(task) = state.get_task(&gid) {
-        task.state == "cancelled"
-            || task.state == "error"
-            || task.state == "completed"
-            || task.state == "removed"
-            || task.state == "missing"
+        TaskState::from(task.state.as_str()).is_terminal()
     } else {
         false
     };
