@@ -9,6 +9,7 @@ export interface AppConfig {
     aria2SaveSessionInterval?: number;
     useCustomAria2: boolean;
     autoStart: boolean;
+    maxConcurrentDownloads: number;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -16,7 +17,8 @@ const DEFAULT_CONFIG: AppConfig = {
     closeToTray: true,
     autoResume: false,
     useCustomAria2: false,
-    autoStart: false
+    autoStart: false,
+    maxConcurrentDownloads: 3
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

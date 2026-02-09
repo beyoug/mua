@@ -54,7 +54,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             };
 
             // 1. 检查现有配置
-            let (preferred_port, save_session_interval, existing_secret) = {
+            let (preferred_port, save_session_interval, existing_secret, max_concurrent) = {
                 if let Some(state) = app
                     .state::<crate::core::config::ConfigState>()
                     .config
@@ -65,9 +65,10 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         state.rpc_port,
                         state.save_session_interval,
                         state.rpc_secret.clone(),
+                        state.max_concurrent_downloads,
                     )
                 } else {
-                    (6800, 30, None)
+                    (6800, 30, None, 3)
                 }
             };
             log::info!("首选 Aria2 端口: {}", preferred_port);
@@ -98,6 +99,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 format!("--rpc-listen-port={}", port),
                 "--disable-ipv6".to_string(),
                 "--log-level=warn".to_string(),
+                format!("--max-concurrent-downloads={}", max_concurrent),
                 format!("--stop-with-process={}", std::process::id()), // 父进程退出时自动关闭
             ];
 

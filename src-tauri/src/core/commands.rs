@@ -441,9 +441,18 @@ pub async fn save_app_config(
     // 2. 更新内存中的状态，确保事件处理器能立即读取到最新配置
     if let Some(state) = app.try_state::<crate::core::config::ConfigState>() {
         if let Ok(mut lock) = state.config.lock() {
-            *lock = config;
+            *lock = config.clone();
         }
     }
+
+    // 3. 实时同步到正在运行的 Aria2 内核 (针对支持动态修改的选项)
+    let mut options = serde_json::Map::new();
+    options.insert(
+        "max-concurrent-downloads".to_string(),
+        serde_json::Value::String(config.max_concurrent_downloads.to_string()),
+    );
+
+    let _ = crate::aria2::client::change_global_option(serde_json::Value::Object(options)).await;
 
     Ok(())
 }

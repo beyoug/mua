@@ -270,3 +270,7 @@ pub async fn pause_all() -> Result<String, String> {
 pub async fn unpause_all() -> Result<String, String> {
     send_rpc_request::<String>("aria2.unpauseAll", vec![]).await
 }
+
+pub async fn change_global_option(options: Value) -> Result<String, String> {
+    send_rpc_request::<String>("aria2.changeGlobalOption", vec![options]).await
+}

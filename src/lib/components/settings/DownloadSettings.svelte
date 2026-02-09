@@ -43,7 +43,13 @@
           <div class="setting-desc">建议设置在 1-5 之间</div>
         </div>
         <div class="inner-input">
-          <input type="number" value="3" min="1" max="16" />
+          <input 
+            type="number" 
+            bind:value={$appSettings.maxConcurrentDownloads} 
+            onchange={() => saveAppSettings($appSettings)}
+            min="1" 
+            max="16" 
+          />
         </div>
       </div>
     </div>

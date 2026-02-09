@@ -23,6 +23,12 @@ pub struct AppConfig {
     pub use_custom_aria2: bool,
     #[serde(rename = "autoStart", default = "default_result_false")]
     pub auto_start: bool,
+    #[serde(rename = "maxConcurrentDownloads", default = "default_max_downloads")]
+    pub max_concurrent_downloads: u32,
+}
+
+fn default_max_downloads() -> u32 {
+    3
 }
 
 fn default_session_interval() -> u64 {
@@ -43,6 +49,7 @@ impl Default for AppConfig {
             save_session_interval: 30,
             use_custom_aria2: false,
             auto_start: false,
+            max_concurrent_downloads: 3,
         }
     }
 }
