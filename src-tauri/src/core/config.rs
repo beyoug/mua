@@ -37,6 +37,8 @@ pub struct AppConfig {
     pub color_mode: String,
     #[serde(rename = "particlesEnabled", default = "default_result_true")]
     pub particles_enabled: bool,
+    #[serde(rename = "startMinimized", default = "default_result_false")]
+    pub start_minimized: bool,
 }
 
 fn default_ua_history() -> Vec<String> {
@@ -94,6 +96,7 @@ impl Default for AppConfig {
             theme: default_theme(),
             color_mode: default_color_mode(),
             particles_enabled: true,
+            start_minimized: false,
         }
     }
 }
@@ -111,9 +114,11 @@ pub fn get_config_path(app: &AppHandle) -> Option<PathBuf> {
 
 pub fn load_config(app: &AppHandle) -> AppConfig {
     if let Some(path) = get_config_path(app) {
+        log::info!("[Config] Checking config path: {:?}", path);
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(mut config) = serde_json::from_str::<AppConfig>(&content) {
+                    log::info!("[Config] Successfully loaded from disk. startMinimized: {}", config.start_minimized);
                     // Ensure secret exists
                     if config.rpc_secret.is_none() {
                         let secret = uuid::Uuid::new_v4().to_string();
@@ -122,11 +127,20 @@ pub fn load_config(app: &AppHandle) -> AppConfig {
                         let _ = save_config(app, &config);
                     }
                     return config;
+                } else {
+                    log::error!("[Config] Failed to deserialize config strings: {}", content);
                 }
+            } else {
+                log::error!("[Config] Failed to read file: {:?}", path);
             }
+        } else {
+            log::warn!("[Config] Path does not exist: {:?}", path);
         }
+    } else {
+        log::error!("[Config] Could not resolve app config path");
     }
 
+    log::info!("[Config] Using DEFAULT config");
     // Default with new secret
     let mut config = AppConfig::default();
     config.rpc_secret = Some(uuid::Uuid::new_v4().to_string());

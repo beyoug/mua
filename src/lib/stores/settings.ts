@@ -16,6 +16,7 @@ export interface AppConfig {
     theme: string;
     colorMode: string;
     particlesEnabled: boolean;
+    startMinimized: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -30,7 +31,8 @@ const DEFAULT_CONFIG: AppConfig = {
     globalMaxDownloadLimit: '',
     theme: 'deep-space',
     colorMode: 'dark',
-    particlesEnabled: true
+    particlesEnabled: true,
+    startMinimized: false
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

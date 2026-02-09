@@ -2,14 +2,10 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
-	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { appSettings, loadAppSettings } from '$lib/stores/settings';
+	import { appSettings } from '$lib/stores/settings';
     import { systemPrefersDark, particlesEnabled } from '$lib/stores/theme';
 	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
-	import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
-
-	import { listen } from '@tauri-apps/api/event';
-	import { message } from '@tauri-apps/plugin-dialog';
+	import { bootApp } from '$lib/services/boot';
 
 	let { children } = $props();
 
@@ -30,48 +26,16 @@
 	});
 
 	onMount(() => {
-		// 禁用右键菜单
-		document.addEventListener('contextmenu', (e) => e.preventDefault());
+		let cleanup: (() => void) | undefined;
 
-		let unlisten_sidecar: (() => void) | undefined;
-
-		const init = async () => {
-			try {
-				// 1. 优先加载应用设置（主题、偏好等）
-				await loadAppSettings();
-
-                // 2. 显示窗口（此时主题已应用到 html 标签）
-				const appWindow = getCurrentWindow();
-				await appWindow.show();
-				await appWindow.setFocus();
-
-				// 3. 初始化通知服务
-				await initNotifications();
-
-				// 监听 Aria2 Sidecar 错误
-				unlisten_sidecar = await listen('aria2-sidecar-error', async (event: any) => {
-					const payload = event.payload;
-					console.error('Aria2 Sidecar Error:', payload);
-					// 简单的防抖或限流可以在这里做，但目前直接弹窗
-					await message(
-						`Aria2 Service Error: ${payload.message}\n\nCode: ${payload.code}\nSignal: ${payload.signal}\n\nLog:\n${payload.stderr}`,
-						{
-							title: 'Aria2 Sidecar Error',
-							kind: 'error'
-						}
-					);
-				});
-			} catch (e) {
-				// 非 Tauri 环境忽略
-				console.warn('Non-Tauri environment or cleanup error', e);
-			}
-		};
-
-		init();
+		bootApp().then(cb => {
+			cleanup = cb;
+		}).catch(e => {
+			console.error('Core Boot Failure:', e);
+		});
 
 		return () => {
-			if (unlisten_sidecar) unlisten_sidecar();
-			cleanupNotifications();
+			if (cleanup) cleanup();
 		};
 	});
 </script>

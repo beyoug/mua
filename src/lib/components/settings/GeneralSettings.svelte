@@ -82,7 +82,6 @@
       </div>
     </div>
   </section>
-
   <section class="settings-section">
     <h4 class="section-title">启动项</h4>
     <div class="setting-list">
@@ -96,6 +95,23 @@
             type="checkbox" 
             bind:checked={$appSettings.autoStart}
             onchange={handleAutoStartChange}
+          />
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">启动时最小化</div>
+          <div class="setting-desc">
+            {$appSettings.startMinimized ? "静默启动到托盘" : "启动时正常显示窗口"}
+          </div>
+        </div>
+        <label class="switch">
+          <input 
+            type="checkbox" 
+            bind:checked={$appSettings.startMinimized}
+            onchange={() => saveAppSettings($appSettings)}
           />
           <span class="slider"></span>
         </label>

@@ -7,7 +7,7 @@ pub mod utils;
 
 use core::commands::*;
 use tauri::Manager;
-use ui::tray::{self, update_tray_icon_with_speed};
+use ui::tray::update_tray_icon_with_speed;
 
 pub fn run() {
     tauri::Builder::default()
@@ -36,63 +36,7 @@ pub fn run() {
         ))
         .manage(crate::core::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
-            // ... (setup is fine) ...
-            // 初始化托盘 (封装)
-            tray::setup_tray(app)?;
-
-            // 初始化配置
-            let config = core::config::load_config(app.handle());
-            app.manage(core::config::ConfigState {
-                config: std::sync::Mutex::new(config.clone()),
-            });
-
-            // Initialize Store Path
-            let store = app.state::<crate::core::store::TaskStore>();
-            store.init(app.handle());
-
-            // 初始化 Aria2 Sidecar
-            #[cfg(desktop)]
-            crate::aria2::sidecar::init_aria2_sidecar(app.handle().clone());
-
-            if cfg!(debug_assertions) {
-                app.handle().plugin(
-                    tauri_plugin_log::Builder::default()
-                        .level(log::LevelFilter::Info)
-                        .build(),
-                )?;
-            }
-
-            // --- Auto Resume Logic ---
-            let config_state = app.state::<crate::core::config::ConfigState>();
-            let auto_resume = config_state
-                .config
-                .lock()
-                .map(|c| c.auto_resume)
-                .unwrap_or(false);
-
-            if auto_resume {
-                log::info!("Auto Resume enabled. Attempting to resume tasks...");
-                let app_handle_resume = app.handle().clone();
-
-                tauri::async_runtime::spawn(async move {
-                    let state = app_handle_resume.state::<crate::core::store::TaskStore>();
-                    let store_tasks = state.get_all();
-
-                    for task in store_tasks {
-                        if task.state == "paused"
-                            || task.state == "waiting"
-                            || task.state == "downloading"
-                        {
-                            log::info!("Auto-resuming task: {}", task.gid);
-                            let _ = core::commands::resume_task(state.clone(), task.gid).await;
-                        }
-                    }
-                });
-            }
-
-            // --- Background Sync Loop ---
-            crate::core::sync::start_background_sync(app.handle().clone());
-
+            crate::core::boot::run(app)?;
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![

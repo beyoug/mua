@@ -26,7 +26,8 @@
           "x": 20,
           "y": 28
         },
-        "backgroundColor": "#00000000"
+        "backgroundColor": "#00000000",
+        "visible": true
       }
     ],
     "security": {
