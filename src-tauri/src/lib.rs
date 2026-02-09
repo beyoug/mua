@@ -11,10 +11,10 @@ use ui::tray::{self, update_tray_icon_with_speed};
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_process::init())
-        .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_single_instance::init(|app, _argv, _cwd| {
             use tauri::Manager;
@@ -157,7 +157,7 @@ pub fn run() {
                     let state = app.state::<crate::aria2::sidecar::SidecarState>();
                     (
                         state.child.lock().ok().and_then(|mut c| c.take()),
-                        state.native_child.lock().ok().and_then(|mut c| c.take())
+                        state.native_child.lock().ok().and_then(|mut c| c.take()),
                     )
                 };
 
@@ -165,10 +165,10 @@ pub fn run() {
                     log::info!("Killing aria2 sidecar process...");
                     let _ = child.kill();
                 }
-                
+
                 if let Some(mut child) = native_child {
-                     log::info!("Killing custom aria2 process...");
-                     let _ = child.kill();
+                    log::info!("Killing custom aria2 process...");
+                    let _ = child.kill();
                 }
             }
             #[cfg(target_os = "macos")]

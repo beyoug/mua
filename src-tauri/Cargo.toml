@@ -1,17 +1,17 @@
 [package]
-name = "app"
+name = "mua"
 version = "0.1.0"
-description = "A Tauri App"
+description = "Modern Aria2 Download Manager built with Tauri and Svelte"
 authors = ["you"]
 license = "MIT"
-repository = ""
+repository = "https://github.com/lionly/Mua"
 edition = "2021"
 rust-version = "1.77.2"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [lib]
-name = "app_lib"
+name = "mua_lib"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]
@@ -36,3 +36,6 @@ tauri-plugin-notification = "2"
 tauri-plugin-process = "2"
 uuid = { version = "1.20.0", features = ["v4"] }
 futures = "0.3"
+
+[target.'cfg(not(any(target_os = "android", target_os = "ios")))'.dependencies]
+tauri-plugin-autostart = "2"

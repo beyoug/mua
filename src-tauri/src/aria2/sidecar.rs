@@ -6,23 +6,21 @@ use tauri_plugin_shell::process::CommandChild;
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
 
-fn find_available_port(start: u16) -> u16 {
+fn find_available_port(start: u16) -> Result<u16, String> {
     let mut port = start;
     loop {
         // 检查 0.0.0.0，因为 aria2c 使用 --rpc-listen-all=true
         if std::net::TcpListener::bind(("0.0.0.0", port)).is_ok() {
-            return port;
+            return Ok(port);
         }
         port += 1;
         // 限制搜索范围以防止死循环
         if port > start + 100 {
-            log::warn!(
-                "Could not find available port in range {}-{}, fallback to {}",
+            return Err(format!(
+                "在范围 {}-{} 内找不到可用的 Aria2 RPC 端口，请检查端口占用情况。",
                 start,
-                start + 100,
-                start
-            );
-            return start;
+                start + 100
+            ));
         }
     }
 }
@@ -46,7 +44,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 }
             }
 
-            let sidecar_command = match app.shell().sidecar("binaries/aria2c") {
+            let sidecar_command = match app.shell().sidecar("aria2c") {
                 Ok(cmd) => cmd,
                 Err(e) => {
                     log::error!("创建 aria2 sidecar 命令失败: {}。5秒后重试...", e);
@@ -75,7 +73,14 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             log::info!("首选 Aria2 端口: {}", preferred_port);
 
             // 2. 查找可用端口
-            let port = find_available_port(preferred_port);
+            let port = match find_available_port(preferred_port) {
+                Ok(p) => p,
+                Err(e) => {
+                    log::error!("{}", e);
+                    tokio::time::sleep(Duration::from_secs(10)).await;
+                    continue;
+                }
+            };
             log::info!("为 Aria2 选择的端口: {}", port);
 
             // 3. 更新客户端配置（端口 + Secret）

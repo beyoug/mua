@@ -285,27 +285,16 @@ pub async fn remove_tasks(
     // 4. 删除文件（如果需要）
     if delete_file {
         for task in &tasks_info {
-            let filepath = if !task.save_path.is_empty() && !task.filename.is_empty() {
-                if task.save_path.ends_with('/') {
-                    Some(format!("{}{}", task.save_path, task.filename))
-                } else {
-                    Some(format!("{}/{}", task.save_path, task.filename))
+            let full_path = utils::get_full_path(&task.save_path, &task.filename);
+            let resolved_path = utils::resolve_path(&full_path);
+            if std::path::Path::new(&resolved_path).exists() {
+                if let Err(e) = std::fs::remove_file(&resolved_path) {
+                    log::error!("删除文件失败 {}: {}", resolved_path, e);
                 }
-            } else {
-                None
-            };
-
-            if let Some(path) = filepath {
-                let resolved_path = utils::resolve_path(&path);
-                if std::path::Path::new(&resolved_path).exists() {
-                    if let Err(e) = std::fs::remove_file(&resolved_path) {
-                        log::error!("删除文件失败 {}: {}", resolved_path, e);
-                    }
-                }
-                // 清理 .aria2 控制文件
-                let aria2_file_path = format!("{}.aria2", resolved_path);
-                let _ = std::fs::remove_file(&aria2_file_path);
             }
+            // 清理 .aria2 控制文件
+            let aria2_file_path = format!("{}.aria2", resolved_path);
+            let _ = std::fs::remove_file(&aria2_file_path);
         }
     }
 
@@ -356,33 +345,22 @@ async fn remove_task_inner(
             // Aria2 可能仍会在一瞬间持有锁。
             // 但我们会尝试执行，并在失败时记录警告。
 
-            let filepath = if !task.save_path.is_empty() && !task.filename.is_empty() {
-                if task.save_path.ends_with('/') {
-                    Some(format!("{}{}", task.save_path, task.filename))
-                } else {
-                    Some(format!("{}/{}", task.save_path, task.filename))
+            let full_path = utils::get_full_path(&task.save_path, &task.filename);
+            let resolved_path = utils::resolve_path(&full_path);
+
+            if std::path::Path::new(&resolved_path).exists() {
+                match std::fs::remove_file(&resolved_path) {
+                    Ok(_) => log::info!("已删除文件: {}", resolved_path),
+                    Err(e) => log::error!("删除文件失败 {}: {}", resolved_path, e),
                 }
             } else {
-                None
-            };
+                log::warn!("未找到要删除的文件: {}", resolved_path);
+            }
 
-            if let Some(path) = filepath {
-                let resolved_path = utils::resolve_path(&path);
-
-                if std::path::Path::new(&resolved_path).exists() {
-                    match std::fs::remove_file(&resolved_path) {
-                        Ok(_) => log::info!("已删除文件: {}", resolved_path),
-                        Err(e) => log::error!("删除文件失败 {}: {}", resolved_path, e),
-                    }
-                } else {
-                    log::warn!("未找到要删除的文件: {}", resolved_path);
-                }
-
-                // 4. 尝试清理 .aria2 控制文件
-                let aria2_file_path = format!("{}.aria2", resolved_path);
-                if std::path::Path::new(&aria2_file_path).exists() {
-                    let _ = std::fs::remove_file(&aria2_file_path);
-                }
+            // 4. 尝试清理 .aria2 控制文件
+            let aria2_file_path = format!("{}.aria2", resolved_path);
+            if std::path::Path::new(&aria2_file_path).exists() {
+                let _ = std::fs::remove_file(&aria2_file_path);
             }
         }
     }
@@ -395,16 +373,7 @@ pub async fn show_task_in_folder(
     gid: String,
 ) -> Result<(), String> {
     if let Some(task) = state.get_task(&gid) {
-        let full_path = if !task.save_path.is_empty() {
-            if task.save_path.ends_with('/') {
-                format!("{}{}", task.save_path, task.filename)
-            } else {
-                format!("{}/{}", task.save_path, task.filename)
-            }
-        } else {
-            task.filename.clone()
-        };
-
+        let full_path = utils::get_full_path(&task.save_path, &task.filename);
         utils::show_in_file_manager(&full_path);
         Ok(())
     } else {

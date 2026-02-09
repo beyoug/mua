@@ -186,7 +186,7 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
                 remaining: '',
                 state: 'waiting',
                 addedAt: formatAddedAt(),
-                savePath: config.savePath
+                savePath: config.savePath || ''
             };
 
             return [...tasks, newTask];

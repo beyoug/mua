@@ -1,6 +1,6 @@
 # 贡献指南 (Contributing Guide)
 
-感谢你对 Mua 的关注！我们非常欢迎任何形式的贡献，无论是修复 bug、增加新功能，还是改进文档。
+感谢你对 Mua 的关注！Mua 是一个开源项目，我们非常欢迎并珍视任何形式的贡献——无论是代码实现、图标设计、文档翻译，还是简单的 Bug 反馈。
 
 ## 🛠️ 开发环境搭建
 
@@ -54,7 +54,7 @@ Mua 是基于 Tauri 2.0 开发的，你需要安装以下环境：
 
 ## 🌍 多平台支持与 Sidecar 集成
 
-Mua 依赖 `aria2c` 作为下载内核。为了支持跨平台运行，我们需要在 `src-tauri/binaries` 目录下放置对应平台的二进制文件。
+Mua 依赖 `aria2c` 作为下载内核。为了支持跨平台运行，我们需要在 `src-tauri/` 目录下放置对应平台的二进制文件。
 
 ### 二进制文件规范
 
@@ -77,7 +77,7 @@ Tauri 会根据 **Target Triple** 寻找对应的 sidecar 文件。文件名格�
     # 以 macOS 为例
     ./configure --with-appletls --with-libxml2 --with-sqlite3
     make
-    cp src/aria2c ./src-tauri/binaries/aria2c-aarch64-apple-darwin
+    cp src/aria2c ./src-tauri/aria2c-aarch64-apple-darwin
     ```
 
 ---

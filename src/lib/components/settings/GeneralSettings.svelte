@@ -1,6 +1,35 @@
 <script lang="ts">
   import { Monitor, RotateCcw } from '@lucide/svelte';
   import { appSettings, saveAppSettings } from '$lib/stores/settings';
+  import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
+  import { onMount } from 'svelte';
+
+  onMount(async () => {
+    try {
+      const enabled = await isEnabled();
+      if (enabled !== $appSettings.autoStart) {
+        $appSettings.autoStart = enabled;
+        await saveAppSettings($appSettings);
+      }
+    } catch (e) {
+      console.error('Failed to check autostart status', e);
+    }
+  });
+
+  async function handleAutoStartChange() {
+    try {
+      if ($appSettings.autoStart) {
+        await enable();
+      } else {
+        await disable();
+      }
+      await saveAppSettings($appSettings);
+    } catch (e) {
+      console.error('Failed to toggle autostart', e);
+      // Rollback UI
+      $appSettings.autoStart = !$appSettings.autoStart;
+    }
+  }
 
   async function toggleSetting(key: keyof typeof $appSettings) {
     // @ts-ignore
@@ -56,15 +85,21 @@
 
   <section class="settings-section">
     <h4 class="section-title">启动项</h4>
-    <div class="setting-item disabled">
-      <div class="setting-info">
-        <div class="setting-name">开机自启</div>
-        <div class="setting-desc">随操作系统自动启动 Mua (即将推出)</div>
+    <div class="setting-list">
+      <div class="setting-item">
+        <div class="setting-info">
+          <div class="setting-name">开机自启</div>
+          <div class="setting-desc">随操作系统自动启动 Mua</div>
+        </div>
+        <label class="switch">
+          <input 
+            type="checkbox" 
+            bind:checked={$appSettings.autoStart}
+            onchange={handleAutoStartChange}
+          />
+          <span class="slider"></span>
+        </label>
       </div>
-      <label class="switch">
-        <input type="checkbox" disabled />
-        <span class="slider"></span>
-      </label>
     </div>
   </section>
 </div>
@@ -98,11 +133,6 @@
 
   .setting-item:hover:not(.disabled) {
     background: var(--surface-hover);
-  }
-
-  .setting-item.disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
   }
 
   .setting-info {

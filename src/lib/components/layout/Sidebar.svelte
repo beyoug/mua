@@ -246,7 +246,9 @@
 	}
 
     .stat-value {
-        font-family: var(--font-mono);
+        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
+        font-weight: 600;
         color: var(--text-secondary);
         font-size: 11px;
     }

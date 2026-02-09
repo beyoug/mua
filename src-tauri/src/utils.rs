@@ -100,6 +100,15 @@ pub fn format_duration(seconds: u64) -> String {
     }
 }
 
+pub fn get_full_path(save_path: &str, filename: &str) -> String {
+    if save_path.is_empty() {
+        return resolve_path(filename);
+    }
+    let p = std::path::Path::new(save_path);
+    let resolved = resolve_path(&p.join(filename).to_string_lossy());
+    resolved
+}
+
 pub fn is_valid_url(url: &str) -> bool {
     // Simple basic check for http/https/ftp
     let lower = url.to_lowercase();
@@ -301,6 +310,12 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
     }
 
     // 2. Rename (Atomic replace)
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let _ = std::fs::set_permissions(&tmp_path, std::fs::Permissions::from_mode(0o600));
+    }
+
     if let Err(e) = std::fs::rename(&tmp_path, path) {
         log::error!("Failed to rename {:?} to {:?}: {}", tmp_path, path, e);
         return Err(e);

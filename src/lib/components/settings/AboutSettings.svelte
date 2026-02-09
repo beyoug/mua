@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Github, Globe, Heart } from '@lucide/svelte';
 
-  const version = "0.0.1";
+  const version = "0.1.0";
 </script>
 
 <div class="settings-container">

@@ -13,6 +13,7 @@
   <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
   <img src="https://img.shields.io/badge/Tauri-2.0-orange.svg" alt="Tauri">
   <img src="https://img.shields.io/badge/Svelte-5-red.svg" alt="Svelte">
+  <img src="https://img.shields.io/badge/Status-Alpha-yellow.svg" alt="Status">
 </p>
 
 <p align="center">
@@ -26,12 +27,11 @@
 ---
 
 ## ✨ 特性
-
 - 🚀 **高性能下载** - 基于 aria2c 多线程下载引擎，支持 EMA 速度平滑算法
 - 🛠️ **高度可定制** - 支持 **自定义 aria2 内核** 与 **自定义配置文件**
 - 🎨 **现代化 UI** - 基于 shadcn-svelte + Tailwind CSS v4 构建的精美界面
-- 📦 **轻量打包** - 基于 Tauri 2.0，体积小、性能强、低资源占用
-- 💻 **跨平台支持** - 默认集成 macOS (Intel) 与 Windows (x64) 二进制内核
+- 📦 **轻量打包** - 基于 Tauri 2.0，体积小、性能强、资源占用极低
+- 💻 **多平台支持** - 内置 macOS (Intel) 与 Windows (x64) 二进制内核，支持手动扩展
 
 ## 🛠️ 技术栈
 
