@@ -3,26 +3,25 @@
   添加下载任务对话框 - 支持高级设置覆盖层
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, Trash2 } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade, scale } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
 	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
+	import { appSettings, saveAppSettings } from '$lib/stores/settings';
+
+	// 基础预设 (如果历史记录中没有，可以作为参考)
+	const BUILTIN_UAS = [
+		{ name: 'Chrome', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
+		{ name: 'Firefox', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0' },
+		{ name: 'Safari', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' }
+	];
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
 		onSubmit?: (config: DownloadConfig) => void;
 	}
-
-	// 预设 User Agent
-	const userAgents = [
-		{ id: 'default', name: '默认', value: '' },
-		{ id: 'chrome', name: 'Chrome', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-		{ id: 'firefox', name: 'Firefox', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0' },
-		{ id: 'safari', name: 'Safari', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' },
-		{ id: 'custom', name: '自定义', value: '' }
-	];
 
 	let { open, onClose, onSubmit }: Props = $props();
 
@@ -33,7 +32,7 @@
 
 	// 高级设置面板
 	let showAdvanced = $state(false);
-	let selectedUaId = $state('default');
+	let selectedUaValue = $state(''); // 改为直接存储选中的 UA 字符串
 	let customUserAgent = $state('');
 	let referer = $state('');
 	let headers = $state('');
@@ -45,11 +44,41 @@
 	let validationError = $state<string>('');
 	let validationTimer: ReturnType<typeof setTimeout> | null = null;
 
+    // 组合展示用的 UA 列表
+    const displayUas = $derived(() => {
+        const history = $appSettings.uaHistory || [];
+        // 过滤掉已经在历史记录中的内置 UA，防止重复展示
+        const remainingBuiltin = BUILTIN_UAS.filter(b => !history.includes(b.value));
+        
+        return [
+            { id: 'default', name: '默认', value: '', builtin: true },
+            ...history.map((val, index) => ({ id: `history-${index}`, name: truncateUa(val), value: val, builtin: false })),
+            ...remainingBuiltin.map((b, index) => ({ id: `builtin-${index}`, name: b.name, value: b.value, builtin: true })),
+        ];
+    });
+
+    function truncateUa(ua: string) {
+        if (ua.length > 40) return ua.substring(0, 37) + '...';
+        return ua;
+    }
+
 	// 计算实际 User Agent
 	const effectiveUserAgent = $derived(() => {
-		if (selectedUaId === 'custom') return customUserAgent;
-		return userAgents.find(ua => ua.id === selectedUaId)?.value || '';
+		if (selectedUaValue === 'custom') return customUserAgent;
+		return selectedUaValue;
 	});
+
+    async function removeUaHistoryItem(uaValue: string) {
+        const history = $appSettings.uaHistory || [];
+        const newHistory = history.filter(v => v !== uaValue);
+        await saveAppSettings({
+            ...$appSettings,
+            uaHistory: newHistory
+        });
+        if (selectedUaValue === uaValue) {
+            selectedUaValue = '';
+        }
+    }
 
 	// 注：URL 验证函数已迁移至 utils/validators.ts
 
@@ -89,16 +118,32 @@
              */
 			
 			// 可选：通知父组件或显示成功toast
+            const finalUa = effectiveUserAgent();
 			onSubmit?.({
 				urls: [trimmedUrl],
 				savePath,
 				filename,
-				userAgent: effectiveUserAgent(),
+				userAgent: finalUa,
 				referer,
 				headers,
 				proxy,
 				maxDownloadLimit: limit
 			});
+
+            // 更新 UA 历史记录
+            if (finalUa && !BUILTIN_UAS.some(b => b.value === finalUa)) {
+                let history = [...($appSettings.uaHistory || [])];
+                // 移动到最前面 (LRU)
+                history = [finalUa, ...history.filter(ua => ua !== finalUa)];
+                // 限制长度为 10
+                if (history.length > 10) history = history.slice(0, 10);
+                
+                await saveAppSettings({
+                    ...$appSettings,
+                    uaHistory: history
+                });
+            }
+
 			resetForm();
 			onClose();
 		} catch (e) {
@@ -309,23 +354,38 @@
 					</header>
 
 					<div class="panel-body">
-						<!-- User Agent -->
 						<div class="form-row">
 							<label>
 								<Globe size={14} />
 								<span>User Agent</span>
 							</label>
-							<div class="ua-selector">
-								<select bind:value={selectedUaId}>
-									{#each userAgents as ua}
-										<option value={ua.id}>{ua.name}</option>
-									{/each}
-								</select>
-								{#if selectedUaId === 'custom'}
+							<div class="ua-manager">
+								<div class="ua-list">
+                                    {#each displayUas() as ua}
+                                        <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
+                                            <button class="ua-select-btn" onclick={() => selectedUaValue = ua.value}>
+                                                <span class="ua-name">{ua.name}</span>
+                                            </button>
+                                            {#if !ua.builtin}
+                                                <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
+                                                    <Trash2 size={12} />
+                                                </button>
+                                            {/if}
+                                        </div>
+                                    {/each}
+                                    <div class="ua-option" class:active={selectedUaValue === 'custom'}>
+                                        <button class="ua-select-btn" onclick={() => selectedUaValue = 'custom'}>
+                                            <span class="ua-name">自定义...</span>
+                                        </button>
+                                    </div>
+                                </div>
+								{#if selectedUaValue === 'custom'}
 									<input
 										type="text"
+                                        class="ua-custom-input"
 										placeholder="输入自定义 User Agent"
 										bind:value={customUserAgent}
+                                        transition:fade={{ duration: 150 }}
 									/>
 								{/if}
 							</div>
@@ -757,11 +817,83 @@
 		padding-right: 32px;
 	}
 
-	.ua-selector {
+	.ua-manager {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 10px;
 	}
+
+    .ua-list {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        max-height: 180px;
+        overflow-y: auto;
+        padding: 4px;
+        background: var(--surface-active);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+    }
+
+    .ua-option {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        border-radius: 6px;
+        transition: all 0.15s ease;
+    }
+
+    .ua-option:hover {
+        background: var(--input-bg);
+    }
+
+    .ua-option.active {
+        background: var(--accent-active-bg);
+        border: 1px solid var(--accent-primary);
+    }
+
+    .ua-select-btn {
+        flex: 1;
+        display: flex;
+        align-items: center;
+        padding: 8px 12px;
+        background: transparent;
+        border: none;
+        color: var(--text-primary);
+        font-size: 13px;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .ua-name {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+
+    .ua-delete-btn {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: transparent;
+        border: none;
+        color: var(--text-muted);
+        cursor: pointer;
+        border-radius: 4px;
+        margin-right: 4px;
+        transition: all 0.15s ease;
+    }
+
+    .ua-delete-btn:hover {
+        background: var(--danger-color);
+        color: white;
+    }
+
+    .ua-custom-input {
+        width: 100%;
+    }
 
 	.panel-footer {
 		padding: 16px 24px;

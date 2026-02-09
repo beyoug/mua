@@ -10,6 +10,7 @@ export interface AppConfig {
     useCustomAria2: boolean;
     autoStart: boolean;
     maxConcurrentDownloads: number;
+    uaHistory: string[];
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -18,7 +19,8 @@ const DEFAULT_CONFIG: AppConfig = {
     autoResume: false,
     useCustomAria2: false,
     autoStart: false,
-    maxConcurrentDownloads: 3
+    maxConcurrentDownloads: 3,
+    uaHistory: []
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

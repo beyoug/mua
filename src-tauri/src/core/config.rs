@@ -25,6 +25,12 @@ pub struct AppConfig {
     pub auto_start: bool,
     #[serde(rename = "maxConcurrentDownloads", default = "default_max_downloads")]
     pub max_concurrent_downloads: u32,
+    #[serde(rename = "uaHistory", default = "default_ua_history")]
+    pub ua_history: Vec<String>,
+}
+
+fn default_ua_history() -> Vec<String> {
+    Vec::new()
 }
 
 fn default_max_downloads() -> u32 {
@@ -50,6 +56,7 @@ impl Default for AppConfig {
             use_custom_aria2: false,
             auto_start: false,
             max_concurrent_downloads: 3,
+            ua_history: Vec::new(),
         }
     }
 }
