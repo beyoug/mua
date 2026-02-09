@@ -14,7 +14,7 @@
     <div class="app-version">Version {version}</div>
     
     <div class="action-grid">
-      <button class="action-tile" onclick={() => window.open('https://github.com', '_blank')}>
+      <button class="action-tile" onclick={() => window.open('https://github.com/beyoug/mua', '_blank')}>
         <Github size={20} />
         <span>GitHub</span>
       </button>

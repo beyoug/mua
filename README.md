@@ -20,9 +20,35 @@
   基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的极简下载管理器。
 </p>
 
-> [!NOTE]
 > **特别说明**：本项目是在与 **Gemini Pro** (DeepMind) 的深度 AI 协作下开发完成的，展示了人类创意与大语言模型协同编写复杂跨平台应用的实践。
 > 由于项目包含大量 AI 生成与优化的逻辑，可能存在未知的 Bug 或不尽完善之处，恳请各位开发者与用户予以宽容。如遇问题，欢迎通过 Issue 诚挚反馈。
+
+## 📸 项目预览
+
+<p align="center">
+  <img src="screens/0u8vxif4xvns.png" width="80%" alt="Mua Preview 1">
+  <br><em>主界面：极简设计与玻璃拟态视觉反馈</em>
+</p>
+
+<p align="center">
+  <img src="screens/d4q29dfpnm0k.png" width="80%" alt="Mua Preview 2">
+  <br><em>任务详情与流畅的进度追踪</em>
+</p>
+
+<p align="center">
+  <img src="screens/cl0sztprn2zr.png" width="80%" alt="Mua Preview 3">
+  <br><em>外观设置：三套精美主题色切换</em>
+</p>
+
+<p align="center">
+  <img src="screens/wokhxy7vasmo.png" width="80%" alt="Mua Preview 4">
+  <br><em>通用设置：开机自启与系统行为配置</em>
+</p>
+
+<p align="center">
+  <img src="screens/9yik7dk8jgun.png" width="80%" alt="Mua Preview 5">
+  <br><em>核心配置：支持导入自定义 aria2 配置</em>
+</p>
 
 ---
 
@@ -47,7 +73,7 @@
 
 ## ⬇️ 下载与安装
 
-请前往 [Releases](https://github.com/lionly/Mua/releases) 下载最新版本。
+请前往 [Releases](https://github.com/beyoug/mua/releases) 下载最新版本。
 
 | 平台 | 安装包格式 | 状态 | 说明 |
 |------|-----------|------|------|
