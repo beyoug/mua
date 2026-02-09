@@ -16,7 +16,7 @@ Mua 是基于 Tauri 2.0 开发的，你需要安装以下环境：
 1.  **Fork 并克隆仓库**
 
     ```bash
-    git clone https://github.com/your-username/Mua.git
+    git clone https://github.com/lionly/Mua.git
     cd Mua
     ```
 
@@ -77,7 +77,7 @@ Tauri 会根据 **Target Triple** 寻找对应的 sidecar 文件。文件名格�
     # 以 macOS 为例
     ./configure --with-appletls --with-libxml2 --with-sqlite3
     make
-    cp src/aria2c <项目根目录>/src-tauri/binaries/aria2c-aarch64-apple-darwin
+    cp src/aria2c ./src-tauri/binaries/aria2c-aarch64-apple-darwin
     ```
 
 ---

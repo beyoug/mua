@@ -6,7 +6,6 @@
  * 2. 提供任务 CRUD 操作方法
  * 3. 导出筛选后的任务列表 (active/completed/all)
  * 4. 导出统计信息 (速度、任务数量)
- * 5. 实现任务自动跳转逻辑
  */
 
 import { writable, derived, get, type Readable } from 'svelte/store';

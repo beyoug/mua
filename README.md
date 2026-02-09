@@ -16,19 +16,18 @@
 </p>
 
 <p align="center">
-  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的跨平台桌面应用，追求极致的性能与简约的体验。
+  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的极简下载管理器。
 </p>
 
 ---
 
 ## ✨ 特性
 
-- 🚀 **高性能下载** - 基于 aria2c 多线程下载引擎
+- 🚀 **高性能下载** - 基于 aria2c 多线程下载引擎，支持 EMA 速度平滑算法
 - 🛠️ **高度可定制** - 支持 **自定义 aria2 内核** 与 **自定义配置文件**
 - 🎨 **现代化 UI** - 基于 shadcn-svelte + Tailwind CSS v4 构建的精美界面
-- 🔄 **实时状态** - TanStack Query 驱动的响应式数据流与 EMA 速度平滑
 - 📦 **轻量打包** - 基于 Tauri 2.0，体积小、性能强、低资源占用
-- 💻 **跨平台支持** - 支持 macOS (Intel) 与 Windows (x64) 默认打包
+- 💻 **跨平台支持** - 默认集成 macOS (Intel) 与 Windows (x64) 二进制内核
 
 ## 🛠️ 技术栈
 
@@ -44,7 +43,7 @@
 
 ## ⬇️ 下载与安装
 
-请前往 [GitHub Releases](https://github.com/your-username/Mua/releases) 下载最新版本。
+请前往 [Releases](https://github.com/lionly/Mua/releases) 下载最新版本。
 
 | 平台 | 安装包格式 | 状态 | 说明 |
 |------|-----------|------|------|
