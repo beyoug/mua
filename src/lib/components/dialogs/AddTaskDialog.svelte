@@ -33,6 +33,7 @@
 	// 高级设置面板
 	let showAdvanced = $state(false);
 	let selectedUaValue = $state(''); // 改为直接存储选中的 UA 字符串
+    let isUaDropdownOpen = $state(false);
 	let customUserAgent = $state('');
 	let referer = $state('');
 	let headers = $state('');
@@ -57,6 +58,13 @@
         ];
     });
 
+    const activeUaName = $derived(() => {
+        if (selectedUaValue === 'custom') return '自定义';
+        if (selectedUaValue === '') return '默认';
+        const found = displayUas().find(u => u.value === selectedUaValue);
+        return found ? found.name : truncateUa(selectedUaValue);
+    });
+
     function truncateUa(ua: string) {
         if (ua.length > 40) return ua.substring(0, 37) + '...';
         return ua;
@@ -78,6 +86,11 @@
         if (selectedUaValue === uaValue) {
             selectedUaValue = '';
         }
+    }
+
+    function handleUaSelect(value: string) {
+        selectedUaValue = value;
+        isUaDropdownOpen = false;
     }
 
 	// 注：URL 验证函数已迁移至 utils/validators.ts
@@ -157,7 +170,8 @@
 	function resetForm() {
 		urls = '';
 		filename = '';
-		selectedUaId = 'default';
+		selectedUaValue = '';
+        isUaDropdownOpen = false;
         isSubmitting = false;
 		customUserAgent = '';
 		referer = '';
@@ -360,25 +374,39 @@
 								<span>User Agent</span>
 							</label>
 							<div class="ua-manager">
-								<div class="ua-list">
-                                    {#each displayUas() as ua}
-                                        <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
-                                            <button class="ua-select-btn" onclick={() => selectedUaValue = ua.value}>
-                                                <span class="ua-name">{ua.name}</span>
-                                            </button>
-                                            {#if !ua.builtin}
-                                                <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
-                                                    <Trash2 size={12} />
+                                <button 
+                                    class="ua-dropdown-trigger" 
+                                    class:open={isUaDropdownOpen}
+                                    onclick={() => isUaDropdownOpen = !isUaDropdownOpen}
+                                >
+                                    <span class="trigger-text">{activeUaName()}</span>
+                                    <ChevronRight size={14} class="chevron" />
+                                </button>
+
+                                {#if isUaDropdownOpen}
+                                    <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
+                                        <div class="ua-list-container">
+                                            {#each displayUas() as ua}
+                                                <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
+                                                    <button class="ua-select-btn" onclick={() => handleUaSelect(ua.value)}>
+                                                        <span class="ua-name">{ua.name}</span>
+                                                    </button>
+                                                    {#if !ua.builtin}
+                                                        <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
+                                                            <Trash2 size={12} />
+                                                        </button>
+                                                    {/if}
+                                                </div>
+                                            {/each}
+                                            <div class="ua-option" class:active={selectedUaValue === 'custom'}>
+                                                <button class="ua-select-btn" onclick={() => handleUaSelect('custom')}>
+                                                    <span class="ua-name">自定义...</span>
                                                 </button>
-                                            {/if}
+                                            </div>
                                         </div>
-                                    {/each}
-                                    <div class="ua-option" class:active={selectedUaValue === 'custom'}>
-                                        <button class="ua-select-btn" onclick={() => selectedUaValue = 'custom'}>
-                                            <span class="ua-name">自定义...</span>
-                                        </button>
                                     </div>
-                                </div>
+                                {/if}
+
 								{#if selectedUaValue === 'custom'}
 									<input
 										type="text"
@@ -821,25 +849,77 @@
 		display: flex;
 		flex-direction: column;
 		gap: 10px;
+        position: relative;
 	}
 
-    .ua-list {
+    .ua-dropdown-trigger {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 14px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    .ua-dropdown-trigger:hover {
+        border-color: var(--accent-primary);
+    }
+
+    .ua-dropdown-trigger.open {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px var(--accent-active-bg);
+    }
+
+    .trigger-text {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        margin-right: 8px;
+    }
+
+    :global(.chevron) {
+        transition: transform 0.2s ease;
+        color: var(--text-muted);
+    }
+
+    .ua-dropdown-trigger.open :global(.chevron) {
+        transform: rotate(90deg);
+        color: var(--accent-primary);
+    }
+
+    .ua-dropdown-content {
+        position: absolute;
+        top: calc(100% + 4px);
+        left: 0;
+        right: 0;
+        z-index: 100;
+        background: var(--dialog-bg);
+        backdrop-filter: blur(12px);
+        -webkit-backdrop-filter: blur(12px);
+        border: 1px solid var(--glass-border);
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        padding: 6px;
+    }
+
+    .ua-list-container {
         display: flex;
         flex-direction: column;
         gap: 4px;
-        max-height: 180px;
+        max-height: 200px;
         overflow-y: auto;
-        padding: 4px;
-        background: var(--surface-active);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
     }
 
     .ua-option {
         display: flex;
         align-items: center;
         gap: 4px;
-        border-radius: 6px;
+        border-radius: 8px;
         transition: all 0.15s ease;
     }
 
@@ -849,7 +929,7 @@
 
     .ua-option.active {
         background: var(--accent-active-bg);
-        border: 1px solid var(--accent-primary);
+        color: var(--accent-primary);
     }
 
     .ua-select-btn {
@@ -859,7 +939,7 @@
         padding: 8px 12px;
         background: transparent;
         border: none;
-        color: var(--text-primary);
+        color: inherit;
         font-size: 13px;
         cursor: pointer;
         text-align: left;
@@ -881,8 +961,8 @@
         border: none;
         color: var(--text-muted);
         cursor: pointer;
-        border-radius: 4px;
-        margin-right: 4px;
+        border-radius: 6px;
+        margin-right: 2px;
         transition: all 0.15s ease;
     }
 
