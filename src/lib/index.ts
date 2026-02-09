@@ -12,7 +12,15 @@ export {
     DownloadStateGroups,
     isActiveTask,
     isCompletedTask,
-    isRemovableTask
+    isRemovableTask,
+    isPausedTask,
+    isDownloadingTask,
+    isWaitingTask,
+    isErrorTask,
+    isCancelledTask,
+    isMissingTask,
+    isResumableTask,
+    isTerminalTask
 } from './utils/downloadStates';
 
 // Stores

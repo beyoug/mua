@@ -4,6 +4,7 @@ import {
     cancelTask,
     cancelTasks,
     isActiveTask,
+    isCompletedTask,
     type DownloadTask
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
@@ -80,7 +81,7 @@ export class TaskController {
         // 检查选中任务中是否包含"已完成"的任务
         // 如果选中的全是 失败/取消/缺失/进行中 等非完成状态，则直接删除不弹窗
         const selectedTasks = currentTasks.filter(t => this.selectedIds.has(t.id));
-        const hasCompletedTask = selectedTasks.some(t => t.state === 'completed');
+        const hasCompletedTask = selectedTasks.some(t => isCompletedTask(t.state));
 
         if (!hasCompletedTask) {
             // 全是非完成任务 -> 直接删除（含文件）
@@ -134,7 +135,7 @@ export class TaskController {
         if (isActiveTask(task.state)) {
             // 活跃任务（下载/等待/暂停）：软删除（仅取消并保留在历史），无需确认
             cancelTask(task.id);
-        } else if (task.state === 'completed') {
+        } else if (isCompletedTask(task.state)) {
             // 已完成任务：物理删除记录，需要确认
             this.itemToDelete = task.id;
             this.clearDialogProps = {

@@ -13,6 +13,53 @@ static LAST_CONNECTION_STATUS: std::sync::atomic::AtomicBool =
 static SPEED_HISTORY: std::sync::OnceLock<std::sync::Mutex<HashMap<String, (f64, u64, String)>>> =
     std::sync::OnceLock::new();
 
+/// 计算剩余时间（带 EMA 平滑）
+/// 返回格式化后的剩余时间字符串
+fn calculate_eta(
+    gid: &str,
+    state: &str,
+    raw_speed: u64,
+    total: u64,
+    completed: u64,
+) -> String {
+    let history_map = SPEED_HISTORY.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
+    let mut history = history_map.lock().unwrap();
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap()
+        .as_secs();
+
+    let (ema_speed, last_update, last_remaining) =
+        history
+            .entry(gid.to_string())
+            .or_insert((raw_speed as f64, 0, String::new()));
+
+    // 更新 EMA 速度
+    if state == "downloading" {
+        *ema_speed = (raw_speed as f64 * 0.2) + (*ema_speed * 0.8);
+    } else {
+        *ema_speed = 0.0;
+    }
+
+    // 计算剩余时间
+    if state == "downloading" && *ema_speed > 0.1 && total > completed {
+        if now > *last_update {
+            let seconds = ((total - completed) as f64 / *ema_speed) as u64;
+            let new_remaining = crate::utils::format_duration(seconds);
+            *last_update = now;
+            *last_remaining = new_remaining.clone();
+            new_remaining
+        } else {
+            last_remaining.clone()
+        }
+    } else {
+        *last_update = 0;
+        *last_remaining = String::new();
+        String::new()
+    }
+}
+
+
 // 前端 DTO (视图模型) - 从 commands.rs 移至此处
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FrontendTask {
@@ -207,41 +254,8 @@ pub async fn sync_tasks(
         let completed = task.completed_length.parse::<u64>().unwrap_or(0);
         let raw_speed = task.download_speed.parse::<u64>().unwrap_or(0);
 
-        // EMA 计算
-        let history_map = SPEED_HISTORY.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
-        let mut history = history_map.lock().unwrap();
-        let now = std::time::SystemTime::now()
-            .duration_since(std::time::UNIX_EPOCH)
-            .unwrap()
-            .as_secs();
-
-        let (ema_speed, last_update, last_remaining) =
-            history
-                .entry(task.gid.clone())
-                .or_insert((raw_speed as f64, 0, "".to_string()));
-
-        if task.state == "downloading" {
-            *ema_speed = (raw_speed as f64 * 0.2) + (*ema_speed * 0.8);
-        } else {
-            *ema_speed = 0.0;
-        }
-
-        let current_remaining =
-            if task.state == "downloading" && *ema_speed > 0.1 && total > completed {
-                if now > *last_update {
-                    let seconds = ((total - completed) as f64 / *ema_speed) as u64;
-                    let new_remaining = crate::utils::format_duration(seconds);
-                    *last_update = now;
-                    *last_remaining = new_remaining.clone();
-                    new_remaining
-                } else {
-                    last_remaining.clone()
-                }
-            } else {
-                *last_update = 0;
-                *last_remaining = "".to_string();
-                "".to_string()
-            };
+        // 使用辅助函数计算剩余时间
+        let current_remaining = calculate_eta(&task.gid, &task.state, raw_speed, total, completed);
 
         let progress = if total > 0 {
             (completed as f64 / total as f64) * 100.0
