@@ -438,8 +438,13 @@ pub async fn save_app_config(
     // 1. 保存到磁盘
     crate::core::config::save_config(&app, &config)?;
 
-    // 2. 我们可能想要重启 aria2 或者只是让用户重启应用。
-    // 动态重启 sidecar 比较复杂。提示重启更好。
+    // 2. 更新内存中的状态，确保事件处理器能立即读取到最新配置
+    if let Some(state) = app.try_state::<crate::core::config::ConfigState>() {
+        if let Ok(mut lock) = state.config.lock() {
+            *lock = config;
+        }
+    }
+
     Ok(())
 }
 
