@@ -924,12 +924,14 @@
     }
 
     .ua-option:hover {
-        background: var(--input-bg);
+        background: var(--surface-active);
+        box-shadow: inset 0 0 0 1px var(--glass-border);
     }
 
     .ua-option.active {
         background: var(--accent-active-bg);
         color: var(--accent-primary);
+        box-shadow: inset 0 0 0 1px var(--accent-primary);
     }
 
     .ua-select-btn {
