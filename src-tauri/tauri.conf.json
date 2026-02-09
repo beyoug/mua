@@ -2,7 +2,7 @@
   "$schema": "../node_modules/@tauri-apps/cli/config.schema.json",
   "productName": "Mua",
   "version": "0.1.0",
-  "identifier": "com.mua.app",
+  "identifier": "com.mua.desktop",
   "build": {
     "frontendDist": "../build",
     "devUrl": "http://localhost:5173",
