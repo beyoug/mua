@@ -16,7 +16,6 @@
 		selectedCount: number;
 		onGlobalPause?: () => void;
 		onGlobalResume?: () => void;
-		onGlobalResume?: () => void;
 		onTrashClick?: () => void;
 		onExitSelection?: () => void;
 	}

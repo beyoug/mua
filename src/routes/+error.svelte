@@ -4,8 +4,8 @@
 
 <div class="error-page">
   <h1>{$page.status}: {$page.error?.message}</h1>
-  {#if $page.error?.stack}
-    <pre>{$page.error.stack}</pre>
+  {#if ($page.error as any)?.stack}
+    <pre>{($page.error as any).stack}</pre>
   {/if}
   <p>Path: {$page.url.pathname}</p>
   <button onclick={() => window.location.reload()}>Retry</button>

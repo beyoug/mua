@@ -130,6 +130,11 @@ pub fn get_state_score(state: &str) -> i32 {
     }
 }
 
+/// 判断是否为活跃任务状态（与前端 downloadStates.ts 保持一致）
+pub fn is_active_state(state: &str) -> bool {
+    matches!(state, "downloading" | "waiting" | "paused")
+}
+
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
     if let Some(out) = filename {
         if !out.is_empty() {
@@ -284,8 +289,8 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
     // Ensure parent dir exists
     if let Some(parent) = path.parent() {
         if let Err(e) = std::fs::create_dir_all(parent) {
-             log::error!("Failed to create directory {:?}: {}", parent, e);
-             return Err(e);
+            log::error!("Failed to create directory {:?}: {}", parent, e);
+            return Err(e);
         }
     }
 
@@ -300,6 +305,6 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
         log::error!("Failed to rename {:?} to {:?}: {}", tmp_path, path, e);
         return Err(e);
     }
-    
+
     Ok(())
 }

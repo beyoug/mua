@@ -1,35 +1,13 @@
 /**
- * 速度解析和格式化工具
+ * formatters.ts - 格式化工具
+ * 
+ * 注意：大部分格式化由后端 Rust 统一处理，前端仅保留必要的聚合计算函数
  */
 
 /**
- * 解析速度字符串，支持多种单位
- * @param speedStr - 例如 "12.5 MB/s", "850 KB/s"
- * @returns 字节/秒
- */
-export function parseSpeedToBytes(speedStr: string): number {
-    if (!speedStr) return 0;
-
-    const match = speedStr.match(/^([\d.]+)\s*(B|KB|MB|GB)\/s$/i);
-    if (!match) return 0;
-
-    const [, value, unit] = match;
-    const num = parseFloat(value);
-
-    const multipliers: Record<string, number> = {
-        'B': 1,
-        'KB': 1024,
-        'MB': 1024 * 1024,
-        'GB': 1024 * 1024 * 1024
-    };
-
-    return num * (multipliers[unit.toUpperCase()] || 0);
-}
-
-/**
- * 格式化字节为人类可读的速度
+ * 格式化字节为人类可读的速度（用于前端聚合统计）
  * @param bytesPerSecond - 每秒字节数
- * @returns 格式化的速度字符串，如 "12.5 MB/s"
+ * @returns 格式化的速度字符串，如 "12.50|MB/s"
  */
 export function formatSpeed(bytesPerSecond: number): string {
     if (bytesPerSecond === 0) return '0.00|B/s';
@@ -39,19 +17,6 @@ export function formatSpeed(bytesPerSecond: number): string {
     const val = (bytesPerSecond / Math.pow(k, i)).toFixed(2);
     const unit = i < sizes.length ? `${sizes[i]}/s` : 'B/s';
     return `${val}|${unit}`;
-}
-
-/**
- * 格式化字节为人类可读的大小（无管道符，无/s）
- */
-export function formatBytes(bytes: number): string {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    const val = (bytes / Math.pow(k, i)).toFixed(2);
-    const unit = i < sizes.length ? sizes[i] : 'B';
-    return `${val} ${unit}`;
 }
 
 /**

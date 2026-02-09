@@ -49,7 +49,7 @@
       "icons/icon.ico"
     ],
     "externalBin": [
-      "aria2c"
+      "binaries/aria2c"
     ]
   }
 }

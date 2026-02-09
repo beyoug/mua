@@ -21,39 +21,39 @@ pub async fn add_download_task(
 ) -> Result<String, String> {
     log::info!("add_download_task called with urls: {:?}", urls);
 
-    // Validation
+    // 验证
     for url in &urls {
         if !utils::is_valid_url(url) {
-            return Err(format!("Invalid URL: {}", url));
+            return Err(format!("无效的 URL: {}", url));
         }
     }
 
-    // 1. Build Options (using helper from utils)
+    // 1. 构建选项（使用 utils 中的辅助函数）
     let deduced_name = utils::deduce_filename(filename.clone(), &urls);
 
-    // Smart Filename Resolution
-    // Resolve save path locally to check for existence
+    // 智能文件名解析
+    // 在本地解析保存路径以检查是否存在
     let resolved_save_path = if let Some(ref path) = save_path {
         utils::resolve_path(path)
     } else {
-        // Default download dir? For now let's assume current dir if not set, or handled by aria2
-        // But for existence check we need a path.
-        // If save_path is None, Aria2 uses its default. We might not be able to check collision easily without knowing Aria2 default.
-        // However, Mua might have a default setting.
-        // For SAFETY, if save_path is provided, we check. If not, we might skip or best effort.
-        // Let's assume most usages provide save_path (settings).
+        // 默认下载目录？目前如果没有设置，假设为当前目录，或者由 aria2 处理。
+        // 但是为了检查是否存在，我们需要一个路径。
+        // 如果 save_path 为 None，Aria2 会使用其默认路径。在不知道 Aria2 默认路径的情况下，我们可能很难检查冲突。
+        // 然而，Mua 可能会有一个默认设置。
+        // 为了安全起见，如果提供了 save_path，我们就进行检查。如果没有提供，我们可能会跳过或尽力而为。
+        // 我们假设大多数用法都会提供 save_path（设置中）。
         ".".to_string()
     };
 
-    // Get active filenames to prevent collision with running tasks
+    // 获取活跃文件名以防止与正在运行的任务冲突
     let active_names = state.get_active_filenames();
 
-    // Generate Unique Name
+    // 生成唯一名称
     let unique_filename =
         utils::get_unique_filename(&resolved_save_path, &deduced_name, &active_names);
 
-    // Now build aria2 options, forcing 'out' to be unique_filename
-    // We pass 'Some(unique_filename)' as filename overrides what user sent if it collided
+    // 现在构建 aria2 选项，强制 'out' 为 unique_filename
+    // 我们传递 'Some(unique_filename)'，如果发生冲突，重命名的文件名将覆盖用户发送的文件名
     let (options, final_save_path) = utils::build_aria2_options(
         save_path,
         Some(unique_filename.clone()),
@@ -64,13 +64,13 @@ pub async fn add_download_task(
         max_download_limit,
     );
 
-    // Call Aria2
+    // 调用 Aria2
     match aria2_client::add_uri(urls.clone(), Some(options)).await {
         Ok(gid) => {
-            // Persist to Store
+            // 持久化到存储 (Store)
             let task = PersistedTask {
                 gid: gid.clone(),
-                filename: unique_filename, // Use unique name
+                filename: unique_filename, // 使用唯一名称
                 url: urls.get(0).cloned().unwrap_or_default(),
                 save_path: final_save_path,
                 added_at: Local::now().to_rfc3339(),
@@ -89,7 +89,7 @@ pub async fn add_download_task(
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> Result<String, String> {
-    // Call Aria2 first, only update store on success
+    // 首先调用 Aria2，仅在成功时更新存储
     let result = aria2_client::pause(gid.clone()).await?;
     state.update_task_state(&gid, "paused");
     Ok(result)
@@ -101,7 +101,7 @@ pub async fn resume_task(
     state: tauri::State<'_, TaskStore>,
     gid: String,
 ) -> Result<String, String> {
-    // 1. Check Store state first
+    // 1. 首先检查 Store 状态
     let should_smart_resume = if let Some(task) = state.get_task(&gid) {
         task.state == "cancelled"
             || task.state == "error"
@@ -109,7 +109,7 @@ pub async fn resume_task(
             || task.state == "removed"
             || task.state == "missing"
     } else {
-        // If not in store, we can't do anything smart, try generic resume
+        // 如果不在存储中，我们无法执行任何智能操作，尝试通用恢复
         false
     };
 
@@ -117,14 +117,14 @@ pub async fn resume_task(
         return smart_resume_task(&state, gid).await;
     }
 
-    // 2. Try standard resume for active/paused tasks
+    // 2. 为活跃/已暂停的任务尝试标准恢复 (resume)
     match aria2_client::resume(gid.clone()).await {
         Ok(res) => {
             state.update_task_state(&gid, "waiting");
             Ok(res)
         }
         Err(e) => {
-            // Check if GID is lost/not found (maybe state said paused but aria2 lost it)
+            // 检查 GID 是否丢失/未找到（可能状态显示为已暂停，但 aria2 丢失了它）
             if e.to_lowercase().contains("not found") || e.to_lowercase().contains("error 1") {
                 smart_resume_task(&state, gid).await
             } else {
@@ -134,13 +134,13 @@ pub async fn resume_task(
     }
 }
 
-// Helper for re-submitting a task
+// 用于重新提交任务的辅助函数
 async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, String> {
-    log::info!("Attempting Smart Resume for GID: {}", gid);
+    log::info!("正在为 GID {} 尝试智能恢复 (Smart Resume)", gid);
 
     if let Some(task) = state.get_task(&gid) {
-        // Re-submit task
-        log::info!("Resubmitting task: {}", task.filename);
+        // 重新提交任务
+        log::info!("正在重新提交任务: {}", task.filename);
 
         let mut options = serde_json::Map::new();
         if !task.save_path.is_empty() {
@@ -148,17 +148,17 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
             options.insert("dir".to_string(), serde_json::Value::String(p));
         }
         if !task.filename.is_empty() {
-            // Ensure we don't double-nest filename if it was inferred
+            // 确保如果文件名是推断出来的，我们不会进行双重嵌套
             options.insert(
                 "out".to_string(),
                 serde_json::Value::String(task.filename.clone()),
             );
         }
 
-        // 0. Purge old task result if it exists in Aria2 to prevent GID conflict or stale data
+        // 0. 如果旧任务结果存在于 Aria2 中，则清除它，以防止 GID 冲突或陈旧数据
         let _ = aria2_client::purge(gid.clone()).await;
 
-        // Re-add URI
+        // 重新添加 URI
         match aria2_client::add_uri(
             vec![task.url.clone()],
             Some(serde_json::Value::Object(options)),
@@ -166,24 +166,20 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
         .await
         {
             Ok(new_gid) => {
-                log::info!(
-                    "Smart Resume successful. Old GID: {}, New GID: {}",
-                    gid,
-                    new_gid
-                );
+                log::info!("智能恢复成功。旧 GID: {}, 新 GID: {}", gid, new_gid);
 
-                // Remove old record
+                // 移除旧记录
                 let removed = state.remove_task(&gid);
-                log::info!("Smart Resume: Removed old task {}? {}", gid, removed);
+                log::info!("智能恢复：已移除旧任务 {}？{}", gid, removed);
 
-                // Add new record
-                // We keep the original 'added_at' for history continuity?
-                // Or maybe update it? Let's update it to now so it bumps to top.
+                // 添加新记录
+                // 我们是否为了历史连续性保留原始的 'added_at'？
+                // 或者更新它？让我们把它更新为“现在”，这样它就会排在最前面。
                 let new_task = PersistedTask {
                     gid: new_gid.clone(),
                     state: "waiting".to_string(),
                     added_at: Local::now().to_rfc3339(),
-                    total_length: "0".to_string(), // Reset progress
+                    total_length: "0".to_string(), // 重置进度
                     completed_length: "0".to_string(),
                     download_speed: "0".to_string(),
                     ..task
@@ -193,12 +189,12 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
                 Ok(new_gid)
             }
             Err(add_err) => {
-                log::error!("Smart Resume failed to re-add task: {}", add_err);
-                Err(format!("Smart Resume Failed: {}", add_err))
+                log::error!("智能恢复重新添加任务失败: {}", add_err);
+                Err(format!("智能恢复失败: {}", add_err))
             }
         }
     } else {
-        Err("Task not found in store, cannot resume".to_string())
+        Err("存储中未找到任务，无法恢复".to_string())
     }
 }
 
@@ -207,7 +203,7 @@ pub async fn cancel_task(
     state: tauri::State<'_, TaskStore>,
     gid: String,
 ) -> Result<String, String> {
-    // Call Aria2 first, only update store on success
+    // 首先调用 Aria2，仅在成功时更新存储
     let result = aria2_client::remove(gid.clone()).await?;
     state.update_task_state(&gid, "cancelled");
     Ok(result)
@@ -215,7 +211,7 @@ pub async fn cancel_task(
 
 #[tauri::command]
 pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
-    // Call Aria2 first, only update store on success
+    // 首先调用 Aria2，仅在成功时更新存储
     let result = aria2_client::pause_all().await?;
     state.update_all_active_to_paused();
     Ok(result)
@@ -223,7 +219,7 @@ pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<Strin
 
 #[tauri::command]
 pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> Result<String, String> {
-    // Call Aria2 first, only update store on success
+    // 首先调用 Aria2，仅在成功时更新存储
     let result = aria2_client::unpause_all().await?;
     state.update_all_paused_to_waiting();
     Ok(result)
@@ -263,7 +259,7 @@ pub async fn remove_tasks(
             tasks_info
                 .iter()
                 .find(|t| &t.gid == gid)
-                .map(|t| t.state == "downloading" || t.state == "waiting" || t.state == "paused")
+                .map(|t| utils::is_active_state(&t.state))
                 .unwrap_or(false)
         });
 
@@ -303,7 +299,7 @@ pub async fn remove_tasks(
                 let resolved_path = utils::resolve_path(&path);
                 if std::path::Path::new(&resolved_path).exists() {
                     if let Err(e) = std::fs::remove_file(&resolved_path) {
-                        log::error!("Failed to delete file {}: {}", resolved_path, e);
+                        log::error!("删除文件失败 {}: {}", resolved_path, e);
                     }
                 }
                 // 清理 .aria2 控制文件
@@ -325,42 +321,40 @@ pub async fn remove_task_record(
     remove_task_inner(&state, gid, delete_file).await
 }
 
-// Inner helper to avoid code duplication
+// 内部辅助函数以避免代码重复
 async fn remove_task_inner(
     state: &TaskStore,
     gid: String,
     delete_file: bool,
 ) -> Result<String, String> {
-    // 0. Get task info BEFORE removal to know path
+    // 0. 在删除前获取任务信息以获取路径
     let task_opt = state.get_task(&gid);
 
-    // Check if task is active
-    let is_active = if let Some(ref t) = task_opt {
-        t.state == "downloading" || t.state == "waiting" || t.state == "paused"
-    } else {
-        false
-    };
+    // 检查任务是否活跃
+    let is_active = task_opt
+        .as_ref()
+        .map_or(false, |t| utils::is_active_state(&t.state));
 
-    // 1. Remove from Aria2 First
+    // 1. 首先从 Aria2 中移除
     if is_active {
-        // If active, we must cancel it first. "remove" in aria2 triggers stop.
+        // 如果是活跃状态，我们必须先取消它。aria2 中的 "remove" 会触发停止。
         let _ = aria2_client::remove(gid.clone()).await;
-        // We try to purge too, just in case
+        // 我们也尝试清理 (purge)，以防万一
         let _ = aria2_client::purge(gid.clone()).await;
     } else {
-        // If stopped/completed, we purge the result
+        // 如果已停止/已完成，我们清理结果
         let _ = aria2_client::purge(gid.clone()).await;
     }
 
-    // 2. Remove from Store Only after Aria2 was notified
+    // 2. 仅在通知 Aria2 后从 Store 中删除
     state.remove_task(&gid);
 
-    // 3. Delete File if requested
+    // 3. 如果请求，则删除文件
     if delete_file {
         if let Some(task) = task_opt {
-            // Unsafe to delete file if it was just active and we only signaled 'remove'.
-            // Aria2 might still hold the lock for a split second.
-            // But we will try anyway, logging warning on failure.
+            // 如果任务刚才还是活跃的，并且我们仅发送了 'remove' 信号，那么删除文件是不安全的。
+            // Aria2 可能仍会在一瞬间持有锁。
+            // 但我们会尝试执行，并在失败时记录警告。
 
             let filepath = if !task.save_path.is_empty() && !task.filename.is_empty() {
                 if task.save_path.ends_with('/') {
@@ -377,14 +371,14 @@ async fn remove_task_inner(
 
                 if std::path::Path::new(&resolved_path).exists() {
                     match std::fs::remove_file(&resolved_path) {
-                        Ok(_) => log::info!("Deleted file: {}", resolved_path),
-                        Err(e) => log::error!("Failed to delete file {}: {}", resolved_path, e),
+                        Ok(_) => log::info!("已删除文件: {}", resolved_path),
+                        Err(e) => log::error!("删除文件失败 {}: {}", resolved_path, e),
                     }
                 } else {
-                    log::warn!("File not found for deletion: {}", resolved_path);
+                    log::warn!("未找到要删除的文件: {}", resolved_path);
                 }
 
-                // 4. Try to clean .aria2 control file
+                // 4. 尝试清理 .aria2 控制文件
                 let aria2_file_path = format!("{}.aria2", resolved_path);
                 if std::path::Path::new(&aria2_file_path).exists() {
                     let _ = std::fs::remove_file(&aria2_file_path);
@@ -414,11 +408,11 @@ pub async fn show_task_in_folder(
         utils::show_in_file_manager(&full_path);
         Ok(())
     } else {
-        Err("Task not found".to_string())
+        Err("未找到任务".to_string())
     }
 }
 
-// Frontend DTO imported from sync module
+// 从 sync 模块导入的前端 DTO
 use crate::core::sync::FrontendTask;
 
 #[tauri::command]
@@ -485,8 +479,8 @@ pub fn start_log_stream(app: AppHandle) {
     if let Some(state) = app.try_state::<crate::aria2::sidecar::LogStreamEnabled>() {
         state.0.store(true, std::sync::atomic::Ordering::Relaxed);
     }
-    
-    // Send buffered logs immediately
+
+    // 立即发送缓冲的日志
     if let Some(state) = app.try_state::<crate::aria2::sidecar::SidecarState>() {
         if let Ok(logs) = state.recent_logs.lock() {
             for log in logs.iter() {
@@ -506,59 +500,65 @@ pub fn stop_log_stream(app: AppHandle) {
 #[tauri::command]
 pub async fn import_custom_binary(app: AppHandle, file_path: String) -> Result<String, String> {
     use std::fs;
-    use std::path::Path;
     #[cfg(unix)]
     use std::os::unix::fs::PermissionsExt;
+    use std::path::Path;
 
-    // 1. Prepare target path
+    // 1. 准备目标路径
     let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
     let bin_dir = config_dir.join("custom-bin");
     if !bin_dir.exists() {
         fs::create_dir_all(&bin_dir).map_err(|e| e.to_string())?;
     }
-    
-    let target_name = if cfg!(windows) { "aria2c.exe" } else { "aria2c" };
+
+    let target_name = if cfg!(windows) {
+        "aria2c.exe"
+    } else {
+        "aria2c"
+    };
     let target_path = bin_dir.join(target_name);
 
-    // 2. Scan constraints
+    // 2. 检查约束
     let source_path = Path::new(&file_path);
     if !source_path.exists() {
-        return Err("Source file does not exist".to_string());
+        return Err("源文件不存在".to_string());
     }
 
-    // 3. Copy file
-    fs::copy(source_path, &target_path).map_err(|e| format!("Copy failed: {}", e))?;
+    // 3. 复制文件
+    fs::copy(source_path, &target_path).map_err(|e| format!("复制失败: {}", e))?;
 
-    // 4. Set permissions (Unix)
+    // 4. 设置权限 (Unix)
     #[cfg(unix)]
     {
-        let mut perms = fs::metadata(&target_path).map_err(|e| e.to_string())?.permissions();
+        let mut perms = fs::metadata(&target_path)
+            .map_err(|e| e.to_string())?
+            .permissions();
         perms.set_mode(0o755);
         fs::set_permissions(&target_path, perms).map_err(|e| e.to_string())?;
     }
 
-    // 5. Validation (Dry Run)
+    // 5. 验证 (空运行)
     let output = std::process::Command::new(&target_path)
         .arg("--version")
         .output()
-        .map_err(|e| format!("Validation failed (exec error): {}", e))?;
+        .map_err(|e| format!("验证失败 (执行错误): {}", e))?;
 
     if !output.status.success() {
-        // Cleanup bad file
+        // 清理错误文件
         let _ = fs::remove_file(&target_path);
-        return Err("Validation failed: integrity check returned non-zero exit code".to_string());
+        return Err("验证失败：完整性检查返回非零退出代码".to_string());
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     if !stdout.contains("aria2 version") {
         let _ = fs::remove_file(&target_path);
-        return Err("Validation failed: Not a valid aria2 binary".to_string());
+        return Err("验证失败：不是有效的 aria2 二进制文件".to_string());
     }
-    
-    // Parse version (simplistic)
+
+    // 解析版本（简单处理）
     // "aria2 version 1.36.0"
     let version_line = stdout.lines().next().unwrap_or("Unknown");
-    
+
     Ok(version_line.to_string())
 }
 
@@ -574,26 +574,33 @@ pub struct Aria2VersionInfo {
 #[tauri::command]
 pub async fn get_aria2_version_info(app: AppHandle) -> Result<Aria2VersionInfo, String> {
     let config_dir = app.path().app_config_dir().map_err(|e| e.to_string())?;
-    let target_name = if cfg!(windows) { "aria2c.exe" } else { "aria2c" };
+    let target_name = if cfg!(windows) {
+        "aria2c.exe"
+    } else {
+        "aria2c"
+    };
     let custom_path = config_dir.join("custom-bin").join(target_name);
-    
-    // Check if custom binary exists and get its version
+
+    // 检查自定义二进制文件是否存在并获取其版本
     let (has_custom, custom_ver) = if custom_path.exists() {
-        match std::process::Command::new(&custom_path).arg("--version").output() {
+        match std::process::Command::new(&custom_path)
+            .arg("--version")
+            .output()
+        {
             Ok(output) if output.status.success() => {
-               let stdout = String::from_utf8_lossy(&output.stdout);
-               let ver = stdout.lines().next().unwrap_or("Unknown").to_string();
-               (true, Some(ver))
-            },
-            _ => (false, None)
+                let stdout = String::from_utf8_lossy(&output.stdout);
+                let ver = stdout.lines().next().unwrap_or("Unknown").to_string();
+                (true, Some(ver))
+            }
+            _ => (false, None),
         }
     } else {
         (false, None)
     };
-    
+
     let config = crate::core::config::load_config(&app);
-    
-    // Determine info about the *Active* kernel
+
+    // 确定活跃内核的信息
     if config.use_custom_aria2 && has_custom {
         Ok(Aria2VersionInfo {
             version: custom_ver.clone().unwrap_or_default(),
@@ -604,7 +611,7 @@ pub async fn get_aria2_version_info(app: AppHandle) -> Result<Aria2VersionInfo, 
         })
     } else {
         Ok(Aria2VersionInfo {
-            version: "Built-in (1.36.0)".to_string(), 
+            version: "Built-in (1.36.0)".to_string(),
             is_custom: false,
             path: "Embedded Sidecar".to_string(),
             custom_binary_exists: has_custom,

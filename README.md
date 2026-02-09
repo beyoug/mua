@@ -9,7 +9,14 @@
 </p>
 
 <p align="center">
-  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的跨平台桌面应用
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License"></a>
+  <img src="https://img.shields.io/badge/PRs-welcome-brightgreen.svg" alt="PRs Welcome">
+  <img src="https://img.shields.io/badge/Tauri-2.0-orange.svg" alt="Tauri">
+  <img src="https://img.shields.io/badge/Svelte-5-red.svg" alt="Svelte">
+</p>
+
+<p align="center">
+  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的跨平台桌面应用，追求极致的性能与简约的体验。
 </p>
 
 ---
@@ -17,10 +24,11 @@
 ## ✨ 特性
 
 - 🚀 **高性能下载** - 基于 aria2c 多线程下载引擎
-- 🎨 **现代化 UI** - shadcn-svelte 组件库 + Tailwind CSS v4
-- 🔄 **实时状态** - TanStack Query 驱动的响应式数据流
-- 📦 **轻量打包** - Tauri 2.0 打包体积远小于 Electron
-- 💻 **跨平台** - 支持 macOS、Windows、Linux
+- 🛠️ **高度可定制** - 支持 **自定义 aria2 内核** 与 **自定义配置文件**
+- 🎨 **现代化 UI** - 基于 shadcn-svelte + Tailwind CSS v4 构建的精美界面
+- 🔄 **实时状态** - TanStack Query 驱动的响应式数据流与 EMA 速度平滑
+- 📦 **轻量打包** - 基于 Tauri 2.0，体积小、性能强、低资源占用
+- 💻 **跨平台支持** - 支持 macOS (Intel) 与 Windows (x64) 默认打包
 
 ## 🛠️ 技术栈
 
@@ -34,6 +42,22 @@
 | 后端 | Rust | latest |
 | 下载引擎 | aria2c | JSON-RPC 2.0 |
 
+## ⬇️ 下载与安装
+
+请前往 [GitHub Releases](https://github.com/your-username/Mua/releases) 下载最新版本。
+
+| 平台 | 安装包格式 | 状态 | 说明 |
+|------|-----------|------|------|
+| **macOS** (Intel) | `.dmg` | ✅ 默认内置 | 适用于 Intel 处理器的 Mac |
+| **Windows** (x64) | `.msi` 或 `.exe` | ✅ 默认内置 | 标准 64 位安装包 |
+| **macOS** (Apple Silicon) | - | ⚠️ 需手动集成 | M1/M2/M3 及后续芯片版本 |
+| **Linux** | - | ⚠️ 需手动集成 | 需自行准备 Linux 静态二进制文件 |
+
+> [!TIP]
+> 开发者可以通过 [贡献指南](./CONTRIBUTING.md) 了解如何为其他架构集成二进制内核。
+
+---
+
 ## 📦 快速开始
 
 ### 环境要求
@@ -41,73 +65,35 @@
 - **Node.js** >= 20
 - **pnpm** >= 9
 - **Rust** >= 1.77
+- **Tauri 编译环境** (详见 [贡献指南](./CONTRIBUTING.md))
 
-### 安装依赖
+### 安装并运行
 
 ```bash
 pnpm install
-```
-
-### 开发模式
-
-```bash
 pnpm tauri:dev
 ```
 
-### 构建生产版本
+## 🗺️ 路线图 (Roadmap)
 
-```bash
-pnpm tauri:build
-```
+- [x] 基于 Tauri 2.0 的核心下载功能
+- [x] 多任务并行管理与速度估算 (EMA)
+- [ ] 种子文件 (BitTorrent) 与磁力链接支持
+- [ ] 浏览器扩展集成
+- [ ] 国际化 (i18n)
 
-### 其他命令
+## 🤝 参与贡献
 
-```bash
-pnpm check        # TypeScript 类型检查
-pnpm build        # 仅构建前端
-pnpm preview      # 预览前端构建
-```
+我们欢迎并感谢任何形式的贡献！在开始之前，请阅读我们的 [贡献指南](./CONTRIBUTING.md)。
 
-## 📁 项目结构
+## 💬 交流与反馈
 
-```
-Mua/
-├── src/                        # 前端源码
-│   ├── routes/                 # SvelteKit 路由
-│   │   ├── +layout.svelte      # 根布局 (QueryClientProvider)
-│   │   ├── +layout.ts          # SPA 模式配置
-│   │   ├── +page.svelte        # 首页
-│   │   └── layout.css          # 全局样式 (shadcn 主题)
-│   └── lib/
-│       ├── api/aria2/          # aria2 JSON-RPC 通信层
-│       │   ├── client.ts       # WebSocket 客户端
-│       │   ├── methods.ts      # RPC 方法封装
-│       │   └── types.ts        # 类型定义
-│       ├── config/             # 配置
-│       │   ├── query.ts        # TanStack Query 配置
-│       │   └── constants.ts    # 应用常量
-│       ├── types/              # 共享类型
-│       └── utils.ts            # 工具函数
-├── src-tauri/                  # Rust 后端
-│   ├── src/lib.rs              # Tauri 入口
-│   ├── tauri.conf.json         # Tauri 配置
-│   └── Cargo.toml              # Rust 依赖
-├── build/                      # 前端构建输出
-├── components.json             # shadcn-svelte 配置
-└── svelte.config.js            # SvelteKit 配置
-```
-
-## 🎨 添加 UI 组件
-
-使用 shadcn-svelte CLI 添加组件：
-
-```bash
-pnpm dlx shadcn-svelte@latest add button card progress
-```
+- **Issue**: 提交 bug 或功能建议
+- **Discussions**: 参与社区讨论
 
 ## 📄 许可证
 
-MIT License
+本项目基于 [MIT](./LICENSE) 许可证开源。
 
 ## 🙏 致谢
 
@@ -115,4 +101,3 @@ MIT License
 - [SvelteKit](https://kit.svelte.dev/) - 现代 Web 框架
 - [shadcn-svelte](https://www.shadcn-svelte.com/) - 精美的 UI 组件库
 - [aria2](https://aria2.github.io/) - 强大的下载引擎
-- [Motrix](https://motrix.app/) - 设计灵感来源

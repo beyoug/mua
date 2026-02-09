@@ -5,6 +5,7 @@
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 	import { currentTheme, effectiveColorMode, particlesEnabled } from '$lib/stores/theme';
 	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
+	import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
 
 	import { listen } from '@tauri-apps/api/event';
 	import { message } from '@tauri-apps/plugin-dialog';
@@ -37,6 +38,9 @@
 				await appWindow.show();
 				await appWindow.setFocus();
 
+				// 初始化通知服务
+				await initNotifications();
+
 				// 监听 Aria2 Sidecar 错误
 				unlisten_sidecar = await listen('aria2-sidecar-error', async (event: any) => {
 					const payload = event.payload;
@@ -60,6 +64,7 @@
 
 		return () => {
 			if (unlisten_sidecar) unlisten_sidecar();
+			cleanupNotifications();
 		};
 	});
 </script>

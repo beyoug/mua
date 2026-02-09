@@ -7,7 +7,7 @@ import { invoke } from '@tauri-apps/api/core';
 import type { DownloadConfig } from '$lib/types/download';
 import type { DownloadTask } from '$lib/types/download';
 
-// === Command Wrappers ===
+// === 命令封装器 ===
 
 /**
  * 获取任务列表
