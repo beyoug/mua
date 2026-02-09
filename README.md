@@ -100,3 +100,4 @@ pnpm tauri:dev
 - [SvelteKit](https://kit.svelte.dev/) - 现代 Web 框架
 - [shadcn-svelte](https://www.shadcn-svelte.com/) - 精美的 UI 组件库
 - [aria2](https://aria2.github.io/) - 强大的下载引擎
+- [Gemini Pro](https://deepmind.google/technologies/gemini/) - AI 协作开发伙伴
