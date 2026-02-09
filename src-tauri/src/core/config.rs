@@ -27,6 +27,16 @@ pub struct AppConfig {
     pub max_concurrent_downloads: u32,
     #[serde(rename = "uaHistory", default = "default_ua_history")]
     pub ua_history: Vec<String>,
+    #[serde(rename = "defaultSavePath", default = "default_save_path")]
+    pub default_save_path: String,
+    #[serde(rename = "globalMaxDownloadLimit", default = "default_string_empty")]
+    pub global_max_download_limit: String,
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    #[serde(rename = "colorMode", default = "default_color_mode")]
+    pub color_mode: String,
+    #[serde(rename = "particlesEnabled", default = "default_result_true")]
+    pub particles_enabled: bool,
 }
 
 fn default_ua_history() -> Vec<String> {
@@ -45,6 +55,28 @@ fn default_result_false() -> bool {
     false
 }
 
+fn default_result_true() -> bool {
+    true
+}
+
+fn default_save_path() -> String {
+    dirs::download_dir()
+        .map(|p| p.to_string_lossy().to_string())
+        .unwrap_or_else(|| "~/Downloads".to_string())
+}
+
+fn default_string_empty() -> String {
+    String::new()
+}
+
+fn default_theme() -> String {
+    "deep-space".to_string()
+}
+
+fn default_color_mode() -> String {
+    "dark".to_string()
+}
+
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
@@ -57,6 +89,11 @@ impl Default for AppConfig {
             auto_start: false,
             max_concurrent_downloads: 3,
             ua_history: Vec::new(),
+            default_save_path: default_save_path(),
+            global_max_download_limit: String::new(),
+            theme: default_theme(),
+            color_mode: default_color_mode(),
+            particles_enabled: true,
         }
     }
 }

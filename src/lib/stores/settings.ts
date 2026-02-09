@@ -11,6 +11,11 @@ export interface AppConfig {
     autoStart: boolean;
     maxConcurrentDownloads: number;
     uaHistory: string[];
+    defaultSavePath: string;
+    globalMaxDownloadLimit: string;
+    theme: string;
+    colorMode: string;
+    particlesEnabled: boolean;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -20,7 +25,12 @@ const DEFAULT_CONFIG: AppConfig = {
     useCustomAria2: false,
     autoStart: false,
     maxConcurrentDownloads: 3,
-    uaHistory: []
+    uaHistory: [],
+    defaultSavePath: '',
+    globalMaxDownloadLimit: '',
+    theme: 'deep-space',
+    colorMode: 'dark',
+    particlesEnabled: true
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

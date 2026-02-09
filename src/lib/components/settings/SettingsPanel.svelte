@@ -45,7 +45,6 @@
   $effect(() => {
     if (open) {
       loadAria2Config();
-      loadAppSettings();
     }
   });
 

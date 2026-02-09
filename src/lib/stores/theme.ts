@@ -5,8 +5,8 @@
  * - 三种颜色模式（深色、浅色、自动）
  * - 持久化到 localStorage
  */
-import { writable, derived } from 'svelte/store';
-import { browser } from '$app/environment';
+import { derived, get } from 'svelte/store';
+import { appSettings, saveAppSettings } from './settings';
 
 // ============ 主题色 ============
 export type ThemeId = 'electric-blue' | 'cyber-purple' | 'deep-space';
@@ -52,98 +52,46 @@ export const colorModes: { id: ColorMode; name: string }[] = [
 	{ id: 'dark', name: '深色' }
 ];
 
-// ============ Storage Keys ============
-const THEME_KEY = 'mua-theme';
-const MODE_KEY = 'mua-color-mode';
-const PARTICLES_KEY = 'mua-particles-enabled';
+// ============ 获取状态的辅助逻辑 ============
 
-const DEFAULT_THEME: ThemeId = 'deep-space';
-const DEFAULT_MODE: ColorMode = 'dark';
-const DEFAULT_PARTICLES: boolean = true;
+/**
+ * 通用的设置保存包装
+ */
+async function updateConfigKey<K extends keyof import('./settings').AppConfig>(key: K, value: import('./settings').AppConfig[K]) {
+	const current = get(appSettings);
+	if (current[key] === value) return;
 
-// ============ 初始化函数 ============
-function getInitialTheme(): ThemeId {
-	if (!browser) return DEFAULT_THEME;
-	const stored = localStorage.getItem(THEME_KEY);
-	if (stored && stored in themes) {
-		return stored as ThemeId;
+	await saveAppSettings({
+		...current,
+		[key]: value
+	});
+}
+
+// ============ Theme Store (Derived from AppSettings) ============
+
+export const currentTheme = {
+	subscribe: derived(appSettings, $s => $s.theme as ThemeId).subscribe,
+	set: (val: ThemeId) => updateConfigKey('theme', val)
+};
+
+export const colorMode = {
+	subscribe: derived(appSettings, $s => $s.colorMode as ColorMode).subscribe,
+	set: (val: ColorMode) => updateConfigKey('colorMode', val)
+};
+
+export const particlesEnabled = {
+	subscribe: derived(appSettings, $s => $s.particlesEnabled).subscribe,
+	set: (val: boolean) => updateConfigKey('particlesEnabled', val),
+	toggle: () => {
+		const current = get(appSettings).particlesEnabled;
+		updateConfigKey('particlesEnabled', !current);
 	}
-	return DEFAULT_THEME;
-}
-
-function getInitialColorMode(): ColorMode {
-	if (!browser) return DEFAULT_MODE;
-	const stored = localStorage.getItem(MODE_KEY);
-	if (stored && ['dark', 'light', 'auto'].includes(stored)) {
-		return stored as ColorMode;
-	}
-	return DEFAULT_MODE;
-}
-
-function getInitialParticlesEnabled(): boolean {
-	if (!browser) return DEFAULT_PARTICLES;
-	const stored = localStorage.getItem(PARTICLES_KEY);
-	if (stored !== null) {
-		return stored === 'true';
-	}
-	return DEFAULT_PARTICLES;
-}
-
-// ============ Theme Store ============
-function createThemeStore() {
-	const { subscribe, set } = writable<ThemeId>(getInitialTheme());
-
-	return {
-		subscribe,
-		set: (themeId: ThemeId) => {
-			if (browser) {
-				localStorage.setItem(THEME_KEY, themeId);
-			}
-			set(themeId);
-		}
-	};
-}
-
-// ============ Color Mode Store ============
-function createColorModeStore() {
-	const { subscribe, set } = writable<ColorMode>(getInitialColorMode());
-
-	return {
-		subscribe,
-		set: (mode: ColorMode) => {
-			if (browser) {
-				localStorage.setItem(MODE_KEY, mode);
-			}
-			set(mode);
-		}
-	};
-}
-
-// ============ Particles Enabled Store ============
-function createParticlesEnabledStore() {
-	const { subscribe, set, update } = writable<boolean>(getInitialParticlesEnabled());
-
-	return {
-		subscribe,
-		set: (enabled: boolean) => {
-			if (browser) {
-				localStorage.setItem(PARTICLES_KEY, String(enabled));
-			}
-			set(enabled);
-		},
-		toggle: () => {
-			update((current) => {
-				const newValue = !current;
-				if (browser) {
-					localStorage.setItem(PARTICLES_KEY, String(newValue));
-				}
-				return newValue;
-			});
-		}
-	};
-}
+};
 
 // ============ 系统偏好检测 ============
+import { writable } from 'svelte/store';
+import { browser } from '$app/environment';
+
 export const systemPrefersDark = writable(true);
 
 if (browser) {
@@ -154,18 +102,14 @@ if (browser) {
 	});
 }
 
-// ============ Exports ============
-export const currentTheme = createThemeStore();
-export const colorMode = createColorModeStore();
-export const particlesEnabled = createParticlesEnabledStore();
-
 // 实际应用的颜色模式（考虑 auto）
 export const effectiveColorMode = derived(
-	[colorMode, systemPrefersDark],
-	([$colorMode, $systemPrefersDark]) => {
-		if ($colorMode === 'auto') {
+	[appSettings, systemPrefersDark],
+	([$appSettings, $systemPrefersDark]) => {
+		const mode = $appSettings.colorMode as ColorMode;
+		if (mode === 'auto') {
 			return $systemPrefersDark ? 'dark' : 'light';
 		}
-		return $colorMode;
+		return mode;
 	}
 );

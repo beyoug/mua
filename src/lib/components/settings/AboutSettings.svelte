@@ -1,7 +1,16 @@
 <script lang="ts">
   import { Github, Globe, Heart } from '@lucide/svelte';
+  import { open } from '@tauri-apps/plugin-shell';
 
   const version = "0.1.0";
+
+  async function openUrl(url: string) {
+    try {
+      await open(url);
+    } catch (e) {
+      console.error('Failed to open URL:', e);
+    }
+  }
 </script>
 
 <div class="settings-container">
@@ -14,11 +23,11 @@
     <div class="app-version">Version {version}</div>
     
     <div class="action-grid">
-      <button class="action-tile" onclick={() => window.open('https://github.com/beyoug/mua', '_blank')}>
+      <button class="action-tile" onclick={() => openUrl('https://github.com/beyoug/mua')}>
         <Github size={20} />
         <span>GitHub</span>
       </button>
-      <button class="action-tile" onclick={() => window.open('https://mua.local', '_blank')}>
+      <button class="action-tile" onclick={() => openUrl('https://mua.local')}>
         <Globe size={20} />
         <span>官网</span>
       </button>

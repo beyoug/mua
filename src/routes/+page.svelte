@@ -209,6 +209,10 @@
 		state={detailsTask.state}
 		savePath={detailsTask.savePath}
 		errorMessage={detailsTask.errorMessage}
+		userAgent={detailsTask.userAgent}
+		referer={detailsTask.referer}
+		proxy={detailsTask.proxy}
+		headers={detailsTask.headers}
 		onClose={() => detailsTask = null}
 	/>
 {/if}

@@ -11,6 +11,10 @@
     colorMode.set(mode);
   }
 
+  function toggleParticles() {
+    particlesEnabled.set(!$particlesEnabled);
+  }
+
   const themeList = Object.values(themes);
 
   const modeIcons = {
@@ -80,7 +84,8 @@
         <label class="switch">
           <input 
             type="checkbox" 
-            bind:checked={$particlesEnabled}
+            checked={$particlesEnabled}
+            onchange={toggleParticles}
           />
           <span class="slider"></span>
         </label>

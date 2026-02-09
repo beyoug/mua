@@ -186,7 +186,12 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
                 remaining: '',
                 state: 'waiting',
                 addedAt: formatAddedAt(),
-                savePath: config.savePath || ''
+                savePath: config.savePath || '',
+                userAgent: config.userAgent,
+                referer: config.referer,
+                proxy: config.proxy,
+                maxDownloadLimit: config.maxDownloadLimit,
+                headers: config.headers ? config.headers.split(';').map(h => h.trim()).filter(h => h !== '') : []
             };
 
             return [...tasks, newTask];

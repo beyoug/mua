@@ -127,7 +127,28 @@
 		overflow-y: auto;
 		display: flex;
 		flex-direction: column;
+        
+        /* 自定义滚动条样式 */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-subtle) transparent;
 	}
+
+    .scroll-container::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .scroll-container::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb {
+        background: var(--border-subtle);
+        border-radius: 10px;
+    }
+
+    .scroll-container::-webkit-scrollbar-thumb:hover {
+        background: var(--border-normal);
+    }
 
 	.downloads-list {
 		display: flex;

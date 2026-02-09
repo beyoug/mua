@@ -11,9 +11,8 @@
         title: '选择默认下载目录'
       });
       if (selected) {
-        // Assume we might want to add a defaultSavePath to settings in future
-        // For now just demonstrating UI. 
-        // If we want to support it, we need to update AppConfig.
+        $appSettings.defaultSavePath = selected as string;
+        await saveAppSettings($appSettings);
       }
     } catch (e) {
       console.error(e);
@@ -32,7 +31,7 @@
           <div class="setting-desc">新任务默认使用的路径</div>
         </div>
         <button class="path-btn" onclick={selectFolder}>
-          <span class="path-val">~/Downloads</span>
+          <span class="path-val">{$appSettings.defaultSavePath || '~/Downloads'}</span>
           <FolderOpen size={14} />
         </button>
       </div>
@@ -64,7 +63,12 @@
           <div class="setting-desc">0 表示不限制</div>
         </div>
         <div class="inner-input group">
-          <input type="number" placeholder="0" />
+          <input 
+            type="text" 
+            placeholder="0" 
+            bind:value={$appSettings.globalMaxDownloadLimit}
+            onchange={() => saveAppSettings($appSettings)}
+          />
           <span class="unit">MB/s</span>
         </div>
       </div>

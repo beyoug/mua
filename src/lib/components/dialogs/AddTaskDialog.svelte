@@ -27,7 +27,7 @@
 
 	// 基础设置
 	let urls = $state('');
-	let savePath = $state('~/Downloads');
+	let savePath = $state($appSettings.defaultSavePath || '~/Downloads');
 	let filename = $state('');
 
 	// 高级设置面板
@@ -46,22 +46,26 @@
 	let validationTimer: ReturnType<typeof setTimeout> | null = null;
 
     // 组合展示用的 UA 列表
-    const displayUas = $derived(() => {
-        const history = $appSettings.uaHistory || [];
-        // 过滤掉已经在历史记录中的内置 UA，防止重复展示
-        const remainingBuiltin = BUILTIN_UAS.filter(b => !history.includes(b.value));
-        
-        return [
-            { id: 'default', name: '默认', value: '', builtin: true },
-            ...history.map((val, index) => ({ id: `history-${index}`, name: truncateUa(val), value: val, builtin: false })),
-            ...remainingBuiltin.map((b, index) => ({ id: `builtin-${index}`, name: b.name, value: b.value, builtin: true })),
-        ];
-    });
+    const displayUas = $derived([
+        { id: 'default', name: '默认', value: '', builtin: true },
+        ...($appSettings.uaHistory || []).map((val, index) => ({ 
+            id: `history-${index}`, 
+            name: truncateUa(val), 
+            value: val, 
+            builtin: false 
+        })),
+        ...BUILTIN_UAS.filter(b => !($appSettings.uaHistory || []).includes(b.value)).map((b, index) => ({ 
+            id: `builtin-${index}`, 
+            name: b.name, 
+            value: b.value, 
+            builtin: true 
+        }))
+    ]);
 
-    const activeUaName = $derived(() => {
+    const activeUaName = $derived.by(() => {
         if (selectedUaValue === 'custom') return '自定义';
         if (selectedUaValue === '') return '默认';
-        const found = displayUas().find(u => u.value === selectedUaValue);
+        const found = displayUas.find(u => u.value === selectedUaValue);
         return found ? found.name : truncateUa(selectedUaValue);
     });
 
@@ -71,10 +75,7 @@
     }
 
 	// 计算实际 User Agent
-	const effectiveUserAgent = $derived(() => {
-		if (selectedUaValue === 'custom') return customUserAgent;
-		return selectedUaValue;
-	});
+	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
 
     async function removeUaHistoryItem(uaValue: string) {
         const history = $appSettings.uaHistory || [];
@@ -96,15 +97,9 @@
 	// 注：URL 验证函数已迁移至 utils/validators.ts
 
 	// 计算是否可以提交
-	const canSubmit = $derived(() => {
-		const trimmed = urls.trim();
-		if (!trimmed) return false;
-		return isValidDownloadUrl(trimmed);
-	});
+	const canSubmit = $derived(isValidDownloadUrl(urls.trim()));
 
-    const isCustomUaInvalid = $derived(() => {
-        return selectedUaValue === 'custom' && !customUserAgent.trim();
-    });
+    const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
 
 	// 提交状态
 	let isSubmitting = $state(false);
@@ -135,7 +130,7 @@
              */
 			
 			// 可选：通知父组件或显示成功toast
-            const finalUa = effectiveUserAgent();
+            const finalUa = effectiveUserAgent;
 			onSubmit?.({
 				urls: [trimmedUrl],
 				savePath,
@@ -173,6 +168,7 @@
 
 	function resetForm() {
 		urls = '';
+        savePath = $appSettings.defaultSavePath || '~/Downloads';
 		filename = '';
 		selectedUaValue = '';
         isUaDropdownOpen = false;
@@ -277,7 +273,7 @@
 			onclick={(e) => e.stopPropagation()}>
 			{#if !showAdvanced}
 				<!-- 主面板 -->
-				<div class="view-main" transition:fade={{ duration: 200 }}>
+				<div class="view-main" transition:fade={{ duration: 300 }}>
 					<header class="dialog-header">
 						<h2>添加下载任务</h2>
 						<button class="close-btn" onclick={onClose}>
@@ -344,7 +340,7 @@
 							<button 
 								class="btn btn-primary" 
 								onclick={handleSubmit}
-								disabled={!canSubmit() || isSubmitting}
+								disabled={!canSubmit || isSubmitting}
 							>
 								{#if isSubmitting}
 									<!-- 简单的 loading 状态 -->
@@ -359,7 +355,7 @@
 				</div>
 			{:else}
 				<!-- 高级设置面板 (直接渲染，共享背景) -->
-				<div class="advanced-panel" transition:fade={{ duration: 200 }}>
+				<div class="advanced-panel" transition:fade={{ duration: 300 }}>
 					<header class="panel-header">
 						<button class="back-btn" onclick={() => showAdvanced = false}>
 							<ArrowLeft size={18} />
@@ -383,14 +379,14 @@
                                     class:open={isUaDropdownOpen}
                                     onclick={() => isUaDropdownOpen = !isUaDropdownOpen}
                                 >
-                                    <span class="trigger-text">{activeUaName()}</span>
+                                    <span class="trigger-text">{activeUaName}</span>
                                     <ChevronRight size={14} class="chevron" />
                                 </button>
 
                                 {#if isUaDropdownOpen}
                                     <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
                                         <div class="ua-list-container">
-                                            {#each displayUas() as ua}
+                                            {#each displayUas as ua}
                                                 <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
                                                     <button class="ua-select-btn" onclick={() => handleUaSelect(ua.value)}>
                                                         <span class="ua-name">{ua.name}</span>
@@ -415,7 +411,7 @@
 									<input
 										type="text"
                                         class="ua-custom-input"
-                                        class:error={isCustomUaInvalid()}
+                                        class:error={isCustomUaInvalid}
 										placeholder="输入自定义 User Agent"
 										bind:value={customUserAgent}
                                         transition:fade={{ duration: 150 }}
@@ -458,7 +454,7 @@
 							</label>
 							<input
 								type="text"
-								placeholder="http://host:port 或 socks5://host:port"
+								placeholder="[user:pass@]host:port (支持 http/socks5)"
 								bind:value={proxy}
 							/>
 						</div>
@@ -488,7 +484,7 @@
 						<button 
                             class="btn btn-primary" 
                             onclick={() => showAdvanced = false}
-                            disabled={isCustomUaInvalid()}
+                            disabled={isCustomUaInvalid}
                         >
 							确定
 						</button>
@@ -512,8 +508,10 @@
 	}
 
 	.dialog {
-		width: 520px;
-		max-width: 90vw;
+		width: 90%;
+		min-width: 520px;
+		max-width: 600px;
+        max-height: 95vh;
 		background: var(--dialog-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
@@ -526,6 +524,9 @@
 		display: grid;
 		grid-template-rows: 1fr;
 		grid-template-columns: 1fr;
+        
+        /* 平滑尺寸过渡 */
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 	}
 	
 	.view-main, .advanced-panel {
@@ -575,9 +576,32 @@
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
-		height: 340px;
+		min-height: 340px;
+        max-height: calc(90vh - 120px);
+        flex: 1;
 		overflow-y: auto;
+
+        /* 自定义滚动条样式 */
+        scrollbar-width: thin;
+        scrollbar-color: var(--border-subtle) transparent;
 	}
+
+    .dialog-body::-webkit-scrollbar {
+        width: 6px;
+    }
+
+    .dialog-body::-webkit-scrollbar-track {
+        background: transparent;
+    }
+
+    .dialog-body::-webkit-scrollbar-thumb {
+        background: var(--border-subtle);
+        border-radius: 10px;
+    }
+
+    .dialog-body::-webkit-scrollbar-thumb:hover {
+        background: var(--border-normal);
+    }
 
 	.form-group {
 		display: flex;
@@ -744,8 +768,6 @@
 
 
 	.advanced-panel {
-		display: flex;
-		flex-direction: column;
 		height: 100%;
 	}
 
@@ -801,11 +823,13 @@
 	}
 
 	.panel-body {
-		height: 340px;
 		padding: 24px;
 		display: flex;
 		flex-direction: column;
 		gap: 16px;
+		min-height: 340px;
+        max-height: calc(90vh - 120px);
+        flex: 1;
 		overflow-y: auto;
 	}
 

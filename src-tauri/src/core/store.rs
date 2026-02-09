@@ -21,6 +21,16 @@ pub struct PersistedTask {
     // Add other fields we want to persist if Aria2 loses them
     #[serde(default)]
     pub error_message: String,
+    #[serde(default)]
+    pub user_agent: String,
+    #[serde(default)]
+    pub referer: String,
+    #[serde(default)]
+    pub proxy: String,
+    #[serde(default)]
+    pub headers: Vec<String>,
+    #[serde(default)]
+    pub max_download_limit: String,
 }
 
 /// Minimum interval between save operations (ms)

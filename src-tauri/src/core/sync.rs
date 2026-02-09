@@ -34,6 +34,13 @@ pub struct FrontendTask {
     pub save_path: String,
     #[serde(rename = "errorMessage")]
     pub error_message: String,
+    #[serde(rename = "userAgent")]
+    pub user_agent: String,
+    pub referer: String,
+    pub proxy: String,
+    pub headers: Vec<String>,
+    #[serde(rename = "maxDownloadLimit")]
+    pub max_download_limit: String,
 }
 
 pub async fn sync_tasks(
@@ -80,8 +87,10 @@ pub async fn sync_tasks(
 
     // 4. 同步逻辑 & 构造视图模型
     for task in store_tasks.iter_mut() {
-        let raw_status = if let Some(aria_task) = aria2_map.get(&task.gid) {
-            aria_task.status.clone()
+        let aria_task = aria2_map.get(&task.gid);
+        
+        let raw_status = if let Some(at) = aria_task {
+            at.status.clone()
         } else {
             task.state.clone()
         };
@@ -106,16 +115,16 @@ pub async fn sync_tasks(
         }
 
         // 如果存在 aria2 数据，则同步其他字段
-        if let Some(aria_task) = aria2_map.get(&task.gid) {
-            if task.completed_length != aria_task.completed_length {
-                task.completed_length = aria_task.completed_length.clone();
+        if let Some(at) = aria_task {
+            if task.completed_length != at.completed_length {
+                task.completed_length = at.completed_length.clone();
                 dirty = true;
             }
-            task.total_length = aria_task.total_length.clone();
-            task.download_speed = aria_task.download_speed.clone();
+            task.total_length = at.total_length.clone();
+            task.download_speed = at.download_speed.clone();
 
             // 同步特定字段
-            if let Some(msg) = &aria_task.error_message {
+            if let Some(msg) = &at.error_message {
                 if task.error_message != *msg {
                     task.error_message = msg.clone();
                     dirty = true;
@@ -123,7 +132,7 @@ pub async fn sync_tasks(
             }
 
             // 始终从 Aria2 同步文件名以处理自动重命名（例如 file.1.mp4）
-            if let Some(file) = aria_task.files.get(0) {
+            if let Some(file) = at.files.get(0) {
                 if !file.path.is_empty() {
                     let path = std::path::Path::new(&file.path);
                     if let Some(name) = path.file_name() {
@@ -151,7 +160,6 @@ pub async fn sync_tasks(
                     "downloadSpeed",
                     "uploadLength",
                     "uploadSpeed",
-                    "dir",
                     "files",
                     "errorMessage",
                 ],
@@ -261,6 +269,11 @@ pub async fn sync_tasks(
             added_at: task.added_at.clone(),
             save_path: task.save_path.clone(),
             error_message: task.error_message.clone(),
+            user_agent: task.user_agent.clone(),
+            referer: task.referer.clone(),
+            proxy: task.proxy.clone(),
+            headers: task.headers.clone(),
+            max_download_limit: task.max_download_limit.clone(),
         });
     }
 

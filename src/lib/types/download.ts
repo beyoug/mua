@@ -33,6 +33,11 @@ export interface DownloadTask {
 	addedAt: string;
 	savePath: string;
 	errorMessage?: string;
+	userAgent?: string;
+	referer?: string;
+	proxy?: string;
+	headers?: string[];
+	maxDownloadLimit?: string;
 }
 
 /**

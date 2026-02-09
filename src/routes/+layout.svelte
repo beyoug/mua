@@ -3,7 +3,8 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
 	import { getCurrentWindow } from '@tauri-apps/api/window';
-	import { currentTheme, effectiveColorMode, particlesEnabled } from '$lib/stores/theme';
+	import { appSettings, loadAppSettings } from '$lib/stores/settings';
+    import { systemPrefersDark, particlesEnabled } from '$lib/stores/theme';
 	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
 	import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
 
@@ -12,10 +13,12 @@
 
 	let { children } = $props();
 
-	// 订阅主题和颜色模式变化，动态更新 html 类
+	// 直接从 appSettings 订阅，确保最高级别的响应性追踪
 	$effect(() => {
-		const themeId = $currentTheme;
-		const mode = $effectiveColorMode;
+		const s = $appSettings;
+		const themeId = s.theme;
+		const mode = s.colorMode === 'auto' ? ($systemPrefersDark ? 'dark' : 'light') : s.colorMode;
+		
 		const classes = [`theme-${themeId}`];
 		if (mode === 'light') {
 			classes.push('light');
@@ -23,7 +26,7 @@
 		document.documentElement.className = classes.join(' ');
 		
 		// 动态设置 color-scheme
-		document.documentElement.style.colorScheme = mode;
+		document.documentElement.style.colorScheme = mode as string;
 	});
 
 	onMount(() => {
@@ -34,11 +37,15 @@
 
 		const init = async () => {
 			try {
+				// 1. 优先加载应用设置（主题、偏好等）
+				await loadAppSettings();
+
+                // 2. 显示窗口（此时主题已应用到 html 标签）
 				const appWindow = getCurrentWindow();
 				await appWindow.show();
 				await appWindow.setFocus();
 
-				// 初始化通知服务
+				// 3. 初始化通知服务
 				await initNotifications();
 
 				// 监听 Aria2 Sidecar 错误

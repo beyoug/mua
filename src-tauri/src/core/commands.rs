@@ -57,11 +57,11 @@ pub async fn add_download_task(
     let (options, final_save_path) = utils::build_aria2_options(
         save_path,
         Some(unique_filename.clone()),
-        user_agent,
-        referer,
-        headers,
-        proxy,
-        max_download_limit,
+        user_agent.clone(),
+        referer.clone(),
+        headers.clone(),
+        proxy.clone(),
+        max_download_limit.clone(),
     );
 
     // 调用 Aria2
@@ -79,6 +79,16 @@ pub async fn add_download_task(
                 completed_length: "0".to_string(),
                 download_speed: "0 B/s".to_string(),
                 error_message: "".to_string(),
+                user_agent: user_agent.unwrap_or_default(),
+                referer: referer.unwrap_or_default(),
+                proxy: proxy.unwrap_or_default(),
+                headers: headers
+                    .unwrap_or_default()
+                    .split(';')
+                    .filter(|s| !s.trim().is_empty())
+                    .map(|s| s.trim().to_string())
+                    .collect(),
+                max_download_limit: max_download_limit.unwrap_or_default(),
             };
             state.add_task(task);
             Ok(gid)
@@ -142,26 +152,39 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> Result<String, Str
         // 重新提交任务
         log::info!("正在重新提交任务: {}", task.filename);
 
-        let mut options = serde_json::Map::new();
-        if !task.save_path.is_empty() {
-            let p = utils::resolve_path(&task.save_path);
-            options.insert("dir".to_string(), serde_json::Value::String(p));
-        }
-        if !task.filename.is_empty() {
-            // 确保如果文件名是推断出来的，我们不会进行双重嵌套
-            options.insert(
-                "out".to_string(),
-                serde_json::Value::String(task.filename.clone()),
-            );
-        }
+        // 1. 从存储中还原所有高级参数
+        let save_path_opt = if task.save_path.is_empty() { None } else { Some(task.save_path.clone()) };
+        let filename_opt = if task.filename.is_empty() { None } else { Some(task.filename.clone()) };
+        let ua_opt = if task.user_agent.is_empty() { None } else { Some(task.user_agent.clone()) };
+        let referer_opt = if task.referer.is_empty() { None } else { Some(task.referer.clone()) };
+        let proxy_opt = if task.proxy.is_empty() { None } else { Some(task.proxy.clone()) };
+        let limit_opt = if task.max_download_limit.is_empty() { None } else { Some(task.max_download_limit.clone()) };
+        
+        // 拼接 Headers 字符串以适配 build_aria2_options
+        let headers_str = if task.headers.is_empty() {
+            None
+        } else {
+            Some(task.headers.join("; "))
+        };
 
-        // 0. 如果旧任务结果存在于 Aria2 中，则清除它，以防止 GID 冲突或陈旧数据
+        // 2. 利用 utils 统一构建选项，确保逻辑一致性
+        let (options, _) = utils::build_aria2_options(
+            save_path_opt,
+            filename_opt,
+            ua_opt,
+            referer_opt,
+            headers_str,
+            proxy_opt,
+            limit_opt,
+        );
+
+        // 3. 如果旧任务结果存在于 Aria2 中，则清除它
         let _ = aria2_client::purge(gid.clone()).await;
 
-        // 重新添加 URI
+        // 4. 重新添加 URI
         match aria2_client::add_uri(
             vec![task.url.clone()],
-            Some(serde_json::Value::Object(options)),
+            Some(options),
         )
         .await
         {
@@ -451,6 +474,20 @@ pub async fn save_app_config(
         "max-concurrent-downloads".to_string(),
         serde_json::Value::String(config.max_concurrent_downloads.to_string()),
     );
+    
+    // 全局下载限速同步
+    if !config.global_max_download_limit.is_empty() {
+        options.insert(
+            "max-download-limit".to_string(),
+            serde_json::Value::String(config.global_max_download_limit.clone()),
+        );
+    } else {
+        // 如果清空了，则恢复不限制
+        options.insert(
+            "max-download-limit".to_string(),
+            serde_json::Value::String("0".to_string()),
+        );
+    }
 
     let _ = crate::aria2::client::change_global_option(serde_json::Value::Object(options)).await;
 
