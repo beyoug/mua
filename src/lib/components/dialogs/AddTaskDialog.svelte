@@ -99,12 +99,6 @@
 	const canSubmit = $derived(() => {
 		const trimmed = urls.trim();
 		if (!trimmed) return false;
-        
-        // 校验自定义 UA 必填
-        if (selectedUaValue === 'custom' && !customUserAgent.trim()) {
-            return false;
-        }
-
 		return isValidDownloadUrl(trimmed);
 	});
 
@@ -491,7 +485,11 @@
 					</div>
 
 					<footer class="panel-footer">
-						<button class="btn btn-primary" onclick={() => showAdvanced = false}>
+						<button 
+                            class="btn btn-primary" 
+                            onclick={() => showAdvanced = false}
+                            disabled={isCustomUaInvalid()}
+                        >
 							确定
 						</button>
 					</footer>
