@@ -99,8 +99,18 @@
 	const canSubmit = $derived(() => {
 		const trimmed = urls.trim();
 		if (!trimmed) return false;
+        
+        // 校验自定义 UA 必填
+        if (selectedUaValue === 'custom' && !customUserAgent.trim()) {
+            return false;
+        }
+
 		return isValidDownloadUrl(trimmed);
 	});
+
+    const isCustomUaInvalid = $derived(() => {
+        return selectedUaValue === 'custom' && !customUserAgent.trim();
+    });
 
 	// 提交状态
 	let isSubmitting = $state(false);
@@ -411,6 +421,7 @@
 									<input
 										type="text"
                                         class="ua-custom-input"
+                                        class:error={isCustomUaInvalid()}
 										placeholder="输入自定义 User Agent"
 										bind:value={customUserAgent}
                                         transition:fade={{ duration: 150 }}
@@ -975,6 +986,11 @@
 
     .ua-custom-input {
         width: 100%;
+    }
+
+    .ua-custom-input.error {
+        border-color: var(--danger-color);
+        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
     }
 
 	.panel-footer {
