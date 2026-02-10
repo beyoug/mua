@@ -146,7 +146,7 @@
 
 	.modal-header {
 		display: flex;
-		align-items: center;
+		align-items: flex-start;
 		justify-content: space-between;
 		padding: 16px 24px;
 		border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
@@ -173,6 +173,7 @@
 		cursor: pointer;
 		transition: all 0.15s ease;
         margin-right: -8px;
+		flex-shrink: 0;
 	}
 
 	.close-btn:hover {
