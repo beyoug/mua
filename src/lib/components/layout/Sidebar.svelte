@@ -15,7 +15,7 @@
 		onSettingsClick?: () => void;
 		onAddClick?: () => void;
 		stats?: {
-			totalSpeed: string;
+			totalSpeed: { value: string; unit: string };
 			activeCount: number;
 			completeCount: number;
 		};
@@ -26,7 +26,7 @@
 		onNavChange,
 		onSettingsClick,
 		onAddClick,
-		stats = { totalSpeed: '0 B/s', activeCount: 0, completeCount: 0 }
+		stats = { totalSpeed: { value: '0', unit: 'B/s' }, activeCount: 0, completeCount: 0 }
 	}: Props = $props();
 
     function startDrag() {
@@ -80,7 +80,7 @@
 	<div class="stats-panel">
         <div class="stat-item" title="总下载速度">
             <TrendingDown size={16} />
-            <span class="stat-value">{stats.totalSpeed?.replace('|', ' ') || '0 B/s'}</span>
+            <span class="stat-value">{stats.totalSpeed?.value ?? '0'} {stats.totalSpeed?.unit ?? 'B/s'}</span>
         </div>
 		<div class="stat-row">
 			<span class="stat-label">活跃</span>
@@ -246,7 +246,7 @@
 	}
 
     .stat-value {
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-family: var(--font-base);
         font-variant-numeric: tabular-nums;
         font-weight: 600;
         color: var(--text-secondary);

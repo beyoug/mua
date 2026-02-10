@@ -56,6 +56,13 @@ fn calculate_eta(gid: &str, state: &str, raw_speed: u64, total: u64, completed: 
     }
 }
 
+/// 速度信息结构体 - 分离数值与单位，便于前端直接渲染
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct SpeedInfo {
+    pub value: String,
+    pub unit: String,
+}
+
 // 前端 DTO (视图模型) - 从 commands.rs 移至此处
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FrontendTask {
@@ -63,7 +70,7 @@ pub struct FrontendTask {
     pub filename: String,
     pub url: String,
     pub progress: f64,
-    pub speed: String,
+    pub speed: SpeedInfo,
     pub speed_u64: u64, // 用于统计的原始值
     pub downloaded: String,
     pub downloaded_u64: u64, // 原始值
@@ -274,7 +281,10 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
             filename: task.filename.clone(),
             url: task.url.clone(),
             progress,
-            speed: crate::utils::format_speed(raw_speed),
+            speed: {
+                let (v, u) = crate::utils::format_speed(raw_speed);
+                SpeedInfo { value: v, unit: u }
+            },
             speed_u64: raw_speed,
             downloaded: crate::utils::format_size(completed),
             downloaded_u64: completed,

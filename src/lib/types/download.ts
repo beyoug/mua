@@ -15,6 +15,14 @@ export type DownloadState =
 	| 'missing';
 
 /**
+ * 速度信息 - 分离数值与单位，便于 UI 直接渲染
+ */
+export interface SpeedInfo {
+	value: string;
+	unit: string;
+}
+
+/**
  * 下载任务接口
  */
 export interface DownloadTask {
@@ -22,7 +30,7 @@ export interface DownloadTask {
 	filename: string;
 	url: string;
 	progress: number;
-	speed: string;
+	speed: SpeedInfo;
 	speed_u64: number;
 	downloaded: string;
 	downloaded_u64: number;
@@ -59,7 +67,7 @@ export interface DownloadConfig {
  * 下载统计信息接口
  */
 export interface DownloadStats {
-	totalSpeed: string;
+	totalSpeed: SpeedInfo;
 	totalSpeedBytes: number;
 	activeCount: number;
 	completeCount: number;

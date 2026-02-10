@@ -1,26 +1,21 @@
-<!--
-  StatusIndicator.svelte
-  下载状态指示器 - 从 DownloadCard 中提取，负责渲染状态图标、文案和速度信息
--->
 <script lang="ts">
-	import type { DownloadState } from '$lib/types/download';
+	import type { DownloadState, SpeedInfo } from '$lib/types/download';
 
 	interface Props {
 		state: DownloadState;
-		speed?: string;
+		speed?: SpeedInfo;
 		remaining?: string;
 		errorMessage?: string;
 	}
 
-	let { state, speed = '', remaining = '', errorMessage = '' }: Props = $props();
+	let { state, speed = { value: '0', unit: 'B/s' }, remaining = '', errorMessage = '' }: Props = $props();
 </script>
 
 {#if state === 'active'}
-	{@const sParts = (speed || '0|B/s').split('|')}
 	<span class="status-indicator active">
 		<span class="status-icon">↓</span>
-		<span class="speed-num">{sParts[0]}</span>
-		<span class="speed-unit-text">{sParts[1]}</span>
+		<span class="speed-num">{speed.value}</span>
+		<span class="speed-unit-text">{speed.unit}</span>
 	</span>
 	{#if remaining}
 		<span class="separator">·</span>

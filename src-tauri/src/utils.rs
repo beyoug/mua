@@ -48,9 +48,11 @@ pub fn format_size(bytes: u64) -> String {
     format!("{:.2} {}", (bytes as f64) / k.powf(i as f64), sizes[i])
 }
 
-pub fn format_speed(bytes_per_sec: u64) -> String {
+/// 格式化速度为 (数值, 单位) 元组
+/// 例: format_speed(1536) -> ("1.50", "KB/s")
+pub fn format_speed(bytes_per_sec: u64) -> (String, String) {
     if bytes_per_sec == 0 {
-        return "0.00|B/s".to_string();
+        return ("0".to_string(), "B/s".to_string());
     }
     let k = 1024.0;
     let sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
@@ -60,7 +62,8 @@ pub fn format_speed(bytes_per_sec: u64) -> String {
     } else {
         "B/s".to_string()
     };
-    format!("{:.2}|{}", (bytes_per_sec as f64) / k.powf(i as f64), unit)
+    let value = format!("{:.2}", (bytes_per_sec as f64) / k.powf(i as f64));
+    (value, unit)
 }
 
 pub fn format_duration(seconds: u64) -> String {

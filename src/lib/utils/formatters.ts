@@ -1,22 +1,18 @@
-/**
- * formatters.ts - 格式化工具
- * 
- * 注意：大部分格式化由后端 Rust 统一处理，前端仅保留必要的聚合计算函数
- */
+import type { SpeedInfo } from '$lib/types/download';
 
 /**
  * 格式化字节为人类可读的速度（用于前端聚合统计）
  * @param bytesPerSecond - 每秒字节数
- * @returns 格式化的速度字符串，如 "12.50|MB/s"
+ * @returns SpeedInfo 对象，如 { value: "12.50", unit: "MB/s" }
  */
-export function formatSpeed(bytesPerSecond: number): string {
-    if (bytesPerSecond === 0) return '0.00|B/s';
+export function formatSpeed(bytesPerSecond: number): SpeedInfo {
+    if (bytesPerSecond === 0) return { value: '0', unit: 'B/s' };
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
-    const val = (bytesPerSecond / Math.pow(k, i)).toFixed(2);
+    const value = (bytesPerSecond / Math.pow(k, i)).toFixed(2);
     const unit = i < sizes.length ? `${sizes[i]}/s` : 'B/s';
-    return `${val}|${unit}`;
+    return { value, unit };
 }
 
 /**
