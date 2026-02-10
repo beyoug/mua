@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { FolderOpen, Gauge, FileCheck } from '@lucide/svelte';
+  import { FolderOpen } from '@lucide/svelte';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import { appSettings, saveAppSettings } from '$lib/stores/settings';
 
@@ -77,48 +77,7 @@
 </div>
 
 <style>
-  .settings-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .setting-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .setting-item:last-child {
-    border-bottom: none;
-  }
-
-  .setting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .setting-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .setting-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
+  /* 组件特有样式 */
   .path-btn {
     display: flex;
     align-items: center;

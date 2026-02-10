@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { Check, FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
+    import { FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
     import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/stores/aria2Config';
     import { appSettings, saveAppSettings } from '$lib/stores/settings';
     import { onMount } from 'svelte';
@@ -41,7 +41,6 @@
                  if (path) {
                      const version = await importCustomBinary(path);
                      alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
-                     // $appSettings.useCustomAria2 = true; // User requested manual enable
                      await saveSettings();
                      await loadVersionInfo();
                  }
@@ -179,7 +178,7 @@
                         loadVersionInfo();
                     }}
                  />
-                 <span class="slider round"></span>
+                 <span class="slider"></span>
                </label>
                
                <button class="mini-btn" onclick={restartApp} title="重启应用">
@@ -231,54 +230,7 @@
 </div>
 
 <style>
-  .settings-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .setting-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-subtle);
-  }
-
-  .setting-item.vertical {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .setting-item:last-child {
-    border-bottom: none;
-  }
-
-  .setting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .setting-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .setting-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
+  /* 组件特有样式 */
   .inner-input-field {
     width: 70px;
     background: var(--surface-hover);
@@ -417,6 +369,7 @@
 
   .badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
   .badge.gray { background: var(--surface-active); color: var(--text-muted); }
+  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
 
   .secondary-btn {
     display: flex;
@@ -489,8 +442,6 @@
       opacity: 0.7;
   }
   
-  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
-  
   .kernel-actions {
       display: flex;
       justify-content: space-between;
@@ -519,58 +470,6 @@
       padding: 8px 12px;
       background: var(--surface-ground);
       border-radius: 6px;
-  }
-  
-  /* Switch Toggle */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 36px;
-    height: 20px;
-  }
-
-  .switch input { 
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--surface-active);
-    transition: .3s;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 16px;
-    width: 16px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .3s;
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent-primary);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(16px);
-  }
-
-  .slider.round {
-    border-radius: 20px;
-  }
-
-  .slider.round:before {
-    border-radius: 50%;
   }
   
   :global(.spin) {

@@ -2,7 +2,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
-  import { Terminal, Eraser } from '@lucide/svelte';
+  import { Eraser } from '@lucide/svelte';
 
   let enabled = $state(false);
   let logs: string[] = $state([]);
@@ -78,17 +78,14 @@
           <button class="icon-btn" onclick={clearLogs} title="清空日志">
               <Eraser size={14} />
           </button>
-          <button 
-            class="toggle-switch" 
-            class:checked={enabled} 
-            onclick={handleToggle}
-            role="switch" 
-            aria-checked={enabled}
-            aria-label="Toggle Log Stream"
-          >
-            <div class="toggle-track"></div>
-            <div class="toggle-thumb"></div>
-          </button>
+          <label class="switch">
+            <input 
+              type="checkbox" 
+              checked={enabled}
+              onchange={handleToggle}
+            />
+            <span class="slider"></span>
+          </label>
       </div>
   </div>
 
@@ -175,7 +172,7 @@
 
     .terminal-window {
         flex: 1;
-        background: #1e1e1e; /* Fixed dark bg for terminal */
+        background: #1e1e1e;
         border-radius: 8px;
         border: 1px solid var(--border-color);
         padding: 12px;
@@ -220,40 +217,5 @@
         0% { opacity: 0.3; }
         50% { opacity: 1; }
         100% { opacity: 0.3; }
-    }
-
-    /* Switch Style (Simplified) */
-    .toggle-switch {
-        position: relative;
-        width: 36px;
-        height: 20px;
-        background: var(--input-bg);
-        border-radius: 20px;
-        border: 1px solid var(--border-color);
-        cursor: pointer;
-        padding: 0;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    }
-
-    .toggle-thumb {
-        position: absolute;
-        top: 2px;
-        left: 2px;
-        width: 14px;
-        height: 14px;
-        background: var(--text-muted);
-        border-radius: 50%;
-        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 1px 2px rgba(0,0,0,0.1);
-    }
-
-    .toggle-switch.checked {
-        background: var(--accent-primary);
-        border-color: var(--accent-primary);
-    }
-
-    .toggle-switch.checked .toggle-thumb {
-        transform: translateX(16px);
-        background: white;
     }
 </style>

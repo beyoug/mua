@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { Monitor, RotateCcw } from '@lucide/svelte';
   import { appSettings, saveAppSettings } from '$lib/stores/settings';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
   import { onMount } from 'svelte';
@@ -28,16 +27,6 @@
       console.error('Failed to toggle autostart', e);
       // Rollback UI
       $appSettings.autoStart = !$appSettings.autoStart;
-    }
-  }
-
-  async function toggleSetting(key: keyof typeof $appSettings) {
-    // @ts-ignore
-    $appSettings[key] = !$appSettings[key];
-    try {
-      await saveAppSettings($appSettings);
-    } catch (e) {
-      console.error('Failed to save settings', e);
     }
   }
 </script>
@@ -119,100 +108,3 @@
     </div>
   </section>
 </div>
-
-<style>
-  .settings-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .setting-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-subtle);
-    transition: background 0.2s;
-  }
-
-  .setting-item:last-child {
-    border-bottom: none;
-  }
-
-  .setting-item:hover:not(.disabled) {
-    background: var(--surface-hover);
-  }
-
-  .setting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .setting-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .setting-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  /* Switch Styles */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 18px;
-    flex-shrink: 0;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--border-strong);
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent-primary);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(16px);
-  }
-</style>

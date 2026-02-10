@@ -257,7 +257,6 @@
     scrollbar-gutter: stable;
   }
 
-  /* 这里的样式通常在子组件里定义，但可以提供一些全局的基础样式 */
   :global(.settings-section) {
     margin-bottom: 32px;
   }
@@ -270,5 +269,107 @@
     letter-spacing: 0.05em;
     margin-bottom: 12px;
     padding-left: 4px;
+  }
+
+  /* ── 共享设置布局 ── */
+  :global(.settings-container) {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  :global(.setting-list) {
+    background: var(--input-bg);
+    border: 1px solid var(--border-normal);
+    border-radius: 12px;
+    overflow: hidden;
+  }
+
+  :global(.setting-item) {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-bottom: 1px solid var(--border-subtle);
+    transition: background 0.2s;
+  }
+
+  :global(.setting-item:last-child) {
+    border-bottom: none;
+  }
+
+  :global(.setting-item:hover:not(.disabled)) {
+    background: var(--surface-hover);
+  }
+
+  :global(.setting-item.vertical) {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+
+  :global(.setting-info) {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  :global(.setting-name) {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-primary);
+  }
+
+  :global(.setting-desc) {
+    font-size: 11px;
+    color: var(--text-muted);
+  }
+
+  /* ── 统一 Switch 开关 ── */
+  :global(.switch) {
+    position: relative;
+    display: inline-block;
+    width: 34px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  :global(.switch input) {
+    opacity: 0;
+    width: 0;
+    height: 0;
+  }
+
+  :global(.slider) {
+    position: absolute;
+    cursor: pointer;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(120, 120, 128, 0.36);
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 20px;
+  }
+
+  :global(.slider:before) {
+    position: absolute;
+    content: "";
+    height: 14px;
+    width: 14px;
+    left: 2px;
+    bottom: 2px;
+    background-color: white;
+    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: 50%;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  }
+
+  :global(input:checked + .slider) {
+    background-color: var(--accent-primary);
+  }
+
+  :global(input:checked + .slider:before) {
+    transform: translateX(16px);
   }
 </style>

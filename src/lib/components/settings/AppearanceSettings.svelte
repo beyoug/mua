@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { Palette, Check, Sun, Moon, Monitor } from '@lucide/svelte';
+  import { Check, Sun, Moon, Monitor } from '@lucide/svelte';
   import { scale } from 'svelte/transition';
   import { currentTheme, themes, colorMode, colorModes, particlesEnabled, type ThemeId, type ColorMode } from '$lib/stores/theme';
 
@@ -95,13 +95,7 @@
 </div>
 
 <style>
-  .settings-container {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  /* ... (Existing grid styles) ... */
+  /* 组件特有样式 — 主题网格 */
   .theme-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
@@ -156,6 +150,7 @@
     font-weight: 500;
   }
 
+  /* 组件特有样式 — 模式网格 */
   .mode-grid {
     display: grid;
     grid-template-columns: repeat(3, 1fr);
@@ -214,90 +209,5 @@
     height: 6px;
     background: var(--accent-primary);
     border-radius: 50%;
-  }
-
-  /* List & Switch Styles */
-  .setting-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
-    border-radius: 12px;
-    overflow: hidden;
-  }
-
-  .setting-item {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 12px 16px;
-    transition: background 0.2s;
-  }
-
-  .setting-item:hover {
-    background: var(--surface-hover);
-  }
-
-  .setting-info {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-  }
-
-  .setting-name {
-    font-size: 13px;
-    font-weight: 500;
-    color: var(--text-primary);
-  }
-
-  .setting-desc {
-    font-size: 11px;
-    color: var(--text-muted);
-  }
-
-  /* Switch Styles (Sync with GeneralSettings) */
-  .switch {
-    position: relative;
-    display: inline-block;
-    width: 34px;
-    height: 18px;
-    flex-shrink: 0;
-  }
-
-  .switch input {
-    opacity: 0;
-    width: 0;
-    height: 0;
-  }
-
-  .slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background-color: var(--border-strong);
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 20px;
-  }
-
-  .slider:before {
-    position: absolute;
-    content: "";
-    height: 14px;
-    width: 14px;
-    left: 2px;
-    bottom: 2px;
-    background-color: white;
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  }
-
-  input:checked + .slider {
-    background-color: var(--accent-primary);
-  }
-
-  input:checked + .slider:before {
-    transform: translateX(16px);
   }
 </style>
