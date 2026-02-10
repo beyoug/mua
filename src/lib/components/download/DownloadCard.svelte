@@ -219,7 +219,7 @@
 	}
 
 	.download-card.completed {
-		border-color: var(--success-glow);
+		border-color: var(--semantic-success-border);
 	}
 
 	.card-header {
@@ -254,7 +254,7 @@
 	}
 
 	.icon-wrapper.completed {
-		background: var(--success-glow);
+		background: var(--semantic-success-bg);
 		color: var(--success-color);
 	}
 
@@ -264,7 +264,7 @@
 	}
 
 	.icon-wrapper.cancelled {
-		background: var(--danger-glow);
+		background: var(--semantic-danger-bg, rgba(239, 68, 68, 0.1));
 		color: var(--danger-color);
 	}
 
