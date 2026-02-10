@@ -46,8 +46,11 @@
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="logo-section" onmousedown={startDrag}>
 		<div class="logo">
-			<span class="logo-icon">↓</span>
-			<span class="logo-text">Mua</span>
+			<img src="/logo.png" alt="Mua" class="logo-icon-img" />
+			<div class="logo-text-group">
+				<span class="logo-text">Mua</span>
+				<span class="logo-slogan">Simple & Fast</span>
+			</div>
 		</div>
 	</div>
 
@@ -137,24 +140,34 @@
 		z-index: 0;
 	}
 
-	.logo-icon {
-		width: 32px;
-		height: 32px;
-		background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+	.logo-icon-img {
+		width: 54px;
+		height: 54px;
 		border-radius: 8px;
+		object-fit: contain;
+	}
+
+	.logo-text-group {
 		display: flex;
-		align-items: center;
+		flex-direction: column;
 		justify-content: center;
-		font-size: 18px;
-		font-weight: bold;
-		color: white;
+		height: 48px; /* Match close to icon height for alignment */
 	}
 
 	.logo-text {
-		font-size: 18px;
-		font-weight: 600;
+		font-size: 24px;
+		font-weight: 700;
 		color: var(--text-primary);
 		letter-spacing: -0.02em;
+		line-height: 1;
+		margin-bottom: 2px;
+	}
+
+	.logo-slogan {
+		font-size: 11px;
+		font-weight: 500;
+		color: var(--text-muted);
+		letter-spacing: 0.02em;
 	}
 
 	.add-section {

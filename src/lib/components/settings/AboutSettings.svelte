@@ -16,7 +16,7 @@
 <div class="settings-container">
   <div class="about-card">
     <div class="app-logo">
-      <div class="logo-circle">M</div>
+      <img src="/logo.png" alt="Mua" class="app-logo-img" />
     </div>
     <h2 class="app-name">Mua</h2>
     <p class="app-tagline">简洁、现代的轻量级下载工具</p>
@@ -83,18 +83,11 @@
     margin-bottom: 16px;
   }
 
-  .logo-circle {
-    width: 64px;
-    height: 64px;
-    background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-    border-radius: 18px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 32px;
-    font-weight: 800;
-    color: white;
-    box-shadow: 0 8px 24px var(--accent-glow);
+  .app-logo-img {
+    width: 80px;
+    height: 80px;
+    filter: drop-shadow(0 8px 24px var(--accent-glow));
+    object-fit: contain;
   }
 
   .app-name {
