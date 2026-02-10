@@ -1,9 +1,9 @@
 /* ============================================
-   Deep Space - 深空主题 (Weather App Style)
+   Default Theme - 默认主题
    ============================================ */
 
 /* ===== 色阶 ===== */
-html.theme-deep-space {
+html.theme-default {
   --theme-50: #f8fafc;
   --theme-100: #f1f5f9;
   --theme-200: #e2e8f0;
@@ -17,44 +17,41 @@ html.theme-deep-space {
 }
 
 /* ===== 深色模式 ===== */
-html.theme-deep-space {
-  /* 白色主题色 - 按钮/开关需要反色文字 */
-  --accent-primary: #ffffff;
-  --accent-secondary: var(--theme-300);
-  --accent-hover: var(--theme-200);
-  --accent-active: var(--theme-400);
-  --accent-glow: rgba(255, 255, 255, 0.3);
-  --accent-subtle: rgba(255, 255, 255, 0.1);
-  --accent-text: #ffffff;
-  --accent-btn-text: var(--theme-900);
-  --toggle-knob-c: var(--theme-900);
-  --progress-stripe-c: rgba(0, 0, 0, 0.15);
+html.theme-default {
+  /* 蓝色配色 (Blue) */
+  --accent-primary: #4A9EFF;
+  --accent-secondary: #70B4FF;
+  --accent-hover: #2E7FEB;
+  --accent-active: #1D6AD8;
+  --accent-glow: rgba(74, 158, 255, 0.5);
+  --accent-subtle: rgba(74, 158, 255, 0.18);
+  --accent-text: #70B4FF;
+  --accent-btn-text: #ffffff;
+  --toggle-knob-c: #ffffff;
+  --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
-  --bg-gradient: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%);
+  --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
 
-  /* 深空专属：覆盖玻璃态以实现更通透的质感 */
+  /* 玻璃态变量 */
   --glass-bg: rgba(15, 23, 42, 0.35);
   --glass-border: rgba(255, 255, 255, 0.08);
   --glass-blur: blur(24px);
   --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
-  /* 弹窗背景：确保在深色背景上可读 */
   --dialog-bg: rgba(15, 23, 42, 0.75);
   --overlay-bg: rgba(15, 23, 42, 0.9);
 }
 
-/* ===== 深色模式背景 - 午夜蓝渐变 ===== */
-html.theme-deep-space body {
+/* ===== 深色模式背景 ===== */
+html.theme-default body {
   background:
-    radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.3) 0px, transparent 50%),
-    linear-gradient(to bottom, #0f172a, #172554, #1e1b4b);
-  /* Slate-900 -> Blue-950 -> Indigo-950 */
+    radial-gradient(ellipse 80% 50% at 50% 0%, rgba(74, 158, 255, 0.12), transparent),
+    linear-gradient(180deg, #0a0f1e, #151b2e);
 }
 
 /* ===== 浅色模式 ===== */
-html.light.theme-deep-space {
-  /* 改为天蓝色主题色，与背景右上角的天蓝色相呼应 */
+html.light.theme-default {
+  /* 天蓝色 (Sky Blue) */
   --accent-primary: #38bdf8;
   --accent-secondary: #7dd3fc;
   --accent-hover: #0ea5e9;
@@ -65,18 +62,18 @@ html.light.theme-deep-space {
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
-  /* 进度条轨道颜色：淡蓝色，确保在白色玻璃上可见 */
+  /* 进度条轨道 */
   --progress-track-bg: rgba(56, 189, 248, 0.15);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%);
 
-  /* 深空浅色专属：覆盖玻璃态与边框 */
+  /* 浅色玻璃态 */
   --glass-bg: rgba(255, 255, 255, 0.45);
   --glass-border: rgba(255, 255, 255, 0.4);
   --glass-blur: blur(24px);
   --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
 
-  /* 柔化边框颜色，避免晨曦背景下出现脏灰色线条 */
+  /* 边框颜色 */
   --border-color: rgba(56, 189, 248, 0.18);
   --border-light: rgba(56, 189, 248, 0.1);
   --border-subtle: rgba(56, 189, 248, 0.08);
@@ -88,12 +85,12 @@ html.light.theme-deep-space {
   --overlay-bg: rgba(255, 255, 255, 0.85);
   --input-bg: rgba(255, 255, 255, 0.7);
 
-  /* 深空浅色遮罩 */
+  /* 遮罩 */
   --dialog-overlay-bg: rgba(15, 23, 42, 0.15);
 }
 
 /* ===== 浅色模式背景 ===== */
-html.light.theme-deep-space body {
+html.light.theme-default body {
   background:
     radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.3) 0px, transparent 50%),
     linear-gradient(180deg, #bfdbfe 0%, #eff6ff 100%);

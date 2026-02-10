@@ -1,0 +1,132 @@
+/* ============================================
+   Cyberpunk Theme - 赛博朋克主题
+   ============================================ */
+
+/* ===== 色阶 ===== */
+html.theme-cyberpunk {
+  --theme-50: #eff6ff;
+  --theme-100: #dbeafe;
+  --theme-200: #bfdbfe;
+  --theme-300: #93c5fd;
+  --theme-400: #70B4FF;
+  --theme-500: #4A9EFF;
+  --theme-600: #2E7FEB;
+  --theme-700: #1D6AD8;
+  --theme-800: #1e40af;
+  --theme-900: #1e3a8a;
+}
+
+/* ===== 深色模式 ===== */
+/* ===== 深色模式 ===== */
+html.theme-cyberpunk {
+  /* 霓虹撞色：青 -> 紫红 */
+  --accent-primary: #22d3ee;      /* Cyan-400 */
+  --accent-secondary: #d946ef;    /* Fuchsia-500 */
+  --accent-hover: #06b6d4;        /* Cyan-500 */
+  --accent-active: #c026d3;       /* Fuchsia-600 */
+  --accent-glow: rgba(34, 211, 238, 0.75); /* 增强辉光强度 */
+  --accent-subtle: rgba(217, 70, 239, 0.2);
+  --accent-text: #22d3ee;
+  --accent-btn-text: #ffffff;
+  --toggle-knob-c: #ffffff;
+  --progress-stripe-c: rgba(255, 255, 255, 0.15);
+  --accent-active-bg: var(--accent-subtle);
+  /* 移除原有的简单渐变，改用 Grid 背景 */
+  --bg-gradient: none; 
+}
+
+/* ===== 深色模式背景 (Retro Grid + Glows) ===== */
+html.theme-cyberpunk body {
+  background-color: #0b0d14; /* Deep Abyss */
+  background-image:
+    /* 局部霓虹光晕 */
+    radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.12), transparent 50%),
+    radial-gradient(circle at 80% 80%, rgba(217, 70, 239, 0.12), transparent 50%),
+    /* 网格线 (水平 + 垂直) */
+    linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(34, 211, 238, 0.08) 1px, transparent 1px);
+  background-size: 
+    100% 100%, 
+    100% 100%, 
+    40px 40px, /* 网格尺寸 */
+    40px 40px;
+  background-attachment: fixed;
+}
+
+/* ===== 扫描线/噪点纹理 (全局蒙版) ===== */
+html.theme-cyberpunk body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  /* 模拟老式 CRT 屏幕扫描线 */
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.15) 3px,
+    rgba(0, 0, 0, 0.15) 3px
+  );
+  z-index: 9999; /* 覆盖在最顶层 */
+  pointer-events: none; /* 允许点击穿透 */
+  opacity: 0.4;
+  mix-blend-mode: overlay;
+}
+
+/* ===== 浅色模式 (High-Tech Lab) ===== */
+html.light.theme-cyberpunk {
+  --accent-primary: #0891b2;      /* Cyan-600 */
+  --accent-secondary: #c026d3;    /* Fuchsia-600 */
+  --accent-hover: #0e7490;
+  --accent-active: #a21caf;
+  --accent-glow: rgba(8, 145, 178, 0.4);
+  --accent-subtle: rgba(217, 70, 239, 0.1);
+  --accent-text: #0891b2;
+  --accent-btn-text: #ffffff;
+  --toggle-knob-c: #ffffff;
+  --progress-stripe-c: rgba(255, 255, 255, 0.15);
+  --accent-active-bg: var(--accent-subtle);
+  --bg-gradient: none;
+}
+
+/* ===== 浅色模式背景 (Tech Grid) ===== */
+html.light.theme-cyberpunk body {
+  background-color: #f8fafc;
+  background-image:
+    /* 局部淡彩光晕 */
+    radial-gradient(circle at 10% 10%, rgba(34, 211, 238, 0.08), transparent 60%),
+    radial-gradient(circle at 90% 90%, rgba(217, 70, 239, 0.08), transparent 60%),
+    /* 浅色网格 */
+    linear-gradient(rgba(8, 145, 178, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(8, 145, 178, 0.05) 1px, transparent 1px);
+  background-size: 
+    100% 100%, 
+    100% 100%, 
+    30px 30px,
+    30px 30px;
+  background-attachment: fixed;
+}
+/* 浅色模式下减弱扫描线 */
+html.light.theme-cyberpunk body::after {
+  opacity: 0.15;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 2px,
+    rgba(0, 0, 0, 0.05) 3px,
+    rgba(0, 0, 0, 0.05) 3px
+  );
+}
+
+/* ===== 动态呼吸光效 (Neon Pulse) ===== */
+@keyframes neon-pulse {
+  0% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle); }
+  50% { box-shadow: 0 0 15px var(--accent-glow), 0 0 25px var(--accent-subtle); }
+  100% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle); }
+}
+
+/* 应用于核心按钮 (Buttons) */
+html.theme-cyberpunk button.primary,
+html.theme-cyberpunk .btn-primary,
+html.theme-cyberpunk .dialog-footer button.confirm {
+  animation: neon-pulse 3s infinite ease-in-out;
+}

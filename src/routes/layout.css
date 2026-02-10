@@ -6,9 +6,9 @@
 @import "../styles/tokens.css";
 @import "../styles/theme-base.css";
 @import "../styles/glass.css";
-@import "../styles/themes/electric-blue.css";
+@import "../styles/themes/cyberpunk.css";
 @import "../styles/themes/cyber-purple.css";
-@import "../styles/themes/deep-space.css";
+@import "../styles/themes/default.css";
 
 /* noinspection CssInvalidAtRule */
 @custom-variant dark (&:is(.dark *));

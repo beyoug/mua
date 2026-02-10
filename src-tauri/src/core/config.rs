@@ -72,7 +72,7 @@ fn default_string_empty() -> String {
 }
 
 fn default_theme() -> String {
-    "deep-space".to_string()
+    "default".to_string()
 }
 
 fn default_color_mode() -> String {

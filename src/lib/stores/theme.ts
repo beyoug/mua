@@ -9,7 +9,7 @@ import { derived, get } from 'svelte/store';
 import { appSettings, saveAppSettings } from './settings';
 
 // ============ 主题色 ============
-export type ThemeId = 'electric-blue' | 'cyber-purple' | 'deep-space';
+export type ThemeId = 'cyberpunk' | 'cyber-purple' | 'default';
 
 export interface Theme {
 	id: ThemeId;
@@ -20,19 +20,19 @@ export interface Theme {
 }
 
 export const themes: Record<ThemeId, Theme> = {
-	'deep-space': {
-		id: 'deep-space',
-		name: '深空',
-		primary: '#ffffff',
-		secondary: '#94a3b8',
-		glow: 'rgba(255, 255, 255, 0.25)'
-	},
-	'electric-blue': {
-		id: 'electric-blue',
-		name: '电光蓝',
+	'default': {
+		id: 'default',
+		name: '默认',
 		primary: '#4A9EFF',
 		secondary: '#70B4FF',
 		glow: 'rgba(74, 158, 255, 0.4)'
+	},
+	'cyberpunk': {
+		id: 'cyberpunk',
+		name: '赛博朋克',
+		primary: '#22d3ee',
+		secondary: '#d946ef',
+		glow: 'rgba(34, 211, 238, 0.6)'
 	},
 	'cyber-purple': {
 		id: 'cyber-purple',

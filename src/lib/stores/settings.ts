@@ -29,7 +29,7 @@ const DEFAULT_CONFIG: AppConfig = {
     uaHistory: [],
     defaultSavePath: '',
     globalMaxDownloadLimit: '',
-    theme: 'deep-space',
+    theme: 'default',
     colorMode: 'dark',
     particlesEnabled: true,
     startMinimized: false
