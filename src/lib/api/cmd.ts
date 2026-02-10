@@ -133,3 +133,19 @@ export async function importCustomBinary(path: string): Promise<string> {
 export async function getAria2VersionInfo(): Promise<Aria2VersionInfo> {
     return invoke<Aria2VersionInfo>('get_aria2_version_info');
 }
+
+export interface TorrentInfo {
+    name: string;
+    files: TorrentFile[];
+    total_length: number;
+}
+
+export interface TorrentFile {
+    path: string;
+    length: number;
+    index: number;
+}
+
+export async function parseTorrent(path: string): Promise<TorrentInfo> {
+    return invoke<TorrentInfo>('parse_torrent', { path });
+}

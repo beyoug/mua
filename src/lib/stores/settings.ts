@@ -13,10 +13,18 @@ export interface AppConfig {
     uaHistory: string[];
     defaultSavePath: string;
     globalMaxDownloadLimit: string;
+    globalMaxUploadLimit: string;
     theme: string;
     colorMode: string;
     particlesEnabled: boolean;
     startMinimized: boolean;
+    btTrackers: string;
+    enableDht: boolean;
+    enablePeerExchange: boolean;
+    enableSeeding: boolean;
+    seedRatio: number;
+    dhtListenPort: string;
+    listenPort: string;
 }
 
 const DEFAULT_CONFIG: AppConfig = {
@@ -29,10 +37,18 @@ const DEFAULT_CONFIG: AppConfig = {
     uaHistory: [],
     defaultSavePath: '',
     globalMaxDownloadLimit: '',
+    globalMaxUploadLimit: '',
     theme: 'default',
     colorMode: 'dark',
     particlesEnabled: true,
-    startMinimized: false
+    startMinimized: false,
+    btTrackers: '',
+    enableDht: true,
+    enablePeerExchange: true,
+    enableSeeding: true,
+    seedRatio: 1.0,
+    dhtListenPort: '6881',
+    listenPort: '6881'
 };
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);

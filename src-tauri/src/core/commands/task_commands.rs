@@ -34,6 +34,7 @@ pub async fn add_download_task(
         headers,
         proxy,
         max_download_limit,
+        torrent_config: None,
     };
     add_download_task_inner(&state, config).await
 }
@@ -70,8 +71,20 @@ pub async fn add_download_tasks(
     Ok(gids)
 }
 
+use base64::Engine as _;
+
 async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppResult<String> {
     log::info!("Adding download task: {:?}", cfg.urls);
+
+    if let Some(ref torrent_cfg) = cfg.torrent_config {
+        return add_torrent_task_inner(
+            state,
+            torrent_cfg.path.clone(),
+            torrent_cfg.select_file.clone(),
+            &cfg,
+        )
+        .await;
+    }
 
     for url in &cfg.urls {
         if !utils::is_valid_url(url) {
@@ -92,7 +105,7 @@ async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppR
         utils::get_unique_filename(&resolved_save_path, &deduced_name, &active_names);
 
     let (options, final_save_path) = utils::build_aria2_options(
-        cfg.save_path,
+        cfg.save_path.clone(),
         Some(unique_filename.clone()),
         cfg.user_agent.clone(),
         cfg.referer.clone(),
@@ -103,36 +116,118 @@ async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppR
 
     match aria2_client::add_uri(cfg.urls.clone(), Some(options)).await {
         Ok(gid) => {
-            let task = PersistedTask {
-                gid: gid.clone(),
-                filename: unique_filename,
-                url: cfg.urls.get(0).cloned().unwrap_or_default(),
-                save_path: final_save_path,
-                added_at: Local::now().to_rfc3339(),
-                state: TaskState::Waiting,
-                total_length: "0".to_string(),
-                completed_length: "0".to_string(),
-                download_speed: "0 B/s".to_string(),
-                completed_at: None,
-                error_message: "".to_string(),
-                user_agent: cfg.user_agent.unwrap_or_default(),
-                referer: cfg.referer.unwrap_or_default(),
-                proxy: cfg.proxy.unwrap_or_default(),
-                headers: cfg
-                    .headers
-                    .unwrap_or_default()
-                    .split(|c| c == ';' || c == '\n')
-                    .filter(|s| !s.trim().is_empty())
-                    .map(|s| s.trim().to_string())
-                    .collect(),
-                max_download_limit: cfg.max_download_limit.unwrap_or_default(),
-            };
+            let task = create_persisted_task(
+                gid.clone(),
+                unique_filename,
+                cfg.urls.get(0).cloned().unwrap_or_default(),
+                final_save_path,
+                &cfg,
+            );
             state.add_task(task);
             Ok(gid)
         }
         Err(e) => Err(e),
     }
 }
+
+fn create_persisted_task(
+    gid: String,
+    filename: String,
+    url: String,
+    save_path: String,
+    cfg: &DownloadConfig,
+) -> PersistedTask {
+    PersistedTask {
+        gid,
+        filename,
+        url,
+        save_path,
+        added_at: Local::now().to_rfc3339(),
+        state: TaskState::Waiting,
+        total_length: "0".to_string(),
+        completed_length: "0".to_string(),
+        download_speed: "0 B/s".to_string(),
+        completed_at: None,
+        error_message: "".to_string(),
+        user_agent: cfg.user_agent.clone().unwrap_or_default(),
+        referer: cfg.referer.clone().unwrap_or_default(),
+        proxy: cfg.proxy.clone().unwrap_or_default(),
+        headers: cfg
+            .headers
+            .clone()
+            .unwrap_or_default()
+            .split(|c| c == ';' || c == '\n')
+            .filter(|s| !s.trim().is_empty())
+            .map(|s| s.trim().to_string())
+            .collect(),
+        max_download_limit: cfg.max_download_limit.clone().unwrap_or_default(),
+    }
+}
+
+#[tauri::command]
+pub async fn parse_torrent(path: String) -> AppResult<crate::core::torrent::TorrentInfo> {
+    crate::core::torrent::parse_torrent_file(&path)
+}
+
+async fn add_torrent_task_inner(
+    state: &TaskStore,
+    path: String,
+    select_file: Option<String>,
+    base_cfg: &DownloadConfig,
+) -> AppResult<String> {
+    // Read file and convert to base64
+    let content = std::fs::read(&path).map_err(|e| AppError::Fs(e.to_string()))?;
+    let torrent_b64 = base64::engine::general_purpose::STANDARD.encode(&content);
+
+    // 1. Resolve save path
+    let _resolved_save_path = if let Some(ref p) = base_cfg.save_path {
+        utils::resolve_path(p)
+    } else {
+        ".".to_string()
+    };
+
+    // 2. Build options
+    let (mut options_val, final_save_path) = utils::build_aria2_options(
+        base_cfg.save_path.clone(),
+        None, // Torrent usually has its own name structure, avoid forcing filename unless single file?
+        base_cfg.user_agent.clone(),
+        base_cfg.referer.clone(),
+        base_cfg.headers.clone(),
+        base_cfg.proxy.clone(),
+        base_cfg.max_download_limit.clone(),
+    );
+
+    if let Some(opts) = options_val.as_object_mut() {
+        if let Some(sf) = select_file {
+            opts.insert("select-file".to_string(), serde_json::Value::String(sf));
+        }
+    }
+
+    match aria2_client::add_torrent(torrent_b64, Some(options_val)).await {
+        Ok(gid) => {
+            // Torrent task might not have a URL, but use path as identifier
+            let task = create_persisted_task(
+                gid.clone(),
+                // Use a placeholder or let Aria2 update it later (store will sync)
+                // But we can try to guess name from path temporarily
+                std::path::Path::new(&path)
+                    .file_name()
+                    .unwrap_or_default()
+                    .to_string_lossy()
+                    .to_string(),
+                format!("file://{}", path),
+                final_save_path,
+                base_cfg,
+            );
+            state.add_task(task);
+            Ok(gid)
+        }
+        Err(e) => Err(e),
+    }
+}
+
+
+
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {

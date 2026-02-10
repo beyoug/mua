@@ -22,8 +22,8 @@ export function isValidDownloadUrl(urlString: string): boolean {
 
     try {
         const url = new URL(urlString);
-        // 支持的协议：http, https, ftp, ftps
-        const validProtocols = ['http:', 'https:', 'ftp:', 'ftps:'];
+        // 支持的协议：http, https, ftp, ftps, magnet
+        const validProtocols = ['http:', 'https:', 'ftp:', 'ftps:', 'magnet:'];
         return validProtocols.includes(url.protocol);
     } catch {
         return false;
@@ -43,7 +43,7 @@ export function validateUrl(urlText: string): string {
     }
 
     if (!isValidDownloadUrl(trimmed)) {
-        return '无效的URL格式，请使用 http/https/ftp 协议';
+        return '无效的URL格式，请使用 http/https/ftp/magnet 协议';
     }
 
     return '';

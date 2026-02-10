@@ -114,4 +114,12 @@ pub struct DownloadConfig {
     pub headers: Option<String>,
     pub proxy: Option<String>,
     pub max_download_limit: Option<String>,
+    pub torrent_config: Option<TorrentDownloadConfig>,
+}
+
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct TorrentDownloadConfig {
+    pub path: String,
+    pub select_file: Option<String>,
 }

@@ -62,7 +62,9 @@ pub fn run() {
             start_log_stream,
             stop_log_stream,
             import_custom_binary,
-            get_aria2_version_info
+            get_aria2_version_info,
+            parse_torrent,
+            fetch_public_trackers
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

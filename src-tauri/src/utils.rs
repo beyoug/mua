@@ -119,6 +119,7 @@ pub fn is_valid_url(url: &str) -> bool {
         || lower.starts_with("https://")
         || lower.starts_with("ftp://")
         || lower.starts_with("ftps://")
+        || lower.starts_with("magnet:")
 }
 use crate::core::types::TaskState;
 
@@ -146,6 +147,19 @@ pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
 
     // Try to extract from URL
     if let Some(first_url) = urls.get(0) {
+        if first_url.starts_with("magnet:") {
+            // 解析 dn 参数
+            if let Some(start) = first_url.find("dn=") {
+                let rest = &first_url[start + 3..];
+                let end = rest.find('&').unwrap_or(rest.len());
+                let dn = &rest[..end];
+                if let Ok(decoded) = urlencoding::decode(dn) {
+                    return decoded.to_string();
+                }
+            }
+            return "magnet_download".to_string();
+        }
+
         // Simple heuristic: take last part of path
         if let Some(name) = first_url.split('/').last() {
             let clean_name = name.split('?').next().unwrap_or(name);

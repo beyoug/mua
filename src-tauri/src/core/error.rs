@@ -101,4 +101,8 @@ impl AppError {
     pub fn validation<S: Into<String>>(msg: S) -> Self {
         Self::Validation(msg.into())
     }
+
+    pub fn io<S: Into<String>>(msg: S) -> Self {
+        Self::Fs(msg.into())
+    }
 }

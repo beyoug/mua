@@ -54,7 +54,20 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             };
 
             // 1. 检查现有配置
-            let (preferred_port, save_session_interval, existing_secret, max_concurrent) = {
+            let (
+                preferred_port,
+                save_session_interval,
+                existing_secret,
+                max_concurrent,
+                bt_trackers,
+                enable_dht,
+                enable_peer_exchange,
+                enable_seeding,
+                seed_ratio,
+                dht_listen_port,
+                listen_port,
+                global_max_upload_limit,
+            ) = {
                 if let Some(state) = app
                     .state::<crate::core::config::ConfigState>()
                     .config
@@ -66,9 +79,30 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         state.save_session_interval,
                         state.rpc_secret.clone(),
                         state.max_concurrent_downloads,
+                        state.bt_trackers.clone(),
+                        state.enable_dht,
+                        state.enable_peer_exchange,
+                        state.enable_seeding,
+                        state.seed_ratio,
+                        state.dht_listen_port.clone(),
+                        state.listen_port.clone(),
+                        state.global_max_upload_limit.clone(),
                     )
                 } else {
-                    (6800, 30, None, 3)
+                    (
+                        6800,
+                        30,
+                        None,
+                        3,
+                        String::new(),
+                        true,
+                        true,
+                        true,
+                        1.0,
+                        "6881".to_string(),
+                        "6881".to_string(),
+                        String::new(),
+                    )
                 }
             };
             log::info!("首选 Aria2 端口: {}", preferred_port);
@@ -100,8 +134,33 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 "--disable-ipv6".to_string(),
                 "--log-level=warn".to_string(),
                 format!("--max-concurrent-downloads={}", max_concurrent),
+                format!("--max-concurrent-downloads={}", max_concurrent),
                 format!("--stop-with-process={}", std::process::id()), // 父进程退出时自动关闭
+                format!("--enable-dht={}", enable_dht),
+                format!("--enable-peer-exchange={}", enable_peer_exchange),
+                format!("--enable-peer-exchange={}", enable_peer_exchange),
+                format!("--seed-ratio={}", seed_ratio),
+                // 如果启用做种，不传 seed-time (默认无限/受 ratio 控制)
+                // 如果禁用做种，传 seed-time=0
+                format!(
+                    "--seed-time={}",
+                    if enable_seeding {
+                        "999999999".to_string() // 显式设置为很大的值，确保覆盖
+                    } else {
+                        "0".to_string()
+                    }
+                ),
+                format!("--dht-listen-port={}", dht_listen_port),
+                format!("--listen-port={}", listen_port),
             ];
+
+            if !global_max_upload_limit.is_empty() {
+                args.push(format!("--max-overall-upload-limit={}", global_max_upload_limit));
+            }
+
+            if !bt_trackers.is_empty() {
+                args.push(format!("--bt-tracker={}", bt_trackers));
+            }
 
             if let Some(ref secret) = existing_secret {
                 args.push(format!("--rpc-secret={}", secret));

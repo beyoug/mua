@@ -3,17 +3,19 @@
   添加下载任务对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown, Layers, FileJson } from '@lucide/svelte';
+	import { Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown, Layers, FileUp, Trash2 } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
     // @ts-ignore
 	import { confirm } from '@tauri-apps/plugin-dialog';
 	import { fade, slide } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { isValidDownloadUrl, validateUrl } from '$lib';
+	import { isValidDownloadUrl } from '$lib';
 	import { appSettings, saveAppSettings } from '$lib/stores/settings';
+    import { parseTorrent, type TorrentInfo } from '$lib/api/cmd';
 	import BaseModal from '../common/BaseModal.svelte';
 	import UaSelector from './UaSelector.svelte';
     import BatchImportPanel from './BatchImportPanel.svelte';
+    import TorrentFileSelector from './TorrentFileSelector.svelte';
     import type { ParsedTask } from '$lib/utils/imports/types';
 
 	interface Props {
@@ -32,6 +34,11 @@
 	let savePath = $state($appSettings.defaultSavePath || '~/Downloads');
 	let filename = $state('');
 
+    // Torrent 状态
+    let torrentPath = $state('');
+    let torrentInfo = $state<TorrentInfo | null>(null);
+    let torrentSelectedFiles = $state<string | undefined>(undefined);
+    let isParsingTorrent = $state(false);
 
 
 	// 高级设置管理
@@ -50,8 +57,9 @@
 	let validationTimer: ReturnType<typeof setTimeout> | null = null;
 
 	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
-    // 普通模式提交条件：URL 非空且验证通过
-	const canSubmitNormal = $derived(!validateInputUrls(urls));
+    
+    // 普通模式提交条件：(URL 非空且验证通过) 或者 (已选择 Torrent)
+	const canSubmitNormal = $derived((!validateInputUrls(urls) && urls.trim().length > 0) || !!torrentInfo);
     
     const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
 
@@ -60,7 +68,7 @@
 
     // 验证多行 URL
     function validateInputUrls(input: string): string {
-        if (!input.trim()) return ''; // 空时不报错，但 disable button
+        if (!input.trim()) return ''; // 空时不报错，但 disable button (如果也没 torrent)
         
         const lines = input.split('\n').map(l => l.trim()).filter(l => l);
         if (lines.length === 0) return '';
@@ -76,9 +84,9 @@
 	async function handleSubmit() {
 		if (isSubmitting) return;
         
-        const error = validateInputUrls(urls);
-		if (error || !urls.trim()) {
-            validationError = error || '请输入下载链接';
+        const urlError = validateInputUrls(urls);
+		if ((urlError || !urls.trim()) && !torrentInfo) {
+            validationError = urlError || '请输入下载链接或选择种子文件';
 			return;
         }
 
@@ -89,23 +97,48 @@
             const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
             const finalUa = effectiveUserAgent;
             
-            const lines = urls.split('\n').map(l => l.trim()).filter(l => l);
-            const isMulti = lines.length > 1;
-			
-            const configs: DownloadConfig[] = lines.map(url => ({
-                urls: [url],
-                savePath,
-                // 如果是多任务，忽略手动输入的文件名，使用自动推断；单任务则使用输入值
-                filename: isMulti ? '' : filename,
-                userAgent: finalUa,
-                referer,
-                headers,
-                proxy,
-                maxDownloadLimit: limit
-            }));
+            const configs: DownloadConfig[] = [];
 
-			onSubmit?.(configs); // TaskController 现在支持数组
+            // 1. Add URL tasks
+            if (urls.trim()) {
+                const lines = urls.split('\n').map(l => l.trim()).filter(l => l);
+                const isMulti = lines.length > 1;
+                
+                configs.push(...lines.map(url => ({
+                    urls: [url],
+                    savePath,
+                    filename: isMulti ? '' : filename,
+                    userAgent: finalUa,
+                    referer,
+                    headers,
+                    proxy,
+                    maxDownloadLimit: limit
+                })));
+            }
 
+            // 2. Add Torrent task
+            if (torrentInfo && torrentPath) {
+                 configs.push({
+                    urls: [], // No URL for local torrent parsing
+                    savePath,
+                    filename: '', // auto-detect from torrent usually
+                    userAgent: finalUa,
+                    referer,
+                    headers,
+                    proxy,
+                    maxDownloadLimit: limit,
+                    torrentConfig: {
+                        path: torrentPath,
+                        selectFile: torrentSelectedFiles
+                    }
+                });
+            }
+
+            if (configs.length > 0) {
+			    onSubmit?.(configs);
+            }
+
+            // Save UA history
             if (finalUa && uaSelectorRef && !uaSelectorRef.isBuiltinUa(finalUa)) {
                 let history = [...($appSettings.uaHistory || [])];
                 history = [finalUa, ...history.filter(ua => ua !== finalUa)];
@@ -152,10 +185,11 @@
 	function resetForm() {
         activeTab = 'normal';
 		urls = '';
-        // batchContent = '';
-        // batchError = '';
         savePath = $appSettings.defaultSavePath || '~/Downloads';
 		filename = '';
+        torrentPath = '';
+        torrentInfo = null;
+        torrentSelectedFiles = undefined;
 		selectedUaValue = '';
 		customUserAgent = '';
         isSubmitting = false;
@@ -178,6 +212,39 @@
 			if (selected) savePath = selected as string;
 		} catch (e) {}
 	}
+
+    async function selectTorrentFile() {
+        try {
+            const selected = await openDialog({
+                multiple: false,
+                filters: [{ name: 'Torrent Files', extensions: ['torrent'] }],
+                title: '选择种子文件'
+            });
+            
+            if (selected) {
+                const path = selected as string;
+                isParsingTorrent = true;
+                try {
+                    const info = await parseTorrent(path);
+                    torrentPath = path;
+                    torrentInfo = info;
+                    // Reset URLs if torrent is selected? Maybe desirable.
+                    // urls = ''; 
+                } catch (e) {
+                    console.error("Failed to parse torrent:", e);
+                    validationError = "种子文件解析失败";
+                } finally {
+                    isParsingTorrent = false;
+                }
+            }
+        } catch (e) {}
+    }
+
+    function removeTorrent() {
+        torrentPath = '';
+        torrentInfo = null;
+        torrentSelectedFiles = undefined;
+    }
 
     function openAdvanced() {
         advancedSnapshot = {
@@ -265,7 +332,7 @@
                         onclick={() => activeTab = 'normal'}
                     >
                         <Link size={16} />
-                        <span>添加链接</span>
+                        <span>添加任务</span>
                     </button>
                     <button 
                         class="tab-btn" 
@@ -282,7 +349,7 @@
                         <ArrowLeft size={18} />
                     </button>
                     <div class="breadcrumb">
-                        <span class="crumb-parent">{activeTab === 'normal' ? '添加链接' : '批量导入'}</span>
+                        <span class="crumb-parent">{activeTab === 'normal' ? '添加任务' : '批量导入'}</span>
                         <ChevronRight size={14} class="crumb-sep" />
                         <span class="crumb-current">高级设置</span>
                     </div>
@@ -303,22 +370,46 @@
                         <div class="form-group">
                             <label for="urls">
                                 <Link size={14} />
-                                <span>下载链接 (每行一个)</span>
-                                {#if validationError}
-                                    <span class="error-inline">
-                                        <AlertCircle size={12} />
-                                        {validationError}
-                                    </span>
-                                {/if}
+                                <span>下载链接 (支持 Magnet)</span>
+                                <div style="margin-left: auto; display: flex; gap: 8px;">
+                                    <button class="btn-xs-secondary" onclick={selectTorrentFile}>
+                                        <FileUp size={12} />
+                                        <span>打开种子文件</span>
+                                    </button>
+                                </div>
                             </label>
+
+                             {#if validationError}
+                                <span class="error-inline" style="margin-top: 4px;">
+                                    <AlertCircle size={12} />
+                                    {validationError}
+                                </span>
+                            {/if}
+
                             <textarea
                                 id="urls"
-                                placeholder="输入下载链接，支持多行批量添加"
+                                placeholder="输入 HTTP/HTTPS/Magnet 链接，每行一个"
                                 bind:value={urls}
                                 oninput={handleUrlInput}
                                 onblur={handleUrlBlur}
                                 class:error={!!validationError}
                             ></textarea>
+                            
+                            {#if torrentInfo}
+                                <div class="torrent-preview" transition:slide>
+                                    <div class="tp-header">
+                                        <span class="tp-badge">种子任务</span>
+                                        <span class="tp-name">{torrentInfo.name}</span>
+                                        <button class="btn-icon-danger" onclick={removeTorrent}>
+                                            <Trash2 size={12} />
+                                        </button>
+                                    </div>
+                                    <TorrentFileSelector 
+                                        torrentInfo={torrentInfo} 
+                                        onSelectionChange={(s) => torrentSelectedFiles = s}
+                                    />
+                                </div>
+                            {/if}
                         </div>
 
                         <!-- 保存位置 -->
@@ -342,8 +433,9 @@
                             <input
                                 type="text"
                                 class="text-input"
-                                placeholder="留空则使用原始文件名"
+                                placeholder="留空则使用默认文件名"
                                 bind:value={filename}
+                                disabled={!!torrentInfo}
                             />
                         </div>
                     </div>
@@ -357,7 +449,7 @@
 
             </div>
         {:else}
-            <!-- 高级设置面板 (仅对 Normal 模式有效，因为 Batch 模式直接解析) -->
+            <!-- 高级设置面板 -->
             <div class="advanced-panel" in:fade={{ duration: 150 }}>
                 <div class="panel-body">
                     <div class="form-row">
@@ -456,8 +548,7 @@
                         {/if}
                     </button>
                 {:else}
-                     <!-- Batch Mode Footer 由组件自己管理，这里只需要占位或者空 -->
-                     <!-- 如果需要统一关闭按钮也可以放 -->
+                     <!-- Batch Mode Footer -->
                 {/if}
             </div>
         {:else}
@@ -593,13 +684,14 @@
         gap: 6px;
         font-size: 13px;
         color: var(--text-secondary);
+        width: 100%;
     }
 
     .error-inline {
         display: flex;
         align-items: center;
         gap: 4px;
-        margin-left: auto;
+        /* margin-left: auto; */
         font-size: 12px;
         color: var(--danger-color);
     }
@@ -640,8 +732,6 @@
         justify-content: space-between;
         align-items: center;
     }
-
-
 
     .btn-primary {
         display: flex;
@@ -784,5 +874,78 @@
         .grouped-select {
             padding: 0 12px;
         }
+    }
+
+    .btn-xs-secondary {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        padding: 4px 8px;
+        background: var(--bg-tertiary);
+        border: 1px solid var(--border-color);
+        color: var(--text-secondary);
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+    
+    .btn-xs-secondary:hover {
+        background: var(--bg-hover);
+        color: var(--primary-color);
+        border-color: var(--primary-color);
+    }
+
+    .torrent-preview {
+        margin-top: 8px;
+        border-radius: 8px;
+        background: var(--bg-secondary);
+        border: 1px solid var(--border-color);
+        display: flex;
+        flex-direction: column;
+    }
+
+    .tp-header {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 8px 12px;
+        background: var(--bg-tertiary);
+        border-bottom: 1px solid var(--border-color);
+        font-size: 12px;
+    }
+
+    .tp-badge {
+        background: var(--primary-color);
+        color: white;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 10px;
+        font-weight: bold;
+    }
+
+    .tp-name {
+        flex: 1;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        color: var(--text-primary);
+    }
+
+    .btn-icon-danger {
+        background: none;
+        border: none;
+        color: var(--text-tertiary);
+        cursor: pointer;
+        padding: 4px;
+        border-radius: 4px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn-icon-danger:hover {
+        background: var(--danger-bg-weak);
+        color: var(--danger-color);
     }
 </style>

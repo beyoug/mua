@@ -232,6 +232,7 @@
 		gap: 12px;
 		flex: 1;
 		min-width: 0;
+		overflow: hidden; /* Ensure children like filename are truncated */
 	}
 
 	.icon-wrapper {
@@ -266,6 +267,9 @@
 	}
 
 	.filename {
+		flex: 1;
+		width: 0; /* Critical for text-overflow to work in flex child */
+		min-width: 0;
 		font-size: 13px;
 		font-weight: 500;
 		color: var(--text-primary);
@@ -280,6 +284,8 @@
 		gap: 6px;
 		opacity: 0;
 		transition: opacity 0.2s ease;
+		flex-shrink: 0;
+		margin-left: 12px;
 	}
 
 	.download-card:hover .actions {

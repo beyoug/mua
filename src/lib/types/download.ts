@@ -61,6 +61,10 @@ export interface DownloadConfig {
 	headers: string;
 	proxy: string;
 	maxDownloadLimit: string;
+	torrentConfig?: {
+		path: string;
+		selectFile?: string;
+	};
 }
 
 /**

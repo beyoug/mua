@@ -31,6 +31,8 @@ pub struct AppConfig {
     pub default_save_path: String,
     #[serde(rename = "globalMaxDownloadLimit", default = "default_string_empty")]
     pub global_max_download_limit: String,
+    #[serde(rename = "globalMaxUploadLimit", default = "default_string_empty")]
+    pub global_max_upload_limit: String,
     #[serde(default = "default_theme")]
     pub theme: String,
     #[serde(rename = "colorMode", default = "default_color_mode")]
@@ -39,6 +41,28 @@ pub struct AppConfig {
     pub particles_enabled: bool,
     #[serde(rename = "startMinimized", default = "default_result_false")]
     pub start_minimized: bool,
+    #[serde(rename = "btTrackers", default = "default_string_empty")]
+    pub bt_trackers: String,
+    #[serde(rename = "enableDht", default = "default_result_true")]
+    pub enable_dht: bool,
+    #[serde(rename = "enablePeerExchange", default = "default_result_true")]
+    pub enable_peer_exchange: bool,
+    #[serde(rename = "enableSeeding", default = "default_result_true")]
+    pub enable_seeding: bool,
+    #[serde(rename = "seedRatio", default = "default_seed_ratio")]
+    pub seed_ratio: f64,
+    #[serde(rename = "dhtListenPort", default = "default_bt_port")]
+    pub dht_listen_port: String,
+    #[serde(rename = "listenPort", default = "default_bt_port")]
+    pub listen_port: String,
+}
+
+fn default_seed_ratio() -> f64 {
+    1.0
+}
+
+fn default_bt_port() -> String {
+    "6881".to_string()
 }
 
 fn default_ua_history() -> Vec<String> {
@@ -93,10 +117,18 @@ impl Default for AppConfig {
             ua_history: Vec::new(),
             default_save_path: default_save_path(),
             global_max_download_limit: String::new(),
+            global_max_upload_limit: String::new(),
             theme: default_theme(),
             color_mode: default_color_mode(),
             particles_enabled: true,
             start_minimized: false,
+            bt_trackers: String::new(),
+            enable_dht: true,
+            enable_peer_exchange: true,
+            enable_seeding: true,
+            seed_ratio: 1.0,
+            dht_listen_port: default_bt_port(),
+            listen_port: default_bt_port(),
         }
     }
 }

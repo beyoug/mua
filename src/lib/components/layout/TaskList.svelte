@@ -117,6 +117,7 @@
 	.scroll-container {
 		flex: 1;
 		overflow-y: auto;
+		overflow-x: hidden; /* Prevent horizontal scroll, force children to fit */
 		display: flex;
 		flex-direction: column;
         

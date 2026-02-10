@@ -3,7 +3,7 @@
   浮动设置面板 - 侧边栏导航布局
 -->
 <script lang="ts">
-  import { X, Palette, Settings2, Download, Cpu, Info, Terminal } from '@lucide/svelte';
+  import { X, Palette, Settings2, Download, Cpu, Info, Terminal, Network } from '@lucide/svelte';
   import { fade, scale } from 'svelte/transition';
   import { loadAria2Config } from '$lib/stores/aria2Config';
   import { loadAppSettings } from '$lib/stores/settings';
@@ -15,6 +15,7 @@
   import CoreSettings from './CoreSettings.svelte';
   import AboutSettings from './AboutSettings.svelte';
   import LogSettings from './LogSettings.svelte';
+  import BTSettings from './BTSettings.svelte';
 
   interface Props {
     open: boolean;
@@ -23,13 +24,14 @@
 
   let { open, onClose }: Props = $props();
   
-  type TabId = 'appearance' | 'general' | 'download' | 'core' | 'about' | 'logs';
+  type TabId = 'appearance' | 'general' | 'download' | 'bt' | 'core' | 'about' | 'logs';
   let activeTab: TabId = $state('appearance');
 
   const navItems = [
     { id: 'appearance' as TabId, label: '外观', icon: Palette },
     { id: 'general' as TabId, label: '通用', icon: Settings2 },
     { id: 'download' as TabId, label: '下载', icon: Download },
+    { id: 'bt' as TabId, label: 'BT', icon: Network },
     { id: 'core' as TabId, label: '核心', icon: Cpu },
     { id: 'logs' as TabId, label: '日志', icon: Terminal },
     { id: 'about' as TabId, label: '关于', icon: Info },
@@ -89,6 +91,10 @@
           {:else if activeTab === 'download'}
             <div in:fade={{ duration: 150 }}>
               <DownloadSettings />
+            </div>
+          {:else if activeTab === 'bt'}
+            <div in:fade={{ duration: 150 }}>
+              <BTSettings />
             </div>
           {:else if activeTab === 'core'}
             <div in:fade={{ duration: 150 }}>

@@ -139,6 +139,15 @@ pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> AppResult<Str
     send_rpc_request::<String>("aria2.addUri", params).await
 }
 
+pub async fn add_torrent(torrent: String, options: Option<Value>) -> AppResult<String> {
+    let mut params = vec![json!(torrent)];
+    if let Some(opts) = options {
+        params.push(json!(opts));
+    }
+
+    send_rpc_request::<String>("aria2.addTorrent", params).await
+}
+
 pub async fn get_all_tasks() -> AppResult<Vec<Aria2Task>> {
     let client = get_client();
 
