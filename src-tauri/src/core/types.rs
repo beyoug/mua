@@ -53,11 +53,10 @@ impl TaskState {
     }
 
     /// 获取状态排序分数（用于任务列表排序）
+    /// Active/Waiting/Paused 合并为同一分数，避免状态过渡期的排序抖动
     pub fn score(&self) -> i32 {
         match self {
-            Self::Active => 3,
-            Self::Waiting => 2,
-            Self::Paused => 1,
+            Self::Active | Self::Waiting | Self::Paused => 1,
             _ => 0,
         }
     }

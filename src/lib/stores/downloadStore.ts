@@ -37,16 +37,50 @@ import {
 
 
 
-
-
 // ============ 内部状态 ============
 
 // 所有下载任务（主数据源）
 const { subscribe: subscribeTasks, set: setTasks, update: updateTasks } = writable<DownloadTask[]>([]);
 
-// 乐观更新锁：记录正在进行操作的任务 ID
-// 后端推送时会自动清除锁
-const pendingStateChanges = new Set<string>();
+// 乐观更新锁：记录正在进行操作的任务 ID（附带超时时间戳）
+const pendingStateChanges = new Map<string, number>();
+
+// 乐观锁超时时间（ms）
+const PENDING_LOCK_TIMEOUT = 5000;
+
+/** 添加乐观锁（自带超时安全网） */
+function addPendingLock(id: string) {
+    pendingStateChanges.set(id, Date.now());
+}
+
+/** 检查锁是否有效（过期自动清除） */
+function hasPendingLock(id: string): boolean {
+    const timestamp = pendingStateChanges.get(id);
+    if (timestamp === undefined) return false;
+    if (Date.now() - timestamp > PENDING_LOCK_TIMEOUT) {
+        pendingStateChanges.delete(id);
+        return false;
+    }
+    return true;
+}
+
+/** 浅比较两个任务数组是否有实际变化（只比较高频变化字段） */
+function tasksChanged(prev: DownloadTask[], next: DownloadTask[]): boolean {
+    if (prev.length !== next.length) return true;
+    for (let i = 0; i < prev.length; i++) {
+        const p = prev[i], n = next[i];
+        if (
+            p.id !== n.id ||
+            p.state !== n.state ||
+            p.progress !== n.progress ||
+            p.speed !== n.speed ||
+            p.downloaded !== n.downloaded ||
+            p.total !== n.total ||
+            p.remaining !== n.remaining
+        ) return true;
+    }
+    return false;
+}
 
 // 后端推送的事件监听器
 // 替换轮询：监听后端 'tasks-update' 事件
@@ -78,22 +112,24 @@ async function setupEventListener() {
 
 // 统一的处理逻辑
 function handleTasksUpdate(backendTasks: DownloadTask[]) {
-    updateTasks(currentTasks => {
-        // 后端是单一事实来源（Single Source of Truth）
-        // 仅对被锁定的任务保留本地状态（乐观更新）
-        return backendTasks.map(task => {
-            if (pendingStateChanges.has(task.id)) {
-                const existing = currentTasks.find(t => t.id === task.id);
-                if (existing) {
-                    // 后端已推送，清除锁
-                    pendingStateChanges.delete(task.id);
-                    // 保留本地状态一次，下次推送使用后端数据
-                    return { ...task, state: existing.state };
-                }
+    const currentTasks = get({ subscribe: subscribeTasks });
+
+    // 后端是单一事实来源（Single Source of Truth）
+    // 仅对被锁定的任务保留本地状态（乐观更新）
+    const nextTasks = backendTasks.map(task => {
+        if (hasPendingLock(task.id)) {
+            const existing = currentTasks.find(t => t.id === task.id);
+            if (existing) {
+                pendingStateChanges.delete(task.id);
+                return { ...task, state: existing.state };
             }
-            return task;
-        });
+        }
+        return task;
     });
+
+    // 浅比较：数据未变化时跳过更新，避免无效重渲染
+    if (!tasksChanged(currentTasks, nextTasks)) return;
+    setTasks(nextTasks);
 }
 
 // 自动开始监听
@@ -128,7 +164,7 @@ export const completeTasks: Readable<DownloadTask[]> = derived(
  */
 export const allTasks: Readable<DownloadTask[]> = derived(
     { subscribe: subscribeTasks },
-    ($tasks) => [...$tasks]
+    ($tasks) => $tasks
 );
 
 /**
@@ -214,7 +250,7 @@ export async function pauseTask(id: string): Promise<void> {
 
     try {
         // 锁定状态以避免抖动
-        pendingStateChanges.add(id);
+        addPendingLock(id);
 
         // 获取并保存原始状态
         updateTasks(tasks => {
@@ -250,7 +286,7 @@ export async function pauseTask(id: string): Promise<void> {
 export async function resumeTask(id: string): Promise<void> {
     try {
         // 锁定状态以防止 UI 闪烁
-        pendingStateChanges.add(id);
+        addPendingLock(id);
 
         // 调用后端恢复 - 现在处理智能逻辑（如果需要则自动重新提交）
         // 如果发生了智能恢复，返回新的 GID；如果是取消暂停，返回 "OK" (gid)。
@@ -280,7 +316,7 @@ export async function resumeTask(id: string): Promise<void> {
             });
 
             // 锁定新 ID 以防止抖动，直到后端赶上
-            pendingStateChanges.add(newGid);
+            addPendingLock(newGid);
             // 同时删除旧 ID 的锁定，以防万一
             pendingStateChanges.delete(id);
 
@@ -309,7 +345,7 @@ export async function cancelTask(id: string): Promise<void> {
 
     try {
         // 锁定状态以避免抖动 (防止轮询在 Aria2 处理完成前覆盖本地状态)
-        pendingStateChanges.add(id);
+        addPendingLock(id);
 
         // 获取原始状态并乐观更新
         updateTasks(tasks => {
@@ -353,7 +389,7 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
 
         // 如果任务是活跃的，锁定 UI 以防止抖动
         if (isActiveTask(taskToDelete.state)) {
-            pendingStateChanges.add(id);
+            addPendingLock(id);
         }
 
         removeTaskRecord(id, deleteFile)
@@ -388,7 +424,7 @@ export async function removeTasks(ids: Set<string>, deleteFile: boolean = false)
 export async function cancelTasks(ids: Set<string>): Promise<void> {
     const idArray = Array.from(ids);
     // 锁定状态
-    ids.forEach(id => pendingStateChanges.add(id));
+    ids.forEach(id => addPendingLock(id));
 
     try {
         await cancelTasksCmd(idArray);
@@ -408,12 +444,16 @@ export async function cancelTasks(ids: Set<string>): Promise<void> {
  * 全局暂停所有下载中的任务
  */
 export async function pauseAll(): Promise<void> {
+    // 保存原始状态用于回滚
+    const snapshot = get({ subscribe: subscribeTasks });
+    const affectedIds: string[] = [];
+
     try {
-        // 获取所有需要暂停的任务 ID 并锁定状态
         updateTasks(tasks => {
             tasks.forEach(t => {
                 if (isDownloadingTask(t.state) || isWaitingTask(t.state)) {
-                    pendingStateChanges.add(t.id);
+                    addPendingLock(t.id);
+                    affectedIds.push(t.id);
                 }
             });
             // 乐观更新：所有 active -> paused
@@ -427,6 +467,9 @@ export async function pauseAll(): Promise<void> {
         await pauseAllTasks();
     } catch (e) {
         console.error("Pause all failed", e);
+        // 回滚到操作前状态
+        affectedIds.forEach(id => pendingStateChanges.delete(id));
+        setTasks(snapshot);
     }
 }
 
@@ -434,12 +477,16 @@ export async function pauseAll(): Promise<void> {
  * 全局恢复所有暂停的任务
  */
 export async function resumeAll(): Promise<void> {
+    // 保存原始状态用于回滚
+    const snapshot = get({ subscribe: subscribeTasks });
+    const affectedIds: string[] = [];
+
     try {
-        // 获取所有需要恢复的任务 ID 并锁定状态
         updateTasks(tasks => {
             tasks.forEach(t => {
                 if (isPausedTask(t.state)) {
-                    pendingStateChanges.add(t.id);
+                    addPendingLock(t.id);
+                    affectedIds.push(t.id);
                 }
             });
             // 乐观更新：所有 paused -> waiting
@@ -453,6 +500,9 @@ export async function resumeAll(): Promise<void> {
         await resumeAllTasks();
     } catch (e) {
         console.error("Resume all failed", e);
+        // 回滚到操作前状态
+        affectedIds.forEach(id => pendingStateChanges.delete(id));
+        setTasks(snapshot);
     }
 }
 

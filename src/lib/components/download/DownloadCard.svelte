@@ -8,47 +8,43 @@
 	import ProgressBar from './ProgressBar.svelte';
     import DownloadCardMenu from './DownloadCardMenu.svelte';
     import StatusIndicator from './StatusIndicator.svelte';
-	import type { DownloadState } from '$lib/types/download';
+	import type { DownloadTask } from '$lib/types/download';
 
 	interface Props {
-		filename: string;
-		url?: string;
-		progress: number;
-		speed?: string;
-		downloaded?: string;
-		total?: string;
-		remaining?: string;
-		state?: DownloadState;
+		/** 完整的任务对象（单一 prop 减少 diff 开销） */
+		task: DownloadTask;
 		onPause?: () => void;
 		onResume?: () => void;
 		onCancel?: () => void;
 		selectionMode?: boolean;
 		selected?: boolean;
 		onSelect?: () => void;
-		errorMessage?: string;
 		onOpenFolder?: () => void;
 		onShowDetails?: () => void;
 	}
 
 	let {
-		filename,
-		url = '',
-		progress,
-		speed = '',
-		downloaded = '',
-		total = '',
-		remaining = '',
-		state: downloadState = 'active',
+		task,
 		onPause,
 		onResume,
 		onCancel,
 		selectionMode = false,
 		selected = false,
 		onSelect,
-		errorMessage = '',
 		onOpenFolder,
 		onShowDetails
 	}: Props = $props();
+
+	// 便捷访问器
+	const downloadState = $derived(task.state);
+	const filename = $derived(task.filename);
+	const url = $derived(task.url);
+	const progress = $derived(task.progress);
+	const speed = $derived(task.speed);
+	const downloaded = $derived(task.downloaded);
+	const total = $derived(task.total);
+	const remaining = $derived(task.remaining);
+	const errorMessage = $derived(task.errorMessage ?? '');
 
 	let showMenu = $state(false);
 
@@ -82,6 +78,7 @@
 		closeMenu();
 	}
 </script>
+
 
 <article class="download-card" class:completed={downloadState === 'complete'} class:menu-open={showMenu}>
 	<div class="card-header">

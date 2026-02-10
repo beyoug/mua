@@ -87,14 +87,7 @@
 				{/if}
 
 				<DownloadCard
-					filename={download.filename}
-					url={download.url}
-					progress={download.progress}
-					speed={download.speed}
-					downloaded={download.downloaded}
-					total={download.total}
-					remaining={download.remaining}
-					state={download.state}
+					task={download}
 					selectionMode={isSelectionMode}
 					selected={selectedIds.has(download.id)}
 					onSelect={() => onSelect?.(download.id)}
@@ -103,7 +96,6 @@
 					onCancel={() => onCancel?.(download)}
 					onOpenFolder={() => onOpenFolder?.(download.id)}
 					onShowDetails={() => onShowDetails?.(download)}
-					errorMessage={download.errorMessage}
 				/>
 			</div>
 		{/each}
