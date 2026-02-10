@@ -58,6 +58,9 @@ fn load_system_font() -> Option<Font<'static>> {
     None
 }
 
+
+const CUSTOM_TRAY_ICON: &[u8] = include_bytes!("../../icons/tray.png");
+
 pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle();
 
@@ -74,7 +77,24 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
         }
 
         // 缓存调整大小后的图标
-        if let Some(icon) = app.default_window_icon() {
+        // 优先使用自定义图标
+        if let Some(src_img) = image::load_from_memory(CUSTOM_TRAY_ICON)
+            .ok()
+            .map(|i| i.to_rgba8())
+        {
+
+             
+             let scale_factor = 2;
+             let icon_size = 22 * scale_factor; // 44px
+             
+             let resized = image::imageops::resize(
+                 &src_img,
+                 icon_size,
+                 icon_size,
+                 image::imageops::FilterType::Lanczos3,
+             );
+             state.icon_cache = Some(resized);
+        } else if let Some(icon) = app.default_window_icon() {
             let icon_rgba = icon.rgba();
             let icon_width = icon.width();
             let icon_height = icon.height();
@@ -116,9 +136,7 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
 
         let _ = TrayIconBuilder::with_id("tray")
             .icon(
-                app.default_window_icon()
-                    .ok_or("Default window icon not found")?
-                    .clone(),
+                tauri::image::Image::from_bytes(CUSTOM_TRAY_ICON)?
             )
             .menu(&menu)
             .show_menu_on_left_click(false)
