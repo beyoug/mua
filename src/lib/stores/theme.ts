@@ -30,15 +30,15 @@ export const themes: Record<ThemeId, Theme> = {
 	'electric-blue': {
 		id: 'electric-blue',
 		name: '电光蓝',
-		primary: '#3B82F6',
-		secondary: '#60A5FA',
-		glow: 'rgba(59, 130, 246, 0.4)'
+		primary: '#4A9EFF',
+		secondary: '#70B4FF',
+		glow: 'rgba(74, 158, 255, 0.4)'
 	},
 	'cyber-purple': {
 		id: 'cyber-purple',
 		name: '赛博紫',
-		primary: '#8B5CF6',
-		secondary: '#A855F7',
+		primary: '#c084fc',
+		secondary: '#a855f7',
 		glow: 'rgba(139, 92, 246, 0.4)'
 	}
 };

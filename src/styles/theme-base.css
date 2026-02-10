@@ -1,0 +1,103 @@
+/* ============================================
+   Theme Base - 深色/浅色模式基础变量
+   与具体主题色无关的通用模式变量
+   ============================================ */
+
+/* ===== 深色模式 (默认) ===== */
+:root {
+  /* 背景层级 - 完全透明 */
+  --bg-base: transparent;
+  --bg-elevated: rgba(24, 24, 27, 0);
+  --bg-surface: rgba(25, 25, 35, 0);
+  --bg-overlay: rgba(15, 15, 20, 0);
+
+  /* 文本层级 - 纯白字体系统 */
+  --text-primary: rgba(255, 255, 255, 0.96);
+  --text-secondary: rgba(255, 255, 255, 0.75);
+  --text-tertiary: rgba(255, 255, 255, 0.55);
+  --text-disabled: rgba(255, 255, 255, 0.4);
+  --text-muted: var(--text-tertiary);
+
+  /* 边框与分割线 - 简约白色线条 */
+  --border-strong: rgba(255, 255, 255, 0.25);
+  --border-normal: rgba(255, 255, 255, 0.14);
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-color: var(--border-normal);
+  --border-light: var(--border-subtle);
+
+  /* 交互反馈 */
+  --surface-hover: rgba(255, 255, 255, 0.06);
+  --surface-active: rgba(255, 255, 255, 0.1);
+  --bg-hover: var(--surface-hover);
+
+  /* 输入框背景 - 深色模式下稍微深一点，增加层次感 */
+  --input-bg: rgba(0, 0, 0, 0.2);
+
+  /* 语义化颜色 */
+  --semantic-danger: #ef4444;
+  --semantic-danger-bg: rgba(239, 68, 68, 0.15);
+  --semantic-danger-border: rgba(239, 68, 68, 0.3);
+  --semantic-warning: #f59e0b;
+  --semantic-warning-bg: rgba(245, 158, 11, 0.15);
+  --semantic-warning-border: rgba(245, 158, 11, 0.3);
+  --semantic-success: #10b981;
+  --semantic-success-bg: rgba(16, 185, 129, 0.15);
+  --semantic-success-border: rgba(16, 185, 129, 0.3);
+  --semantic-info: #3b82f6;
+  --semantic-info-bg: rgba(59, 130, 246, 0.15);
+  --semantic-info-border: rgba(59, 130, 246, 0.3);
+
+  /* 兼容旧变量 */
+  --danger-color: var(--semantic-danger);
+  --warning-color: var(--semantic-warning);
+  --success-color: var(--semantic-success);
+}
+
+/* ===== 浅色模式 ===== */
+html.light {
+  /* 背景层级 - 完全透明 */
+  --bg-base: transparent;
+  --bg-elevated: rgba(255, 255, 255, 0);
+  --bg-surface: rgba(255, 255, 255, 0);
+  --bg-overlay: rgba(248, 249, 250, 0);
+
+  /* 文本层级 - 深色文字 */
+  --text-primary: rgba(15, 23, 42, 0.96);
+  --text-secondary: rgba(15, 23, 42, 0.70);
+  --text-tertiary: rgba(15, 23, 42, 0.55);
+  --text-disabled: rgba(15, 23, 42, 0.4);
+  --text-muted: var(--text-tertiary);
+
+  /* 边框 - 深色线条 */
+  --border-strong: rgba(15, 23, 42, 0.22);
+  --border-normal: rgba(15, 23, 42, 0.14);
+  --border-subtle: rgba(15, 23, 42, 0.08);
+  --border-color: var(--border-normal);
+  --border-light: var(--border-subtle);
+
+  --surface-hover: rgba(15, 23, 42, 0.06);
+  --surface-active: rgba(15, 23, 42, 0.1);
+  --bg-hover: var(--surface-hover);
+
+  /* 输入框背景 - 浅色模式下为半透明白 */
+  --input-bg: rgba(255, 255, 255, 0.6);
+
+  /* 语义化颜色 - 浅色模式优化 */
+  --semantic-danger: #dc2626;
+  --semantic-danger-bg: rgba(220, 38, 38, 0.08);
+  --semantic-danger-border: rgba(220, 38, 38, 0.2);
+  --semantic-warning: #d97706;
+  --semantic-warning-bg: rgba(217, 119, 6, 0.08);
+  --semantic-warning-border: rgba(217, 119, 6, 0.2);
+  --semantic-success: #059669;
+  --semantic-success-bg: rgba(5, 150, 105, 0.08);
+  --semantic-success-border: rgba(5, 150, 105, 0.2);
+  --semantic-info: #2563eb;
+  --semantic-info-bg: rgba(37, 99, 235, 0.08);
+  --semantic-info-border: rgba(37, 99, 235, 0.2);
+
+  /* 兼容旧变量 */
+  --danger-color: var(--semantic-danger);
+  --warning-color: var(--semantic-warning);
+  --success-color: var(--semantic-success);
+}

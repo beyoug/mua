@@ -1,0 +1,42 @@
+/* ============================================
+   Glass Effects - 玻璃态效果变量
+   深色/浅色模式的默认玻璃态效果
+   各主题可按需覆盖
+   ============================================ */
+
+/* ===== 深色模式默认 ===== */
+:root {
+  --glass-bg: rgba(15, 23, 42, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(24px);
+  --glass-saturate: saturate(120%);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* 弹窗专用背景 */
+  --dialog-bg: rgba(15, 23, 42, 0.75);
+  /* 内部覆盖层背景 */
+  --overlay-bg: rgba(15, 23, 42, 0.9);
+  /* 菜单背景 - 85% 透明度 + 5% 主题色混合 */
+  --glass-menu-bg: color-mix(in srgb, rgba(20, 20, 28, 0.85), var(--accent-primary) 5%);
+}
+
+/* ===== 浅色模式 ===== */
+html.light {
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(20px);
+  --glass-saturate: saturate(150%);
+  --glass-shadow:
+    0 4px 6px -1px rgba(0, 0, 0, 0.05),
+    0 2px 4px -1px rgba(0, 0, 0, 0.03),
+    0 0 0 1px rgba(255, 255, 255, 0.3) inset;
+
+  /* 弹窗专用背景 */
+  --dialog-bg: rgba(255, 255, 255, 0.75);
+  /* 遮罩层背景颜色 - 浅色模式下更通透 */
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.2);
+  /* 内部覆盖层背景 - 与弹窗保持一致 */
+  --overlay-bg: rgba(255, 255, 255, 0.85);
+  /* 菜单背景 */
+  --glass-menu-bg: color-mix(in srgb, rgba(255, 255, 255, 0.85), var(--accent-primary) 5%);
+}
