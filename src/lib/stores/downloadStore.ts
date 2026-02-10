@@ -216,7 +216,7 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
                 filename: config.filename || extractFilenameFromUrl(primaryUrl),
                 url: primaryUrl,
                 progress: 0,
-                speed: '0.00|B/s',
+                speed: { value: '0', unit: 'B/s' },
                 speed_u64: 0,
                 downloaded: '0 B',
                 downloaded_u64: 0,
@@ -260,7 +260,7 @@ export async function pauseTask(id: string): Promise<void> {
             }
             // 乐观更新
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'paused', speed: '0.00|B/s' } : t
+                t.id === id ? { ...t, state: 'paused', speed: { value: '0', unit: 'B/s' }, completedAt: new Date().toISOString() } : t
             );
         });
 
@@ -305,7 +305,7 @@ export async function resumeTask(id: string): Promise<void> {
                     id: newGid,
                     state: 'waiting', // 或 downloading
                     progress: 0,
-                    speed: '0.00|B/s',
+                    speed: { value: '0', unit: 'B/s' },
                     speed_u64: 0,
                     remaining: '',
                     // 重置统计信息，因为它是一个全新的下载
@@ -324,7 +324,7 @@ export async function resumeTask(id: string): Promise<void> {
             // 标准恢复
             // 乐观更新 - 假设变回 active
             updateTasks(tasks => tasks.map(t =>
-                t.id === id ? { ...t, state: 'active' } : t
+                t.id === id ? { ...t, state: 'active', completedAt: null } : t
             ));
         }
 
@@ -354,7 +354,7 @@ export async function cancelTask(id: string): Promise<void> {
                 originalState = task.state;
             }
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'removed' } : t
+                t.id === id ? { ...t, state: 'removed', completedAt: new Date().toISOString() } : t
             );
         });
 
@@ -457,9 +457,10 @@ export async function pauseAll(): Promise<void> {
                 }
             });
             // 乐观更新：所有 active -> paused
+            const now = new Date().toISOString();
             return tasks.map(t =>
                 (t.state === 'active' || t.state === 'waiting')
-                    ? { ...t, state: 'paused', speed: '0.00|B/s' }
+                    ? { ...t, state: 'paused', speed: { value: '0', unit: 'B/s' }, completedAt: now }
                     : t
             );
         });
@@ -492,7 +493,7 @@ export async function resumeAll(): Promise<void> {
             // 乐观更新：所有 paused -> waiting
             return tasks.map(t =>
                 isPausedTask(t.state)
-                    ? { ...t, state: 'waiting' }
+                    ? { ...t, state: 'waiting', completedAt: null }
                     : t
             );
         });
