@@ -4,8 +4,7 @@
  */
 
 import { invoke } from '@tauri-apps/api/core';
-import type { DownloadConfig } from '$lib/types/download';
-import type { DownloadTask } from '$lib/types/download';
+import type { DownloadConfig, DownloadTask, Aria2VersionInfo } from '$lib/types/download';
 
 // === 命令封装器 ===
 
@@ -118,13 +117,7 @@ export async function showTaskInFolder(gid: string): Promise<void> {
     return invoke('show_task_in_folder', { gid });
 }
 
-export interface Aria2VersionInfo {
-    version: string;
-    is_custom: boolean;
-    path: string;
-    custom_binary_exists: boolean;
-    custom_binary_version?: string;
-}
+
 
 export async function importCustomBinary(path: string): Promise<string> {
     return invoke<string>('import_custom_binary', { filePath: path });

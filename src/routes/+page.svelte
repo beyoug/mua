@@ -6,16 +6,14 @@
 	import SettingsPanel from '$lib/components/settings/SettingsPanel.svelte';
 	import ClearConfirmDialog from '$lib/components/dialogs/ClearConfirmDialog.svelte';
 	import TaskDetailsModal from '$lib/components/dialogs/TaskDetailsModal.svelte';
-	import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
+
 	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 
 		activeTasks, 
 		completeTasks, 
 		allTasks, 
 		downloadStats,
-		addDownloadTask,
 		pauseTask,
-		resumeTask,
 		pauseAll,
 		resumeAll,
 		hasDownloadingTasks,
@@ -39,7 +37,7 @@
 	// ============ Derived States ============
 
 	// 当前显示的任务列表
-	const filteredTasks = $derived(() => {
+	const filteredTasks = $derived.by(() => {
 		switch (controller.activeNav) {
 			case 'active':
 				return $activeTasks;
@@ -53,7 +51,7 @@
 	});
 
 	// 页面标题
-	const pageTitle = $derived(() => {
+	const pageTitle = $derived.by(() => {
 		switch (controller.activeNav) {
 			case 'active': return '进行中';
 			case 'complete': return '已完成';
@@ -63,7 +61,7 @@
 	});
 
 	// 空状态提示文案
-	const emptyStateText = $derived(() => {
+	const emptyStateText = $derived.by(() => {
 		switch (controller.activeNav) {
 			case 'active': 
 				return {
@@ -89,16 +87,11 @@
 	});
 
 	// 判断当前列表中是否有正在下载/暂停/可删除的任务
-	const hasDownloading = $derived(hasDownloadingTasks(filteredTasks()));
-	const hasPaused = $derived(hasPausedTasks(filteredTasks()));
-	const hasRemovable = $derived(filteredTasks().some(t => isRemovableTask(t.state)));
+	const hasDownloading = $derived(hasDownloadingTasks(filteredTasks));
+	const hasPaused = $derived(hasPausedTasks(filteredTasks));
+	const hasRemovable = $derived(filteredTasks.some(t => isRemovableTask(t.state)));
 
 	// ============ Effects ============
-
-	// 同步下载速度到全局 store（用于粒子效果）
-	$effect(() => {
-		totalDownloadSpeed.set($downloadStats.totalSpeedBytes);
-	});
 
 	// 自动跳转逻辑：仅当任务"全部完成"时跳转
 	let prevActiveIds: string[] = [];
@@ -122,8 +115,8 @@
 	// ============ Event Handlers ============
 
 	function handleAddTask(config: DownloadConfig) {
-		controller.handleAddTask(config, addDownloadTask);
-        showAddDialog = false; // 直接在这里关闭，体验更连贯
+		controller.handleAddTask(config);
+        showAddDialog = false;
 	}
 	
 	function handleShowDetails(task: DownloadTask) {
@@ -144,8 +137,8 @@
 <main class="main-content">
 	<div class="content-panel">
 		<TaskListHeader
-			title={pageTitle()}
-			taskCount={filteredTasks().length}
+			title={pageTitle}
+			taskCount={filteredTasks.length}
 			hasDownloading={controller.activeNav === 'active' && hasDownloading}
 			hasPaused={controller.activeNav === 'active' && hasPaused}
 			{hasRemovable}
@@ -153,19 +146,19 @@
 			selectedCount={controller.selectedIds.size}
 			onGlobalPause={pauseAll}
 			onGlobalResume={resumeAll}
-			onTrashClick={() => controller.handleTrashClick(filteredTasks())}
+			onTrashClick={() => controller.handleTrashClick(filteredTasks)}
 			onExitSelection={() => controller.exitSelectionMode()}
 		/>
 
 		<TaskList
-			tasks={filteredTasks()}
-			emptyTitle={emptyStateText().title}
-			emptyHint={emptyStateText().hint}
+			tasks={filteredTasks}
+			emptyTitle={emptyStateText.title}
+			emptyHint={emptyStateText.hint}
 			isSelectionMode={controller.isSelectionMode}
 			selectedIds={controller.selectedIds}
 			onSelect={(id) => controller.toggleSelection(id)}
 			onPause={pauseTask}
-			onResume={(id) => controller.handleResumeTask(id, resumeTask)}
+			onResume={(id) => controller.handleResumeTask(id)}
 			onCancel={(task) => controller.handleCancelTask(task)}
 			onOpenFolder={(id) => controller.handleOpenFolder(id)}
 			onShowDetails={handleShowDetails}

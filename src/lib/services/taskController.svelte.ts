@@ -3,9 +3,12 @@ import {
     removeTasks,
     cancelTask,
     cancelTasks,
+    addDownloadTask,
+    resumeTask,
     isActiveTask,
     isCompletedTask,
-    type DownloadTask
+    type DownloadTask,
+    type DownloadConfig
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
 
@@ -159,18 +162,19 @@ export class TaskController {
     }
 
     /**
-     * 接管添加下载逻辑，添加后自动跳转至进行中
+     * 添加下载任务并自动跳转至进行中
      */
-    handleAddTask(config: any, addTaskFn: (config: any) => void) {
-        addTaskFn(config);
+    handleAddTask(config: DownloadConfig) {
+        addDownloadTask(config);
         this.handleNavChange('active');
     }
 
     /**
-     * 接管恢复/重新下载逻辑，操作后自动跳转至进行中
+     * 恢复/重新下载任务并自动跳转至进行中
      */
-    handleResumeTask(id: string, resumeFn: (id: string) => void) {
-        resumeFn(id);
+    handleResumeTask(id: string) {
+        resumeTask(id);
         this.handleNavChange('active');
     }
 }
+

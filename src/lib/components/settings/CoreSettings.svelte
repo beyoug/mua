@@ -4,7 +4,7 @@
     import { appSettings, saveAppSettings } from '$lib/stores/settings';
     import { onMount } from 'svelte';
     import { importCustomBinary, getAria2VersionInfo } from '$lib/api/cmd';
-    import type { Aria2VersionInfo } from '$lib/api/cmd';
+    import type { Aria2VersionInfo } from '$lib/types/download';
     import { open as openDialog } from '@tauri-apps/plugin-dialog';
     import { relaunch } from '@tauri-apps/plugin-process';
 

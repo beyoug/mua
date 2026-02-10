@@ -65,4 +65,13 @@ export interface DownloadStats {
 	completeCount: number;
 }
 
-
+/**
+ * Aria2 版本信息
+ */
+export interface Aria2VersionInfo {
+	version: string;
+	is_custom: boolean;
+	path: string;
+	custom_binary_exists: boolean;
+	custom_binary_version?: string;
+}

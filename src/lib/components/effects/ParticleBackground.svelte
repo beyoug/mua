@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 import { onMount, onDestroy } from 'svelte';
-import { totalDownloadSpeed } from '$lib/stores/downloadSpeed';
+import { downloadStats } from '$lib/stores/downloadStore';
 
 interface Particle {
   x: number;
@@ -50,9 +50,9 @@ function initPool() {
   }
 }
 
-// 订阅下载速度
-const unsubscribeSpeed = totalDownloadSpeed.subscribe((speed) => {
-  currentSpeedMbps = speed / (1024 * 1024);
+// 订阅下载速度（直接从 downloadStats 获取，无需中间 Store）
+const unsubscribeSpeed = downloadStats.subscribe((stats) => {
+  currentSpeedMbps = stats.totalSpeedBytes / (1024 * 1024);
 });
 
 function getEmitRate(): number {

@@ -7,6 +7,7 @@
 	import { fade } from 'svelte/transition';
 	import ProgressBar from './ProgressBar.svelte';
     import DownloadCardMenu from './DownloadCardMenu.svelte';
+    import StatusIndicator from './StatusIndicator.svelte';
 	import type { DownloadState } from '$lib/types/download';
 
 	interface Props {
@@ -170,54 +171,7 @@
 	<div class="card-footer">
 		<!-- 左区域：动态状态信息 -->
 		<div class="footer-status">
-			{#if downloadState === 'active'}
-                {@const sParts = (speed || '0|B/s').split('|')}
-				<span class="status-indicator active">
-					<span class="status-icon">↓</span>
-                    <span class="speed-num">{sParts[0]}</span>
-                    <span class="speed-unit-text">{sParts[1]}</span>
-				</span>
-				{#if remaining}
-					<span class="separator">·</span>
-					<span class="time-remaining">{remaining}</span>
-				{/if}
-			{:else if downloadState === 'paused'}
-				<span class="status-indicator paused">
-					<span class="status-icon">⏸</span>
-					<span class="status-text">已暂停</span>
-				</span>
-			{:else if downloadState === 'complete'}
-				<span class="status-indicator complete">
-					<span class="status-icon">✓</span>
-					<span class="status-text">已完成</span>
-				</span>
-			{:else if downloadState === 'waiting'}
-				<span class="status-indicator waiting">
-					<span class="status-icon">◦</span>
-					<span class="status-text">等待中</span>
-				</span>
-			{:else if downloadState === 'removed'}
-				<span class="status-indicator removed">
-					<span class="status-icon">✕</span>
-					<span class="status-text">已取消</span>
-				</span>
-			{:else if downloadState === 'error'}
-				<span class="status-indicator error">
-					<span class="status-icon">⚠</span>
-					<span class="status-text">下载失败</span>
-				</span>
-                {#if errorMessage}
-                    <span class="separator">·</span>
-                    <span class="error-inline" title={errorMessage}>
-                       {errorMessage}
-                    </span>
-                {/if}
-            {:else if downloadState === 'missing'}
-				<span class="status-indicator missing">
-					<span class="status-icon">⚠</span>
-					<span class="status-text">本地文件不存在</span>
-				</span>
-			{/if}
+		<StatusIndicator state={downloadState} {speed} {remaining} {errorMessage} />
 		</div>
 		
 		<!-- 右区域：文件大小和时间 -->
@@ -264,7 +218,7 @@
 		z-index: 10;
 	}
 
-	.download-card.complete {
+	.download-card.completed {
 		border-color: var(--success-glow);
 	}
 
@@ -299,7 +253,7 @@
 		color: var(--accent-text);
 	}
 
-	.icon-wrapper.complete {
+	.icon-wrapper.completed {
 		background: var(--success-glow);
 		color: var(--success-color);
 	}
@@ -309,7 +263,7 @@
 		color: #f87171;
 	}
 
-	.icon-wrapper.removed {
+	.icon-wrapper.cancelled {
 		background: var(--danger-glow);
 		color: var(--danger-color);
 	}
@@ -388,78 +342,7 @@
         overflow: hidden; /* Essential for child truncation */
 	}
 
-	.status-indicator {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		font-weight: 500;
-	}
 
-	.status-icon {
-		font-size: 12px;
-		line-height: 1;
-	}
-
-	.status-indicator.active {
-		color: var(--accent-text);
-	}
-
-	.status-indicator.paused {
-		color: var(--warning-color, #f59e0b);
-	}
-
-	.status-indicator.complete {
-		color: var(--semantic-success, #10b981);
-	}
-
-	.status-indicator.waiting {
-		color: var(--text-muted);
-	}
-
-	.status-indicator.removed {
-		color: var(--text-muted);
-	}
-
-	.status-indicator.error {
-		color: var(--semantic-danger, #ef4444);
-	}
-
-	.status-indicator.missing {
-		color: #d97706; /* 琥珀色，用于表示本地文件丢失，比错误红更柔和且更专业 */
-		opacity: 0.85;
-	}
-
-	.speed-num {
-		font-weight: 600;
-		display: inline-block;
-		text-align: right;
-		min-width: 3.2em; /* 刚好容纳 0.00 */
-		font-variant-numeric: tabular-nums;
-	}
-
-    .speed-unit-text {
-        font-weight: 600;
-        margin-left: 2px;
-        display: inline-block;
-        color: var(--text-secondary);
-        opacity: 0.9;
-    }
-
-	.separator {
-		color: var(--text-muted);
-		opacity: 0.5;
-		margin: 0 6px;
-		flex-shrink: 0;
-	}
-
-	.time-remaining {
-		justify-content: flex-start;
-        font-variant-numeric: tabular-nums;
-	}
-
-	.status-text {
-		color: inherit;
-	}
 
 	/* 右区域 - 文件信息 */
 	.footer-meta {
@@ -513,15 +396,5 @@
 	}
 
 
-    .error-inline {
-        color: var(--semantic-danger);
-        font-size: 11px;
-        opacity: 0.9;
-        font-family: var(--font-mono);
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        flex: 1; /* Fill remaining space in footer-status */
-        min-width: 0; /* Allow flex item to shrink below content size */
-    }
+
 </style>

@@ -1,5 +1,5 @@
 import { writable } from 'svelte/store';
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
+import { open as openDialog, message } from '@tauri-apps/plugin-dialog';
 import { getAria2ConfigPath, readAria2Config, importAria2Config as importAria2ConfigCmd } from '$lib/api/cmd';
 
 export const aria2Config = writable<string>('');
@@ -32,11 +32,11 @@ export async function importAria2Config() {
 
             await importAria2ConfigCmd(path);
             await loadAria2Config(); // Reload to show preview
-            alert('配置导入成功！请重启应用以生效。');
+            await message('配置导入成功！请重启应用以生效。', { title: '导入成功', kind: 'info' });
         }
     } catch (e) {
         console.error('Failed to import config:', e);
-        alert('导入失败: ' + e);
+        await message('导入失败: ' + e, { title: '导入失败', kind: 'error' });
     } finally {
         isImporting.set(false);
     }

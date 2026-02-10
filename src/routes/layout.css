@@ -87,6 +87,7 @@
   /* 极细边框 */
   --glass-blur: blur(24px);
   /* 更强的模糊 */
+  --glass-saturate: saturate(120%);
   --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
   /* 弹窗专用背景 */
@@ -116,7 +117,9 @@
   --success-color: var(--semantic-success);
 
   /* 字体 */
-  --font-mono: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-base: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  /* 兼容旧变量 */
+  --font-mono: var(--font-base);
 
   /* 默认主题变量 (深空 - Deep Space) */
   --accent-primary: #ffffff;
@@ -206,7 +209,9 @@ html.light {
   --success-color: var(--semantic-success);
 
   /* 字体 (浅色模式使用相同值) */
-  --font-mono: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  --font-base: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  /* 兼容旧变量 */
+  --font-mono: var(--font-base);
 
   /* 默认主题变量 fallback (类似深空) */
   --accent-primary: #ffffff;

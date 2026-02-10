@@ -1,10 +1,12 @@
 <script lang="ts">
 	import { X, Copy, Folder, Info, RefreshCw } from '@lucide/svelte';
 	import { scale } from 'svelte/transition';
+	import { isTerminalTask, isActiveTask, isPausedTask, isCompletedTask, isRemovableTask } from '$lib/utils/downloadStates';
+	import type { DownloadState } from '$lib/types/download';
 
     interface Props {
         show: boolean;
-        downloadState: string;
+        downloadState: DownloadState;
         url?: string;
         onClose: () => void;
         onCopy: () => void;
@@ -60,7 +62,7 @@
         bind:this={menuRef}
         transition:scale={{ duration: 150, start: 0.95 }}
     >
-        {#if ['complete', 'removed', 'error', 'missing'].includes(downloadState)}
+        {#if isTerminalTask(downloadState)}
             <button class="menu-item" onclick={() => { onRedownload?.(); onClose(); }}>
                 <RefreshCw size={14} />
                 <span>重新下载</span>
@@ -70,7 +72,7 @@
             <Copy size={14} />
             <span>复制链接</span>
         </button>
-        {#if ['active', 'paused', 'complete'].includes(downloadState)}
+        {#if isActiveTask(downloadState) || isCompletedTask(downloadState)}
             <button class="menu-item" onclick={onOpenFolder}>
                 <Folder size={14} />
                 <span>打开文件夹</span>
@@ -83,7 +85,7 @@
         <div class="menu-divider"></div>
         <button class="menu-item danger" onclick={onCancelOrDelete}>
             <X size={14} />
-            <span>{['complete', 'removed', 'error'].includes(downloadState) ? '删除任务' : '取消下载'}</span>
+            <span>{isRemovableTask(downloadState) ? '删除任务' : '取消下载'}</span>
         </button>
     </div>
 {/if}

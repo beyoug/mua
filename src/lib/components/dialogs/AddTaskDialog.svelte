@@ -3,20 +3,16 @@
   添加下载任务对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, Trash2, ChevronDown } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
 	import { fade } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { isValidDownloadUrl, validateUrl, clickOutside } from '$lib';
+	import { isValidDownloadUrl, validateUrl } from '$lib';
 	import { appSettings, saveAppSettings } from '$lib/stores/settings';
 	import BaseModal from '../common/BaseModal.svelte';
+	import UaSelector from './UaSelector.svelte';
 
-	// 基础预设
-	const BUILTIN_UAS = [
-		{ name: 'Chrome', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-		{ name: 'Firefox', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0' },
-		{ name: 'Safari', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' }
-	];
+
 
 	interface Props {
 		open: boolean;
@@ -35,7 +31,6 @@
 	let showAdvanced = $state(false);
     let advancedSnapshot = $state<any>(null);
 	let selectedUaValue = $state('');
-    let isUaDropdownOpen = $state(false);
 	let customUserAgent = $state('');
 	let referer = $state('');
 	let headers = $state('');
@@ -47,51 +42,13 @@
 	let validationError = $state<string>('');
 	let validationTimer: ReturnType<typeof setTimeout> | null = null;
 
-    // 组合展示用的 UA 列表
-    const displayUas = $derived([
-        { id: 'default', name: '默认', value: '', builtin: true },
-        ...($appSettings.uaHistory || []).map((val, index) => ({ 
-            id: `history-${index}`, 
-            name: truncateUa(val), 
-            value: val, 
-            builtin: false 
-        })),
-        ...BUILTIN_UAS.filter(b => !($appSettings.uaHistory || []).includes(b.value)).map((b, index) => ({ 
-            id: `builtin-${index}`, 
-            name: b.name, 
-            value: b.value, 
-            builtin: true 
-        }))
-    ]);
 
-    const activeUaName = $derived.by(() => {
-        if (selectedUaValue === 'custom') return '自定义';
-        if (selectedUaValue === '') return '默认';
-        const found = displayUas.find(u => u.value === selectedUaValue);
-        return found ? found.name : truncateUa(selectedUaValue);
-    });
-
-    function truncateUa(ua: string) {
-        if (ua.length > 40) return ua.substring(0, 37) + '...';
-        return ua;
-    }
 
 	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
-
-    async function removeUaHistoryItem(uaValue: string) {
-        const history = $appSettings.uaHistory || [];
-        const newHistory = history.filter(v => v !== uaValue);
-        await saveAppSettings({ ...$appSettings, uaHistory: newHistory });
-        if (selectedUaValue === uaValue) selectedUaValue = '';
-    }
-
-    function handleUaSelect(value: string) {
-        selectedUaValue = value;
-        isUaDropdownOpen = false;
-    }
-
 	const canSubmit = $derived(isValidDownloadUrl(urls.trim()));
     const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
+
+	let uaSelectorRef = $state<UaSelector>();
 	let isSubmitting = $state(false);
 
 	async function handleSubmit() {
@@ -122,7 +79,7 @@
 				maxDownloadLimit: limit
 			});
 
-            if (finalUa && !BUILTIN_UAS.some(b => b.value === finalUa)) {
+            if (finalUa && uaSelectorRef && !uaSelectorRef.isBuiltinUa(finalUa)) {
                 let history = [...($appSettings.uaHistory || [])];
                 history = [finalUa, ...history.filter(ua => ua !== finalUa)];
                 if (history.length > 10) history = history.slice(0, 10);
@@ -144,9 +101,8 @@
         savePath = $appSettings.defaultSavePath || '~/Downloads';
 		filename = '';
 		selectedUaValue = '';
-        isUaDropdownOpen = false;
-        isSubmitting = false;
 		customUserAgent = '';
+        isSubmitting = false;
 		referer = '';
 		headers = '';
 		proxy = '';
@@ -316,51 +272,13 @@
                             <Globe size={14} />
                             <span>User Agent</span>
                         </label>
-                        <div class="ua-manager" use:clickOutside={() => isUaDropdownOpen = false}>
-                            <button 
-                                class="ua-dropdown-trigger" 
-                                class:open={isUaDropdownOpen}
-                                onclick={() => isUaDropdownOpen = !isUaDropdownOpen}
-                            >
-                                <span class="trigger-text">{activeUaName}</span>
-                                <ChevronRight size={14} class="chevron" />
-                            </button>
-
-                            {#if isUaDropdownOpen}
-                                <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
-                                    <div class="ua-list-container">
-                                        {#each displayUas as ua}
-                                            <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
-                                                <button class="ua-select-btn" onclick={() => handleUaSelect(ua.value)}>
-                                                    <span class="ua-name">{ua.name}</span>
-                                                </button>
-                                                {#if !ua.builtin}
-                                                    <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
-                                                        <Trash2 size={12} />
-                                                    </button>
-                                                {/if}
-                                            </div>
-                                        {/each}
-                                        <div class="ua-option" class:active={selectedUaValue === 'custom'}>
-                                            <button class="ua-select-btn" onclick={() => handleUaSelect('custom')}>
-                                                <span class="ua-name">自定义...</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            {/if}
-
-                            {#if selectedUaValue === 'custom'}
-                                <input
-                                    type="text"
-                                    class="ua-custom-input"
-                                    class:error={isCustomUaInvalid}
-                                    placeholder="输入自定义 User Agent"
-                                    bind:value={customUserAgent}
-                                    transition:fade={{ duration: 150 }}
-                                />
-                            {/if}
-                        </div>
+                        <UaSelector
+                            bind:this={uaSelectorRef}
+                            selectedValue={selectedUaValue}
+                            customValue={customUserAgent}
+                            onValueChange={(v) => selectedUaValue = v}
+                            onCustomChange={(v) => customUserAgent = v}
+                        />
                     </div>
 
                     <!-- Referer -->
@@ -498,7 +416,7 @@
     }
 
     .crumb-parent { color: var(--text-muted); }
-    .crumb-sep { color: var(--text-tertiary); opacity: 0.5; }
+    :global(.crumb-sep) { color: var(--text-tertiary); opacity: 0.5; }
     .crumb-current { color: var(--text-primary); font-weight: 500; }
 
     .modal-content-stack {
@@ -647,95 +565,7 @@
         line-height: 1.5;
     }
 
-    /* UA Manager */
-    .ua-manager { display: flex; flex-direction: column; gap: 8px; position: relative; }
-    .ua-dropdown-trigger {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        color: var(--text-primary);
-        cursor: pointer;
-    }
-    .ua-dropdown-trigger:hover { border-color: var(--accent-primary); }
-    .ua-dropdown-trigger .chevron { transition: transform 0.2s; }
-    .ua-dropdown-trigger.open .chevron { transform: rotate(90deg); }
 
-    .ua-dropdown-content {
-        position: absolute;
-        top: 100%;
-        left: 0;
-        right: 0;
-        margin-top: 4px;
-        /* 使用主题适配的覆盖层背景，保证在不同主题下都能清晰显示 */
-        background: var(--overlay-bg, var(--dialog-bg));
-        backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
-        border-radius: 12px;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
-        z-index: 1000;
-        overflow: hidden;
-    }
-
-    .ua-list-container { max-height: 240px; overflow-y: auto; }
-    .ua-option {
-        display: flex;
-        align-items: center;
-        padding: 2px 8px;
-    }
-    .ua-option:hover { background: var(--surface-hover); }
-    .ua-option.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 5%, transparent); }
-
-    .ua-select-btn {
-        flex: 1;
-        text-align: left;
-        padding: 8px;
-        background: transparent;
-        border: none;
-        color: inherit;
-        font-size: 13px;
-        cursor: pointer;
-    }
-
-    .ua-delete-btn {
-        padding: 6px;
-        background: transparent;
-        border: none;
-        color: var(--text-tertiary);
-        cursor: pointer;
-        border-radius: 4px;
-    }
-    .ua-delete-btn:hover { color: var(--danger-color); background: rgba(239, 68, 68, 0.1); }
-
-    .ua-custom-input {
-        margin-top: 8px;
-        width: 100%;
-        padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        color: var(--text-primary);
-        font-size: 13px;
-        outline: none;
-        transition: all 0.2s;
-    }
-
-    .ua-custom-input:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
-    }
-
-    .ua-custom-input.error {
-        border-color: var(--danger-color);
-        background: color-mix(in srgb, var(--danger-color) 4%, var(--input-bg));
-    }
-
-    .ua-custom-input.error:focus {
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger-color) 15%, transparent);
-    }
 
     .input-group {
         display: flex;

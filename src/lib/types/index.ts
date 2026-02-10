@@ -3,4 +3,3 @@
  */
 
 export * from './download';
-export * from './aria2';
