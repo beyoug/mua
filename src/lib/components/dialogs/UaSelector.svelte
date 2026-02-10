@@ -168,9 +168,11 @@
         display: flex;
         align-items: center;
         padding: 2px 8px;
+        transition: background 0.15s ease;
     }
-    .ua-option:hover { background: var(--surface-hover); }
-    .ua-option.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 5%, transparent); }
+    /* hover 使用 accent 色调提供更明显的视觉反馈 */
+    .ua-option:hover { background: color-mix(in srgb, var(--accent-primary) 8%, transparent); }
+    .ua-option.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 12%, transparent); }
 
     .ua-select-btn {
         flex: 1;
