@@ -7,7 +7,7 @@
 
 	import { getCurrentWindow } from '@tauri-apps/api/window';
 
-	type NavItem = 'active' | 'completed' | 'history';
+	type NavItem = 'active' | 'complete' | 'history';
 
 	interface Props {
 		activeNav?: NavItem;
@@ -17,7 +17,7 @@
 		stats?: {
 			totalSpeed: string;
 			activeCount: number;
-			completedCount: number;
+			completeCount: number;
 		};
 	}
 
@@ -26,7 +26,7 @@
 		onNavChange,
 		onSettingsClick,
 		onAddClick,
-		stats = { totalSpeed: '0 B/s', activeCount: 0, completedCount: 0 }
+		stats = { totalSpeed: '0 B/s', activeCount: 0, completeCount: 0 }
 	}: Props = $props();
 
     function startDrag() {
@@ -36,7 +36,7 @@
 
 	const navItems = [
 		{ id: 'active' as NavItem, icon: Download, label: '进行中' },
-		{ id: 'completed' as NavItem, icon: CheckCircle, label: '已完成' },
+		{ id: 'complete' as NavItem, icon: CheckCircle, label: '已完成' },
 		{ id: 'history' as NavItem, icon: History, label: '历史记录' }
 	];
 </script>
@@ -88,7 +88,7 @@
 		</div>
 		<div class="stat-row">
 			<span class="stat-label">已完成</span>
-			<span class="stat-count">{stats.completedCount}</span>
+			<span class="stat-count">{stats.completeCount}</span>
 		</div>
 	</div>
 

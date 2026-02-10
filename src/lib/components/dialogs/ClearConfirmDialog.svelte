@@ -1,11 +1,10 @@
 <!--
   ClearConfirmDialog.svelte
-  清空/删除确认对话框 - 支持选择是否同时删除本地文件
+  清空/删除确认对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
 	import { Trash2 } from '@lucide/svelte';
-	import { fade, scale } from 'svelte/transition';
-	import { createScrollLockEffect } from '$lib';
+	import BaseModal from '../common/BaseModal.svelte';
 
 	interface Props {
 		open: boolean;
@@ -40,175 +39,138 @@
 			deleteFile = false;
 		}
 	});
-
-	// 使用统一的滚动锁定工具
-	$effect(() => {
-		return createScrollLockEffect(open);
-	});
 </script>
 
-{#if open}
-	<div 
-		class="dialog-overlay" 
-		in:fade={{ duration: 150 }}
-		out:fade={{ duration: 100 }}
-		onclick={onClose}
-		role="button"
-		tabindex="0"
-		onkeydown={(e) => {
-			if (e.key === 'Enter' || e.key === ' ') onClose();
-		}}
-	>
-		<div 
-			class="dialog" 
-			role="dialog"
-			aria-modal="true"
-			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
-			out:fade={{ duration: 80 }}
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
-			tabindex="-1"
-		>
-			<div class="dialog-header">
-				<div class="icon-wrapper">
-					<Trash2 size={24} color="#ef4444" />
-				</div>
-				<h3>{title}</h3>
-			</div>
-			
-			<div class="dialog-content">
-				<p>{description}</p>
-				
-				{#if showDeleteFileOption}
-					<label class="checkbox-label">
-						<input type="checkbox" bind:checked={deleteFile} />
-						<span>同时删除本地文件</span>
-					</label>
-				{/if}
-			</div>
+<BaseModal 
+    {open} 
+    onClose={onClose} 
+    size="sm"
+    showClose={true}
+>
+    {#snippet header()}
+        <div class="confirm-header">
+            <div class="icon-wrapper">
+                <Trash2 size={20} color="#ef4444" />
+            </div>
+            <h3 class="modal-title">{title}</h3>
+        </div>
+    {/snippet}
 
-			<div class="dialog-footer">
-				<button class="btn cancel" onclick={onClose}>取消</button>
-				<button class="btn confirm" onclick={handleConfirm}>
-					{confirmText}
-				</button>
-			</div>
-		</div>
-	</div>
-{/if}
+    <div class="confirm-body">
+        <p class="description">{description}</p>
+        
+        {#if showDeleteFileOption}
+            <label class="checkbox-label">
+                <input type="checkbox" bind:checked={deleteFile} />
+                <span class="checkbox-text">同时删除本地文件</span>
+            </label>
+        {/if}
+    </div>
+
+    {#snippet footer()}
+        <button class="btn-secondary" onclick={onClose}>取消</button>
+        <button class="btn-danger" onclick={handleConfirm}>
+            {confirmText}
+        </button>
+    {/snippet}
+</BaseModal>
 
 <style>
-	.dialog-overlay {
-		position: fixed;
-		inset: 0;
-		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.2));
-		backdrop-filter: blur(4px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 1000;
-	}
+    .confirm-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+    }
 
-	.dialog {
-		width: 400px;
-		background: var(--dialog-bg);
-		backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
-		border-radius: 16px;
-		box-shadow: var(--glass-shadow);
-		padding: 24px;
-	}
+    .icon-wrapper {
+        width: 36px;
+        height: 36px;
+        border-radius: 10px;
+        background: rgba(239, 68, 68, 0.1);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+    }
 
-	.dialog-header {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 16px;
-		margin-bottom: 8px;
-	}
+    .modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
 
-	.icon-wrapper {
-		width: 48px;
-		height: 48px;
-		border-radius: 12px;
-		background: rgba(239, 68, 68, 0.1);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-	}
+    .confirm-body {
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        text-align: left;
+    }
 
-	h3 {
-		margin: 0;
-		font-size: 18px;
-		font-weight: 600;
-		color: var(--text-primary);
-	}
+    .description {
+        color: var(--text-secondary);
+        font-size: 14px;
+        margin: 0;
+        line-height: 1.6;
+    }
 
-	.dialog-content {
-		margin-bottom: 24px;
-		text-align: center;
-	}
+    .checkbox-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 14px;
+        color: var(--text-primary);
+        cursor: pointer;
+        padding: 10px 14px;
+        background: var(--surface-hover, rgba(255, 255, 255, 0.03));
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+        border-radius: 10px;
+        transition: all 0.2s;
+        width: fit-content;
+    }
 
-	p {
-		color: var(--text-secondary);
-		font-size: 14px;
-		margin: 0 0 16px;
-		line-height: 1.5;
-	}
+    .checkbox-label:hover {
+        background: var(--surface-active, rgba(255, 255, 255, 0.06));
+        border-color: var(--border-normal);
+    }
 
-	.checkbox-label {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-		font-size: 14px;
-		color: var(--text-primary);
-		cursor: pointer;
-		user-select: none;
-		padding: 8px 12px;
-		background: var(--bg-hover);
-		border-radius: 8px;
-		transition: background 0.2s;
-	}
+    .checkbox-text {
+        font-weight: 400;
+    }
 
-	.checkbox-label:hover {
-		background: var(--border-light);
-	}
+    .btn-secondary {
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        background: transparent;
+        color: var(--text-primary);
+    }
 
-	.dialog-footer {
-		display: flex;
-		gap: 12px;
-		justify-content: center;
-	}
+    .btn-secondary:hover {
+        background: var(--surface-hover);
+    }
 
-	.btn {
-		padding: 8px 24px;
-		border-radius: 8px;
-		font-size: 14px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.2s;
-		border: none;
-	}
+    .btn-danger {
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: none;
+        background: #ef4444;
+        color: white;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+    }
 
-	.btn.cancel {
-		background: transparent;
-		border: 1px solid var(--border-color);
-		color: var(--text-primary);
-	}
-
-	.btn.cancel:hover {
-		background: var(--bg-hover);
-	}
-
-	.btn.confirm {
-		background: var(--danger-color);
-		color: white;
-		box-shadow: 0 2px 8px rgba(239, 68, 68, 0.3);
-	}
-
-	.btn.confirm:hover {
-		background: #dc2626;
-	}
-
+    .btn-danger:hover {
+        background: #dc2626;
+        transform: translateY(-1px);
+        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+    }
 </style>

@@ -1,3 +1,5 @@
+use crate::core::types::TaskState;
+use chrono::Local;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
@@ -14,10 +16,12 @@ pub struct PersistedTask {
     pub url: String,
     pub save_path: String,
     pub added_at: String,
-    pub state: String, // 'active' | 'waiting' | 'paused' | 'completed' | 'error' | 'removed' | 'cancelled'
+    pub state: TaskState,
     pub total_length: String,
     pub completed_length: String,
     pub download_speed: String,
+    #[serde(default)]
+    pub completed_at: Option<String>,
     // Add other fields we want to persist if Aria2 loses them
     #[serde(default)]
     pub error_message: String,
@@ -141,10 +145,22 @@ impl TaskStore {
         None
     }
 
-    pub fn update_task_state(&self, gid: &str, state: &str) {
+    pub fn update_task_state(&self, gid: &str, state: TaskState) {
         if let Ok(mut tasks) = self.tasks.lock() {
             if let Some(t) = tasks.get_mut(gid) {
-                t.state = state.to_string();
+                if t.state != state {
+                    let old_state = t.state;
+                    t.state = state;
+
+                    // 同步记录时间戳逻辑
+                    if t.state.is_terminal() || t.state == TaskState::Paused {
+                        if t.completed_at.is_none() || old_state != TaskState::Complete {
+                            t.completed_at = Some(Local::now().to_rfc3339());
+                        }
+                    } else if t.state == TaskState::Active || t.state == TaskState::Waiting {
+                        t.completed_at = None;
+                    }
+                }
             }
         }
         self.save();
@@ -177,14 +193,14 @@ impl TaskStore {
     pub fn update_from_aria2(
         &self,
         gid: &str,
-        state: &str,
+        state: TaskState,
         completed: &str,
         speed: &str,
         total: &str,
     ) {
         if let Ok(mut tasks) = self.tasks.lock() {
             if let Some(t) = tasks.get_mut(gid) {
-                t.state = state.to_string();
+                t.state = state;
                 t.completed_length = completed.to_string();
                 t.download_speed = speed.to_string();
                 t.total_length = total.to_string();
@@ -214,9 +230,11 @@ impl TaskStore {
 
     pub fn update_all_active_to_paused(&self) {
         if let Ok(mut tasks) = self.tasks.lock() {
+            let now = Local::now().to_rfc3339();
             for task in tasks.values_mut() {
-                if task.state == "downloading" || task.state == "waiting" {
-                    task.state = "paused".to_string();
+                if task.state == TaskState::Active || task.state == TaskState::Waiting {
+                    task.state = TaskState::Paused;
+                    task.completed_at = Some(now.clone());
                 }
             }
         }
@@ -226,8 +244,9 @@ impl TaskStore {
     pub fn update_all_paused_to_waiting(&self) {
         if let Ok(mut tasks) = self.tasks.lock() {
             for task in tasks.values_mut() {
-                if task.state == "paused" {
-                    task.state = "waiting".to_string();
+                if task.state == TaskState::Paused {
+                    task.state = TaskState::Waiting;
+                    task.completed_at = None;
                 }
             }
         }
@@ -235,11 +254,24 @@ impl TaskStore {
     }
 
     /// 批量更新任务状态（不触发 save，调用方需显式调用 save()）
-    pub fn update_batch_state(&self, gids: &[String], state: &str) {
+    pub fn update_batch_state(&self, gids: &[String], state: TaskState) {
         if let Ok(mut tasks) = self.tasks.lock() {
+            let now = Local::now().to_rfc3339();
             for gid in gids {
                 if let Some(t) = tasks.get_mut(gid) {
-                    t.state = state.to_string();
+                    if t.state != state {
+                        let old_state = t.state;
+                        t.state = state;
+
+                        // 同步记录时间戳逻辑
+                        if t.state.is_terminal() || t.state == TaskState::Paused {
+                            if t.completed_at.is_none() || old_state != TaskState::Complete {
+                                t.completed_at = Some(now.clone());
+                            }
+                        } else if t.state == TaskState::Active || t.state == TaskState::Waiting {
+                            t.completed_at = None;
+                        }
+                    }
                 }
             }
         }

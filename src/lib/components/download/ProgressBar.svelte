@@ -15,7 +15,7 @@
 
 	let {
 		progress,
-		state = 'downloading',
+		state = 'active',
 		showPercent = true
 	}: Props = $props();
 
@@ -26,13 +26,13 @@
 	<div class="progress-track">
 		<div 
 			class="progress-fill"
-			class:downloading={state === 'downloading'}
+			class:downloading={state === 'active' || state === 'complete'}
 			class:paused={state === 'paused'}
 			class:error={state === 'error'}
 			style="width: {clampedProgress}%"
 		>
-			{#if state === 'downloading'}
-				<div class="stripes"></div>
+			{#if state === 'active' || state === 'complete'}
+				<div class="stripes" class:moving={state === 'active'}></div>
 				<div class="glow"></div>
 			{/if}
 		</div>
@@ -88,6 +88,9 @@
 			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 8px,
 			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 16px
 		);
+	}
+
+	.stripes.moving {
 		animation: stripe-move 0.8s linear infinite;
 	}
 
@@ -117,5 +120,6 @@
 		min-width: 32px;
 		text-align: right;
 		opacity: 0.8;
+		font-variant-numeric: tabular-nums;
 	}
 </style>

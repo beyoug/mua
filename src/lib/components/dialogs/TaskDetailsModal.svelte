@@ -1,11 +1,12 @@
 <!--
   TaskDetailsModal.svelte
-  任务详情弹窗 - 显示任务详细信息
+  任务详情弹窗 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { X, File, Link, CheckCircle, AlertCircle, LayoutDashboard, Shield, Settings, Copy, Info, Check } from '@lucide/svelte';
-	import { fade, scale } from 'svelte/transition';
+	import { X, File, Folder, Link, CheckCircle, AlertCircle, LayoutDashboard, Shield, Settings, Copy, Info, Check, Clock, Calendar } from '@lucide/svelte';
+	import { fade } from 'svelte/transition';
 	import type { DownloadState } from '$lib/types/download';
+    import BaseModal from '../common/BaseModal.svelte';
 
 	interface Props {
 		open?: boolean;
@@ -18,29 +19,77 @@
 		referer?: string;
 		proxy?: string;
 		headers?: string[];
+		addedAt?: string;
+		completedAt?: string | null;
+		onOpenFolder?: () => void;
 		onClose: () => void;
 	}
 
-	let { open = false, filename, url, state: downloadState, savePath = '', errorMessage = '', userAgent = '', referer = '', proxy = '', headers = [], onClose }: Props = $props();
+	let { 
+        open = false, 
+        filename, 
+        url, 
+        state: downloadState, 
+        savePath = '', 
+        errorMessage = '', 
+        userAgent = '', 
+        referer = '', 
+        proxy = '', 
+        headers = [], 
+        addedAt = '', 
+        completedAt = null, 
+        onOpenFolder,
+        onClose 
+    }: Props = $props();
 
     let activeTab = $state<'basic' | 'advanced'>('basic');
     let copiedField = $state<string | null>(null);
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			onClose();
-		}
-	}
+    // 提取文件扩展名
+    // 提取文件扩展名
+    const fileExtension = $derived(() => {
+        if (!filename) return '未知';
+        const lastDotIndex = filename.lastIndexOf('.');
+        if (lastDotIndex === -1 || lastDotIndex === 0 || lastDotIndex === filename.length - 1) return '未知';
+        return filename.substring(lastDotIndex + 1).toUpperCase();
+    });
 
 	function getStateLabel(s: DownloadState): string {
 		switch (s) {
-			case 'downloading': return '下载中';
+			case 'active': return '下载中';
 			case 'paused': return '已暂停';
-			case 'completed': return '已完成';
+			case 'complete': return '已完成';
 			case 'error': return '下载失败';
 			case 'waiting': return '等待中';
-			case 'cancelled': return '已取消';
+			case 'removed': return '已取消';
 			default: return s;
+		}
+	}
+
+	function formatDateTime(isoString: string): string {
+		if (!isoString) return '-';
+		try {
+			const date = new Date(isoString);
+			return date.toLocaleString('zh-CN', {
+				year: 'numeric',
+				month: '2-digit',
+				day: '2-digit',
+				hour: '2-digit',
+				minute: '2-digit',
+				second: '2-digit',
+				hour12: false
+			}).replace(/\//g, '-');
+		} catch (e) {
+			return isoString;
+		}
+	}
+
+	function getStopLabel(s: DownloadState): string {
+		switch (s) {
+			case 'complete': return '完成时间';
+			case 'removed': return '取消时间';
+			case 'error': return '失败时间';
+			default: return '结束时间';
 		}
 	}
 
@@ -57,122 +106,161 @@
 	}
 </script>
 
-{#if open}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div 
-		class="task-details-modal-overlay" 
-		in:fade={{ duration: 150 }} 
-		out:fade={{ duration: 100 }}
-		onkeydown={handleKeydown}
-		onclick={onClose}
-	>
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div 
-			class="task-details-modal" 
-			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
-			out:fade={{ duration: 80 }}
-			onclick={(e) => e.stopPropagation()}
-		>
-			<header class="modal-header">
-				<h3>任务详情</h3>
-				<button class="close-btn" onclick={onClose} aria-label="关闭">
-					<X size={18} />
-				</button>
-			</header>
-
-            <div class="modal-tabs">
-                <button 
-                    class="tab-btn" 
-                    class:active={activeTab === 'basic'} 
-                    onclick={() => activeTab = 'basic'}
-                >
-                    基本信息
-                </button>
-                <button 
-                    class="tab-btn" 
-                    class:active={activeTab === 'advanced'} 
-                    onclick={() => activeTab = 'advanced'}
-                >
-                    高级设置
-                    {#if userAgent || referer || proxy || (headers && headers.length > 0)}
-                        <span class="dot"></span>
-                    {/if}
-                </button>
-                <div class="active-indicator" style="transform: translateX({activeTab === 'basic' ? '0' : '100%'})"></div>
+<BaseModal 
+    {open} 
+    onClose={onClose} 
+    size="md" 
+    title="任务详情"
+    minHeight="400px"
+>
+    {#snippet header()}
+        <div class="details-header">
+            <h3 class="modal-title">任务详情</h3>
+            <div class="tab-sc-container">
+                <div class="modal-tabs">
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'basic'} 
+                        onclick={() => activeTab = 'basic'}
+                    >
+                        <Info size={14} />
+                        <span>基本信息</span>
+                    </button>
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'advanced'} 
+                        onclick={() => activeTab = 'advanced'}
+                    >
+                        <Settings size={14} />
+                        <span>高级设置</span>
+                        {#if userAgent || referer || proxy || (headers && headers.length > 0)}
+                            <span class="dot"></span>
+                        {/if}
+                    </button>
+                    <div class="active-indicator" style="transform: translateX({activeTab === 'basic' ? '0' : '100%'})"></div>
+                </div>
             </div>
+        </div>
+    {/snippet}
 
-			<div class="modal-body">
-                {#if activeTab === 'basic'}
-                    <div class="tab-content" in:fade={{ duration: 150 }}>
-                        <div class="detail-row">
-                            <div class="detail-label">
-                                <File size={14} />
-                                <span>文件名</span>
-                            </div>
-                            <div class="detail-value">
-                                <div class="detail-value-box">
+    <div class="details-body">
+        {#if activeTab === 'basic'}
+            <div class="tab-content" in:fade={{ duration: 150 }}>
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <File size={14} />
+                        <span>文件信息</span>
+                    </div>
+                    <div class="detail-value">
+                        <div class="detail-value-box identity-box">
+                            <div class="identity-main">
+                                <div class="filename-row">
+                                    <span class="extension-badge" class:unknown={fileExtension() === '未知'}>{fileExtension()}</span>
                                     <span class="value-text filename" title={filename}>{filename}</span>
                                 </div>
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <div class="detail-label">
-                                <Link size={14} />
-                                <span>下载链接</span>
-                            </div>
-                            <div class="detail-value">
-                                <div class="detail-value-box">
-                                    <span class="value-text mono" title={url}>{url}</span>
-                                    <button class="item-copy-btn" onclick={() => copyToClipboard(url, 'url')} title="复制链接">
-                                        {#if copiedField === 'url'}
-                                            <Check size={12} class="success" />
-                                        {:else}
-                                            <Copy size={12} />
+                                {#if savePath}
+                                    <div class="identity-sub">
+                                        <Folder size={12} class="sub-icon" />
+                                        <span class="value-text path-text" title={savePath}>{savePath}</span>
+                                        {#if ['active', 'paused', 'complete'].includes(downloadState)}
+                                            <div class="sub-actions">
+                                                <button class="item-copy-btn" onclick={onOpenFolder} title="在访达中打开">
+                                                    <Folder size={12} />
+                                                </button>
+                                            </div>
                                         {/if}
-                                    </button>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="detail-row">
-                            <div class="detail-label">
-                                <CheckCircle size={14} />
-                                <span>当前状态</span>
-                            </div>
-                            <div class="detail-value">
-                                <div class="detail-value-box" class:error={downloadState === 'error'}>
-                                    <div class="status-pill status-{downloadState}">
-                                        {#if downloadState === 'downloading'}
-                                            <div class="status-dot pulsing"></div>
-                                        {:else if downloadState === 'completed'}
-                                            <Check size={10} />
-                                        {:else if downloadState === 'error'}
-                                            <AlertCircle size={10} />
-                                        {:else if downloadState === 'paused'}
-                                            <Info size={10} />
-                                        {/if}
-                                        <span>{getStateLabel(downloadState)}</span>
                                     </div>
-                                    {#if downloadState === 'error' && errorMessage}
-                                        <div class="status-error-divider"></div>
-                                        <span class="value-text error-msg" title={errorMessage}>{errorMessage}</span>
-                                    {/if}
+                                {/if}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <Link size={14} />
+                        <span>下载链接</span>
+                    </div>
+                    <div class="detail-value">
+                        <div class="detail-value-box">
+                            <span class="value-text mono" title={url}>{url}</span>
+                            <button class="item-copy-btn" onclick={() => copyToClipboard(url, 'url')} title="复制链接">
+                                {#if copiedField === 'url'}
+                                    <Check size={12} class="success" />
+                                {:else}
+                                    <Copy size={12} />
+                                {/if}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="detail-row">
+                    <div class="detail-label">
+                        <Calendar size={14} />
+                        <span>任务状态与记录</span>
+                    </div>
+                    <div class="timeline-narrative">
+                        <div class="detail-value-box narrative-row" class:error={downloadState === 'error'}>
+                            <div class="timeline-segment">
+                                <div class="status-pill status-start">
+                                    <div class="status-dot"></div>
+                                    <span>开始</span>
                                 </div>
+                                <span class="timeline-text">于</span>
+                                <span class="value-text mono">{formatDateTime(addedAt)}</span>
+                            </div>
+
+                            <div class="timeline-segment">
+                                <div class="status-pill status-{downloadState}">
+                                    {#if downloadState === 'active'}
+                                        <div class="status-dot pulsing"></div>
+                                    {:else if downloadState === 'complete'}
+                                        <Check size={10} />
+                                    {:else if downloadState === 'error'}
+                                        <AlertCircle size={10} />
+                                    {:else if downloadState === 'paused'}
+                                        <Info size={10} />
+                                    {/if}
+                                    <span>{getStateLabel(downloadState)}</span>
+                                </div>
+                                {#if completedAt}
+                                    <span class="timeline-text">于</span>
+                                    <span class="value-text mono">{formatDateTime(completedAt)}</span>
+                                {/if}
                             </div>
                         </div>
 
-                        {#if savePath}
+                        {#if downloadState === 'error' && errorMessage}
+                            <div class="detail-value-box error-reason-box">
+                                <AlertCircle size={14} class="error-icon" />
+                                <span class="value-text error-msg" title={errorMessage}>{errorMessage}</span>
+                            </div>
+                        {/if}
+                    </div>
+                </div>
+
+            </div>
+        {:else}
+            <div class="tab-content" in:fade={{ duration: 150 }}>
+                {#if !userAgent && !referer && !proxy && (!headers || headers.length === 0)}
+                    <div class="empty-advanced">
+                        <Info size={32} />
+                        <p>未配置任何高级设置</p>
+                    </div>
+                {:else}
+                    <div class="advanced-groups">
+                        {#if userAgent}
                             <div class="detail-row">
                                 <div class="detail-label">
-                                    <File size={14} />
-                                    <span>保存路径</span>
+                                    <LayoutDashboard size={14} />
+                                    <span>User Agent</span>
                                 </div>
                                 <div class="detail-value">
                                     <div class="detail-value-box">
-                                        <span class="value-text mono" title={savePath}>{savePath}</span>
-                                        <button class="item-copy-btn" onclick={() => copyToClipboard(savePath, 'path')} title="复制路径">
-                                            {#if copiedField === 'path'}
+                                        <span class="value-text mono multi-line" title={userAgent}>{userAgent}</span>
+                                        <button class="item-copy-btn" onclick={() => copyToClipboard(userAgent, 'ua')} title="复制 UA">
+                                            {#if copiedField === 'ua'}
                                                 <Check size={12} class="success" />
                                             {:else}
                                                 <Copy size={12} />
@@ -182,255 +270,211 @@
                                 </div>
                             </div>
                         {/if}
-                    </div>
-                {:else}
-                    <div class="tab-content" in:fade={{ duration: 150 }}>
-                        {#if !userAgent && !referer && !proxy && (!headers || headers.length === 0)}
-                            <div class="empty-advanced">
-                                <Info size={32} />
-                                <p>未配置任何高级设置</p>
+
+                        {#if referer}
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    <Link size={14} />
+                                    <span>Referer</span>
+                                </div>
+                                <div class="detail-value">
+                                    <div class="detail-value-box">
+                                        <span class="value-text mono" title={referer}>{referer}</span>
+                                        <button class="item-copy-btn" onclick={() => copyToClipboard(referer, 'ref')} title="复制 Referer">
+                                            {#if copiedField === 'ref'}
+                                                <Check size={12} class="success" />
+                                            {:else}
+                                                <Copy size={12} />
+                                            {/if}
+                                        </button>
+                                    </div>
+                                </div>
                             </div>
-                        {:else}
-                            <div class="advanced-groups">
-                                {#if userAgent}
-                                    <div class="detail-row">
-                                        <div class="detail-label">
-                                            <LayoutDashboard size={14} />
-                                            <span>User Agent</span>
-                                        </div>
-                                        <div class="detail-value">
-                                            <div class="detail-value-box">
-                                                <span class="value-text mono multi-line" title={userAgent}>{userAgent}</span>
-                                                <button class="item-copy-btn" onclick={() => copyToClipboard(userAgent, 'ua')} title="复制 UA">
-                                                    {#if copiedField === 'ua'}
-                                                        <Check size={12} class="success" />
-                                                    {:else}
-                                                        <Copy size={12} />
-                                                    {/if}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {/if}
+                        {/if}
 
-                                {#if referer}
-                                    <div class="detail-row">
-                                        <div class="detail-label">
-                                            <Link size={14} />
-                                            <span>Referer</span>
-                                        </div>
-                                        <div class="detail-value">
-                                            <div class="detail-value-box">
-                                                <span class="value-text mono" title={referer}>{referer}</span>
-                                                <button class="item-copy-btn" onclick={() => copyToClipboard(referer, 'ref')} title="复制 Referer">
-                                                    {#if copiedField === 'ref'}
-                                                        <Check size={12} class="success" />
-                                                    {:else}
-                                                        <Copy size={12} />
-                                                    {/if}
-                                                </button>
-                                            </div>
-                                        </div>
+                        {#if proxy}
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    <Shield size={14} />
+                                    <span>代理服务器</span>
+                                </div>
+                                <div class="detail-value">
+                                    <div class="detail-value-box">
+                                        <span class="value-text mono" title={proxy}>{proxy}</span>
+                                        <button class="item-copy-btn" onclick={() => copyToClipboard(proxy, 'proxy')} title="复制代理">
+                                            {#if copiedField === 'proxy'}
+                                                <Check size={12} class="success" />
+                                            {:else}
+                                                <Copy size={12} />
+                                            {/if}
+                                        </button>
                                     </div>
-                                {/if}
+                                </div>
+                            </div>
+                        {/if}
 
-                                {#if proxy}
-                                    <div class="detail-row">
-                                        <div class="detail-label">
-                                            <Shield size={14} />
-                                            <span>代理服务器</span>
+                        {#if headers && headers.length > 0}
+                            <div class="detail-row">
+                                <div class="detail-label">
+                                    <Settings size={14} />
+                                    <span>自定义 Headers</span>
+                                </div>
+                                <div class="header-rows-list">
+                                    {#each headers as header, i}
+                                        <div class="detail-value-box header-item-row">
+                                            <span class="value-text mono">{header}</span>
+                                            <button class="item-copy-btn" onclick={() => copyToClipboard(header, `h-${i}`)} title="复制 Header">
+                                                {#if copiedField === `h-${i}`}
+                                                    <Check size={12} class="success" />
+                                                {:else}
+                                                    <Copy size={12} />
+                                                {/if}
+                                            </button>
                                         </div>
-                                        <div class="detail-value">
-                                            <div class="detail-value-box">
-                                                <span class="value-text mono" title={proxy}>{proxy}</span>
-                                                <button class="item-copy-btn" onclick={() => copyToClipboard(proxy, 'proxy')} title="复制代理">
-                                                    {#if copiedField === 'proxy'}
-                                                        <Check size={12} class="success" />
-                                                    {:else}
-                                                        <Copy size={12} />
-                                                    {/if}
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </div>
-                                {/if}
-
-                                {#if headers && headers.length > 0}
-                                    <div class="detail-row">
-                                        <div class="detail-label">
-                                            <Settings size={14} />
-                                            <span>自定义 Headers</span>
-                                        </div>
-                                        <div class="header-rows-list">
-                                            {#each headers as header, i}
-                                                <div class="detail-value-box header-item-row">
-                                                    <span class="value-text mono">{header}</span>
-                                                    <button class="item-copy-btn" onclick={() => copyToClipboard(header, `h-${i}`)} title="复制 Header">
-                                                        {#if copiedField === `h-${i}`}
-                                                            <Check size={12} class="success" />
-                                                        {:else}
-                                                            <Copy size={12} />
-                                                        {/if}
-                                                    </button>
-                                                </div>
-                                            {/each}
-                                        </div>
-                                    </div>
-                                {/if}
+                                    {/each}
+                                </div>
                             </div>
                         {/if}
                     </div>
                 {/if}
-			</div>
+            </div>
+        {/if}
+    </div>
 
-			<footer class="modal-footer">
-				<button class="btn btn-secondary" onclick={onClose}>关闭</button>
-			</footer>
-		</div>
-	</div>
-{/if}
+    {#snippet footer()}
+        <button class="btn-secondary" onclick={onClose}>关闭</button>
+    {/snippet}
+</BaseModal>
 
 <style>
-	/* Use unique class names and global to escape stacking context */
-	.task-details-modal-overlay {
-		position: fixed;
-		inset: 0;
-		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.5));
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 9999;
-	}
-
-	.task-details-modal {
-		width: 90%;
-		max-width: 480px;
-        max-height: 85vh;
-		background: var(--dialog-bg);
-		backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
-		border-radius: 16px;
-		box-shadow: var(--glass-shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
-		overflow: hidden;
-		z-index: 10000;
+    .details-header {
         display: flex;
         flex-direction: column;
-	}
+        gap: 12px;
+        width: 100%;
+    }
 
-	.modal-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 16px 20px;
-		border-bottom: 1px solid var(--border-subtle);
-	}
+    .modal-title {
+        font-size: 16px;
+        font-weight: 600;
+        color: var(--text-primary);
+        margin: 0;
+    }
 
-	.modal-header h3 {
-		font-size: 15px;
-		font-weight: 600;
-		color: var(--text-primary);
-		margin: 0;
-	}
+    /* Tab 样式重构 - Segmented Control Style */
+    .tab-sc-container {
+        padding: 4px 16px;
+        width: 100%;
+    }
 
-	.close-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		height: 28px;
-		background: transparent;
-		border: none;
-		border-radius: 6px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
+    .modal-tabs {
+        display: flex;
+        position: relative;
+        background: var(--input-bg, rgba(0, 0, 0, 0.08));
+        border-radius: 12px;
+        padding: 3px;
+        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
 
-	.close-btn:hover {
-		background: var(--surface-hover);
-		color: var(--text-primary);
-	}
-
-	.modal-body {
-		padding: 20px;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-        overflow-y: auto;
+    .tab-btn {
         flex: 1;
-        /* 自定义滚动条样式 */
-        scrollbar-width: thin;
-        scrollbar-color: var(--border-subtle) transparent;
-	}
-
-    .modal-body::-webkit-scrollbar {
-        width: 6px;
-    }
-
-    .modal-body::-webkit-scrollbar-track {
+        padding: 8px 0;
         background: transparent;
+        border: none;
+        font-size: 13px;
+        font-weight: 500;
+        color: var(--text-secondary);
+        cursor: pointer;
+        transition: color 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        position: relative;
+        z-index: 1;
     }
 
-    .modal-body::-webkit-scrollbar-thumb {
-        background: var(--border-subtle);
-        border-radius: 10px;
+    .tab-btn.active {
+        color: var(--accent-primary);
+        font-weight: 600;
     }
 
-    .modal-body::-webkit-scrollbar-thumb:hover {
-        background: var(--border-normal);
+    .tab-btn .dot {
+        position: absolute;
+        top: 10px;
+        right: 25%;
+        width: 5px;
+        height: 5px;
+        background: var(--accent-primary);
+        border-radius: 50%;
+        box-shadow: 0 0 8px var(--accent-primary);
     }
 
-	.detail-row {
+    .active-indicator {
+        position: absolute;
+        top: 3px;
+        bottom: 3px;
+        left: 3px;
+        width: calc((100% - 6px) / 2);
+        background: var(--glass-bg, rgba(255, 255, 255, 0.1));
+        backdrop-filter: blur(8px);
+        border-radius: 9px;
+        transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        border: 1px solid var(--border-normal, rgba(255, 255, 255, 0.15));
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+    }
+
+    .details-body {
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
+
+    .tab-content {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+    }
+
+    .detail-row {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 6px;
 	}
 
 	.detail-label {
 		display: flex;
 		align-items: center;
-		gap: 8px;
-		font-size: 11px;
+		gap: 6px;
+		font-size: 10px;
 		font-weight: 600;
 		color: var(--text-tertiary);
         text-transform: uppercase;
-        letter-spacing: 0.05em;
-        padding-left: 2px;
-	}
-
-	.detail-value {
-		width: 100%;
+        letter-spacing: 0.03em;
+        padding-left: 1px;
 	}
 
     .detail-value-box {
         display: flex;
         align-items: center;
         gap: 10px;
-        background: rgba(255, 255, 255, 0.03);
+        background: var(--input-bg, rgba(0, 0, 0, 0.05));
         padding: 8px 12px;
         border-radius: 10px;
-        border: 1px solid var(--border-subtle);
+        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
         transition: all 0.2s ease;
-        min-height: 38px;
+        min-height: 36px;
     }
 
     .detail-value-box:hover {
         border-color: var(--border-normal);
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--surface-hover);
     }
 
     .detail-value-box.error {
         background: rgba(239, 68, 68, 0.05);
         border-color: rgba(239, 68, 68, 0.2);
-        box-shadow: 0 0 12px rgba(239, 68, 68, 0.05);
-    }
-
-    .status-error-divider {
-        width: 1px;
-        height: 14px;
-        background: rgba(239, 68, 68, 0.2);
-        flex-shrink: 0;
     }
 
     .value-text {
@@ -442,40 +486,111 @@
     }
 
     .value-text.mono {
-        font-family: var(--font-mono);
-        font-size: 11px;
+        font-family: var(--font-mono, monospace);
+        font-size: 12px;
         color: var(--text-secondary);
+        font-variant-numeric: tabular-nums;
     }
 
     .value-text.filename {
-        font-weight: 500;
+        font-size: 14px;
+        font-weight: 600;
+        color: var(--text-primary);
+        line-height: 1.4;
+        word-break: break-all;
     }
 
-    .value-text.multi-line {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
-        overflow: hidden;
+    .filename-row {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
     }
 
-    .value-text.error-msg {
-        color: var(--semantic-danger);
-        font-family: var(--font-mono);
+    .extension-badge {
+        font-size: 10px;
+        font-weight: 700;
+        color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        padding: 2px 6px;
+        border-radius: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+        flex-shrink: 0;
+        align-self: flex-start;
+        margin-top: 1px; /* Optical alignment with text */
+    }
+
+    .extension-badge.unknown {
+        color: var(--warning-color, #f59e0b);
+        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
+        border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 20%, transparent);
+    }
+
+    .identity-box {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 12px !important;
+    }
+
+    .identity-main {
+        flex: 1;
+        min-width: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .identity-sub {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        min-width: 0; 
+        max-width: 100%;
+    }
+
+    .sub-actions {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: 2px;
+        flex-shrink: 0;
+    }
+
+    /* Small variant for inline buttons */
+    .item-copy-btn.small {
+        width: 20px;
+        height: 20px;
+        padding: 0;
+    }
+
+    :global(.sub-icon) {
+        flex-shrink: 0;
+        color: var(--text-tertiary);
+    }
+
+    .path-text {
+        flex: 1;
+        min-width: 0;
         font-size: 11px;
-        opacity: 0.85;
-        font-weight: 500;
+        color: var(--text-tertiary);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-variant-numeric: tabular-nums;
     }
 
     .status-pill {
         display: inline-flex;
         align-items: center;
-        gap: 6px;
-        padding: 4px 10px;
+        gap: 5px;
+        padding: 3px 8px;
         font-size: 11px;
         font-weight: 600;
-        border-radius: 20px;
+        border-radius: 12px;
         white-space: nowrap;
-        flex-shrink: 0;
     }
 
     .status-dot {
@@ -495,46 +610,48 @@
         100% { opacity: 0.4; transform: scale(0.8); }
     }
 
-    .status-pill.status-downloading {
+    .status-pill.status-active {
         background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
         color: var(--accent-primary);
     }
 
-    .status-pill.status-completed {
-        background: color-mix(in srgb, var(--semantic-success) 10%, transparent);
-        color: var(--semantic-success);
+    .status-pill.status-complete {
+        background: color-mix(in srgb, var(--semantic-success, #10b981) 10%, transparent);
+        color: var(--semantic-success, #10b981);
     }
 
     .status-pill.status-paused {
-        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-        color: var(--semantic-warning);
+        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
+        color: var(--warning-color, #f59e0b);
     }
 
     .status-pill.status-error {
-        background: color-mix(in srgb, #ef4444 12%, transparent);
-        color: #ef4444;
-        padding: 4px 8px;
+        background: color-mix(in srgb, var(--semantic-danger, #ef4444) 10%, transparent);
+        color: var(--semantic-danger, #ef4444);
     }
 
-    .status-pill.status-cancelled,
-    .status-pill.status-waiting {
-        background: rgba(255, 255, 255, 0.05);
+    .status-pill.status-removed {
+        background: color-mix(in srgb, var(--text-tertiary) 10%, transparent);
         color: var(--text-tertiary);
+    }
+
+    .status-pill.status-start {
+        background: color-mix(in srgb, var(--semantic-success, #10b981) 10%, transparent);
+        color: var(--semantic-success, #10b981);
     }
 
     .item-copy-btn {
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 26px;
-        height: 26px;
+        width: 28px;
+        height: 28px;
         background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
-        border-radius: 6px;
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
         color: var(--text-tertiary);
         cursor: pointer;
-        transition: all 0.15s ease;
-        flex-shrink: 0;
+        transition: all 0.2s;
     }
 
     .item-copy-btn:hover {
@@ -543,86 +660,67 @@
         border-color: var(--accent-primary);
     }
 
-    .item-copy-btn :global(.success) {
-        color: var(--semantic-success);
-    }
+    .item-copy-btn :global(.success) { color: #10b981; }
 
-    /* Tab 样式 */
-    .modal-tabs {
-        display: flex;
-        position: relative;
-        padding: 0 20px;
-        border-bottom: 1px solid var(--border-subtle);
-        background: rgba(255, 255, 255, 0.02);
-    }
+    .header-rows-list { display: flex; flex-direction: column; gap: 8px; }
 
-    .tab-btn {
-        flex: 1;
-        padding: 12px 0;
-        background: transparent;
-        border: none;
-        font-size: 13px;
-        font-weight: 500;
-        color: var(--text-tertiary);
-        cursor: pointer;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        gap: 6px;
-        position: relative;
-    }
-
-    .tab-btn:hover {
-        color: var(--text-primary);
-    }
-
-    .tab-btn.active {
-        color: var(--accent-primary);
-    }
-
-    .tab-btn .dot {
-        width: 4px;
-        height: 4px;
-        border-radius: 50%;
-        background: var(--accent-primary);
-        opacity: 0.6;
-    }
-
-    .active-indicator {
-        position: absolute;
-        bottom: 0;
-        left: 20px;
-        width: calc((100% - 40px) / 2);
-        height: 2px;
-        background: var(--accent-primary);
-        transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        box-shadow: 0 0 10px rgba(var(--accent-primary-rgb), 0.5);
-    }
-
-    .tab-content {
-        display: flex;
-        flex-direction: column;
-        gap: 20px;
-    }
-
-    /* 对齐调整 */
-    .advanced-groups {
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-
-    /* Header 列表重构样式 */
-    .header-rows-list {
+    .timeline-narrative {
         display: flex;
         flex-direction: column;
         gap: 8px;
-        margin-top: 4px;
     }
 
-    .header-item-row {
-        min-height: 34px;
+    .timeline-step {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .narrative-row {
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        padding: 4px 12px !important;
+        min-height: 40px !important;
+        overflow-x: auto;
+        -ms-overflow-style: none;
+        scrollbar-width: none;
+    }
+
+    .narrative-row::-webkit-scrollbar {
+        display: none;
+    }
+
+    .timeline-segment {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 6px 0;
+        white-space: nowrap;
+        flex-shrink: 0;
+    }
+
+    .timeline-text {
+        font-size: 11px;
+        color: var(--text-tertiary);
+        white-space: nowrap;
+    }
+
+    .error-reason-box {
+        background: rgba(239, 68, 68, 0.08) !important;
+        border-color: rgba(239, 68, 68, 0.2) !important;
+        padding: 10px 12px !important;
+    }
+
+    .error-icon {
+        color: var(--semantic-danger, #ef4444);
+        flex-shrink: 0;
+    }
+
+    .error-msg {
+        color: var(--semantic-danger, #ef4444) !important;
+        font-weight: 500;
+        font-size: 12px;
     }
 
     .empty-advanced {
@@ -630,42 +728,22 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
-        padding: 60px 0;
+        padding: 40px 0;
         color: var(--text-tertiary);
-        gap: 16px;
-        opacity: 0.8;
-    }
-
-    .empty-advanced p {
-        margin: 0;
-        font-size: 13px;
-    }
-
-    .modal-footer {
-        display: flex;
-        justify-content: flex-end;
-        padding: 16px 20px;
-        border-top: 1px solid var(--border-subtle);
-    }
-
-    .btn {
-        padding: 8px 16px;
-        font-size: 13px;
-        font-weight: 500;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.15s ease;
+        gap: 12px;
     }
 
     .btn-secondary {
-        background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
-        color: var(--text-secondary);
-    }
-
-    .btn-secondary:hover {
-        background: var(--surface-active);
-        border-color: var(--border-normal);
+        padding: 8px 18px;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+        border: 1px solid var(--border-color);
+        background: transparent;
         color: var(--text-primary);
     }
+
+    .btn-secondary:hover { background: var(--surface-hover); }
 </style>

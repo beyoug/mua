@@ -72,17 +72,18 @@ pub async fn add_download_task(
                 url: urls.get(0).cloned().unwrap_or_default(),
                 save_path: final_save_path,
                 added_at: Local::now().to_rfc3339(),
-                state: "waiting".to_string(),
+                state: TaskState::Waiting,
                 total_length: "0".to_string(),
                 completed_length: "0".to_string(),
                 download_speed: "0 B/s".to_string(),
+                completed_at: None,
                 error_message: "".to_string(),
                 user_agent: user_agent.unwrap_or_default(),
                 referer: referer.unwrap_or_default(),
                 proxy: proxy.unwrap_or_default(),
                 headers: headers
                     .unwrap_or_default()
-                    .split(';')
+                    .split(|c| c == ';' || c == '\n')
                     .filter(|s| !s.trim().is_empty())
                     .map(|s| s.trim().to_string())
                     .collect(),
@@ -98,15 +99,12 @@ pub async fn add_download_task(
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
     let result = aria2_client::pause(gid.clone()).await?;
-    state.update_task_state(&gid, "paused");
+    state.update_task_state(&gid, TaskState::Paused);
     Ok(result)
 }
 
 #[tauri::command]
-pub async fn resume_task(
-    state: tauri::State<'_, TaskStore>,
-    gid: String,
-) -> AppResult<String> {
+pub async fn resume_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
     // 1. 首先检查 Store 状态
     let should_smart_resume = if let Some(task) = state.get_task(&gid) {
         TaskState::from(task.state.as_str()).is_terminal()
@@ -121,7 +119,7 @@ pub async fn resume_task(
     // 2. 为活跃/已暂停的任务尝试标准恢复 (resume)
     match aria2_client::resume(gid.clone()).await {
         Ok(res) => {
-            state.update_task_state(&gid, "waiting");
+            state.update_task_state(&gid, TaskState::Waiting);
             Ok(res)
         }
         Err(e) => {
@@ -143,13 +141,37 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
         log::info!("正在重新提交任务: {}", task.filename);
 
         // 1. 从存储中还原所有高级参数
-        let save_path_opt = if task.save_path.is_empty() { None } else { Some(task.save_path.clone()) };
-        let filename_opt = if task.filename.is_empty() { None } else { Some(task.filename.clone()) };
-        let ua_opt = if task.user_agent.is_empty() { None } else { Some(task.user_agent.clone()) };
-        let referer_opt = if task.referer.is_empty() { None } else { Some(task.referer.clone()) };
-        let proxy_opt = if task.proxy.is_empty() { None } else { Some(task.proxy.clone()) };
-        let limit_opt = if task.max_download_limit.is_empty() { None } else { Some(task.max_download_limit.clone()) };
-        
+        let save_path_opt = if task.save_path.is_empty() {
+            None
+        } else {
+            Some(task.save_path.clone())
+        };
+        let filename_opt = if task.filename.is_empty() {
+            None
+        } else {
+            Some(task.filename.clone())
+        };
+        let ua_opt = if task.user_agent.is_empty() {
+            None
+        } else {
+            Some(task.user_agent.clone())
+        };
+        let referer_opt = if task.referer.is_empty() {
+            None
+        } else {
+            Some(task.referer.clone())
+        };
+        let proxy_opt = if task.proxy.is_empty() {
+            None
+        } else {
+            Some(task.proxy.clone())
+        };
+        let limit_opt = if task.max_download_limit.is_empty() {
+            None
+        } else {
+            Some(task.max_download_limit.clone())
+        };
+
         let headers_str = if task.headers.is_empty() {
             None
         } else {
@@ -182,11 +204,12 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
                 // 添加新记录
                 let new_task = PersistedTask {
                     gid: new_gid.clone(),
-                    state: "waiting".to_string(),
+                    state: TaskState::Waiting,
                     added_at: Local::now().to_rfc3339(),
                     total_length: "0".to_string(),
                     completed_length: "0".to_string(),
                     download_speed: "0".to_string(),
+                    completed_at: None,
                     ..task
                 };
                 state.add_task(new_task);
@@ -204,12 +227,9 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
 }
 
 #[tauri::command]
-pub async fn cancel_task(
-    state: tauri::State<'_, TaskStore>,
-    gid: String,
-) -> AppResult<String> {
+pub async fn cancel_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
     let result = aria2_client::remove(gid.clone()).await?;
-    state.update_task_state(&gid, "cancelled");
+    state.update_task_state(&gid, TaskState::Removed);
     Ok(result)
 }
 
@@ -232,7 +252,7 @@ pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
 ) -> AppResult<String> {
-    state.update_batch_state(&gids, "cancelled");
+    state.update_batch_state(&gids, TaskState::Removed);
     state.save();
 
     let futures: Vec<_> = gids
@@ -257,7 +277,7 @@ pub async fn remove_tasks(
             tasks_info
                 .iter()
                 .find(|t| &t.gid == gid)
-                .map(|t| utils::is_active_state(&t.state))
+                .map(|t| utils::is_active_state(t.state))
                 .unwrap_or(false)
         });
 
@@ -302,16 +322,12 @@ pub async fn remove_task_record(
     remove_task_inner(&state, gid, delete_file).await
 }
 
-async fn remove_task_inner(
-    state: &TaskStore,
-    gid: String,
-    delete_file: bool,
-) -> AppResult<String> {
+async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) -> AppResult<String> {
     let task_opt = state.get_task(&gid);
 
     let is_active = task_opt
         .as_ref()
-        .map_or(false, |t| utils::is_active_state(&t.state));
+        .map_or(false, |t| utils::is_active_state(t.state));
 
     if is_active {
         let _ = aria2_client::remove(gid.clone()).await;
@@ -346,10 +362,7 @@ async fn remove_task_inner(
 }
 
 #[tauri::command]
-pub async fn show_task_in_folder(
-    state: tauri::State<'_, TaskStore>,
-    gid: String,
-) -> AppResult<()> {
+pub async fn show_task_in_folder(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<()> {
     if let Some(task) = state.get_task(&gid) {
         let full_path = utils::get_full_path(&task.save_path, &task.filename);
         utils::show_in_file_manager(&full_path);

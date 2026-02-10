@@ -8,18 +8,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum TaskState {
-    /// 下载中
-    Downloading,
+    /// 活跃中（下载中、做种中等）
+    Active,
     /// 等待中
     Waiting,
     /// 已暂停
     Paused,
     /// 已完成
-    Completed,
+    Complete,
     /// 错误
     Error,
-    /// 已取消
-    Cancelled,
+    /// 已移除/已取消
+    Removed,
     /// 文件缺失
     Missing,
 }
@@ -28,25 +28,26 @@ impl TaskState {
     /// 从 Aria2 状态字符串映射
     pub fn from_aria2_status(status: &str) -> Self {
         match status {
-            "active" => Self::Downloading,
+            "active" | "downloading" => Self::Active,
             "waiting" => Self::Waiting,
             "paused" => Self::Paused,
-            "complete" => Self::Completed,
+            "complete" | "completed" => Self::Complete,
             "error" => Self::Error,
-            "removed" | "cancelled" => Self::Cancelled,
+            "removed" | "cancelled" => Self::Removed,
+            "missing" => Self::Missing,
             _ => Self::Waiting,
         }
     }
 
-    /// 转换为前端状态字符串
+    /// 转换为状态字符串（与 Aria2 原生状态对齐）
     pub fn as_str(&self) -> &'static str {
         match self {
-            Self::Downloading => "downloading",
+            Self::Active => "active",
             Self::Waiting => "waiting",
             Self::Paused => "paused",
-            Self::Completed => "completed",
+            Self::Complete => "complete",
             Self::Error => "error",
-            Self::Cancelled => "cancelled",
+            Self::Removed => "removed",
             Self::Missing => "missing",
         }
     }
@@ -54,7 +55,7 @@ impl TaskState {
     /// 获取状态排序分数（用于任务列表排序）
     pub fn score(&self) -> i32 {
         match self {
-            Self::Downloading => 3,
+            Self::Active => 3,
             Self::Waiting => 2,
             Self::Paused => 1,
             _ => 0,
@@ -63,12 +64,15 @@ impl TaskState {
 
     /// 判断是否为活跃状态（下载中、等待中、已暂停）
     pub fn is_active(&self) -> bool {
-        matches!(self, Self::Downloading | Self::Waiting | Self::Paused)
+        matches!(self, Self::Active | Self::Waiting | Self::Paused)
     }
 
     /// 判断是否为终态（已完成、已取消、错误、缺失）
     pub fn is_terminal(&self) -> bool {
-        matches!(self, Self::Completed | Self::Cancelled | Self::Error | Self::Missing)
+        matches!(
+            self,
+            Self::Complete | Self::Removed | Self::Error | Self::Missing
+        )
     }
 }
 
@@ -81,12 +85,12 @@ impl std::fmt::Display for TaskState {
 impl From<&str> for TaskState {
     fn from(s: &str) -> Self {
         match s {
-            "downloading" => Self::Downloading,
+            "active" | "downloading" => Self::Active,
             "waiting" => Self::Waiting,
             "paused" => Self::Paused,
-            "completed" => Self::Completed,
+            "complete" | "completed" => Self::Complete,
             "error" => Self::Error,
-            "cancelled" => Self::Cancelled,
+            "removed" | "cancelled" => Self::Removed,
             "missing" => Self::Missing,
             _ => Self::Waiting,
         }

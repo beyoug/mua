@@ -25,6 +25,28 @@
         onCancelOrDelete,
         onRedownload
     }: Props = $props();
+    let menuRef = $state<HTMLElement | null>(null);
+    let isPopup = $state(false);
+
+    $effect(() => {
+        if (show && menuRef) {
+            const rect = menuRef.getBoundingClientRect();
+            const viewportHeight = window.innerHeight;
+            // 如果底部超出屏幕，则向上弹出
+            // 这里我们预判一下，如果当前是 top 定位，bottom 会是多少
+            // 但因为已经是 mounted 了，直接看 rect.bottom 即可
+            // 为了避免闪烁，最理想是 visibility: hidden 先算，但 svelte transition 可能冲突
+            // 实测：直接判断 rect.bottom > viewportHeight 即可，虽然可能有一帧的 layout shift，但一般很快
+            if (rect.bottom > viewportHeight - 20) {
+                isPopup = true;
+            }
+        } else {
+            // 关闭时重置，保证下次打开默认是向下（除非立刻又打开）
+            // 注意：不要在 show 为 true 时重置为 false，否则会死循环（如果上面判断变成 false）
+            // 但我们在 show=false 时重置是安全的
+            if (!show) isPopup = false;
+        }
+    });
 </script>
 
 {#if show}
@@ -34,9 +56,11 @@
     
     <div 
         class="dropdown-menu" 
+        class:pop-up={isPopup}
+        bind:this={menuRef}
         transition:scale={{ duration: 150, start: 0.95 }}
     >
-        {#if ['completed', 'cancelled', 'error', 'missing'].includes(downloadState)}
+        {#if ['complete', 'removed', 'error', 'missing'].includes(downloadState)}
             <button class="menu-item" onclick={() => { onRedownload?.(); onClose(); }}>
                 <RefreshCw size={14} />
                 <span>重新下载</span>
@@ -46,10 +70,12 @@
             <Copy size={14} />
             <span>复制链接</span>
         </button>
-        <button class="menu-item" onclick={onOpenFolder}>
-            <Folder size={14} />
-            <span>打开文件夹</span>
-        </button>
+        {#if ['active', 'paused', 'complete'].includes(downloadState)}
+            <button class="menu-item" onclick={onOpenFolder}>
+                <Folder size={14} />
+                <span>打开文件夹</span>
+            </button>
+        {/if}
         <button class="menu-item" onclick={onDetails}>
             <Info size={14} />
             <span>查看详情</span>
@@ -57,7 +83,7 @@
         <div class="menu-divider"></div>
         <button class="menu-item danger" onclick={onCancelOrDelete}>
             <X size={14} />
-            <span>{['completed', 'cancelled', 'error'].includes(downloadState) ? '删除任务' : '取消下载'}</span>
+            <span>{['complete', 'removed', 'error'].includes(downloadState) ? '删除任务' : '取消下载'}</span>
         </button>
     </div>
 {/if}
@@ -91,6 +117,12 @@
 		z-index: 100;
 		transform-origin: top right;
 	}
+
+    .dropdown-menu.pop-up {
+        top: auto;
+        bottom: calc(100% + 4px);
+        transform-origin: bottom right;
+    }
 
 	.menu-item {
 		display: flex;

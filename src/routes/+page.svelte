@@ -10,7 +10,7 @@
 	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 
 		activeTasks, 
-		completedTasks, 
+		completeTasks, 
 		allTasks, 
 		downloadStats,
 		addDownloadTask,
@@ -32,8 +32,9 @@
 	let showSettings = $state(false);
 	
 	// 任务详情弹窗状态
-	let detailsTask = $state<DownloadTask | null>(null);
-	let showDetailsModal = $derived(detailsTask !== null);
+	let detailsTaskId = $state<string | null>(null);
+	const detailsTask = $derived($allTasks.find(t => t.id === detailsTaskId) || null);
+	const showDetailsModal = $derived(detailsTask !== null);
 
 	// ============ Derived States ============
 
@@ -42,8 +43,8 @@
 		switch (controller.activeNav) {
 			case 'active':
 				return $activeTasks;
-			case 'completed':
-				return $completedTasks;
+			case 'complete':
+				return $completeTasks;
 			case 'history':
 				return $allTasks;
 			default:
@@ -55,7 +56,7 @@
 	const pageTitle = $derived(() => {
 		switch (controller.activeNav) {
 			case 'active': return '进行中';
-			case 'completed': return '已完成';
+			case 'complete': return '已完成';
 			case 'history': return '历史记录';
 			default: return '历史记录';
 		}
@@ -69,7 +70,7 @@
 					title: '暂无进行中的任务',
 					hint: '点击左侧「添加任务」按钮开始下载'
 				};
-			case 'completed': 
+			case 'complete': 
 				return {
 					title: '暂无已完成的任务',
 					hint: '完成的下载任务会显示在这里'
@@ -108,11 +109,11 @@
 		if (controller.activeNav === 'active' && prevActiveIds.length > 0 && currentIds.length === 0) {
 			// 检查消失的任务是否全部完成
 			const allCompleted = prevActiveIds.every(id => 
-				$completedTasks.some(t => t.id === id)
+				$completeTasks.some(t => t.id === id)
 			);
 
 			if (allCompleted) {
-                controller.handleNavChange('completed');
+                controller.handleNavChange('complete');
 			}
 		}
 		prevActiveIds = currentIds;
@@ -126,7 +127,7 @@
 	}
 	
 	function handleShowDetails(task: DownloadTask) {
-		detailsTask = task;
+		detailsTaskId = task.id;
 	}
 </script>
 
@@ -213,7 +214,10 @@
 		referer={detailsTask.referer}
 		proxy={detailsTask.proxy}
 		headers={detailsTask.headers}
-		onClose={() => detailsTask = null}
+		addedAt={detailsTask.addedAt}
+		completedAt={detailsTask.completedAt}
+		onOpenFolder={() => controller.handleOpenFolder(detailsTask.id)}
+		onClose={() => detailsTaskId = null}
 	/>
 {/if}
 

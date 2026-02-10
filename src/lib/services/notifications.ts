@@ -20,7 +20,7 @@ export async function initNotifications(): Promise<void> {
     if (unlistenFn) return; // 已初始化
 
     try {
-        unlistenFn = await listen<DownloadTask>('task-completed', async (event) => {
+        unlistenFn = await listen<DownloadTask>('task-complete', async (event) => {
             const task = event.payload;
             await showCompletionNotification(task);
         });

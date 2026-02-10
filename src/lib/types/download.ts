@@ -6,12 +6,12 @@
  * 下载任务状态
  */
 export type DownloadState =
-	| 'downloading'
+	| 'active'
 	| 'paused'
-	| 'completed'
+	| 'complete'
 	| 'error'
 	| 'waiting'
-	| 'cancelled'
+	| 'removed'
 	| 'missing';
 
 /**
@@ -38,6 +38,7 @@ export interface DownloadTask {
 	proxy?: string;
 	headers?: string[];
 	maxDownloadLimit?: string;
+	completedAt?: string | null;
 }
 
 /**
@@ -61,7 +62,7 @@ export interface DownloadStats {
 	totalSpeed: string;
 	totalSpeedBytes: number;
 	activeCount: number;
-	completedCount: number;
+	completeCount: number;
 }
 
 

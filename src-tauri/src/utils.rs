@@ -119,20 +119,19 @@ pub fn is_valid_url(url: &str) -> bool {
 }
 use crate::core::types::TaskState;
 
-/// 将 Aria2 状态映射为应用状态字符串
-/// 内部使用 TaskState 枚举，返回字符串保持 API 兼容
-pub fn map_status(aria2_status: &str) -> String {
-    TaskState::from_aria2_status(aria2_status).to_string()
+/// 将 Aria2 状态映射为应用状态枚举
+pub fn map_status(aria2_status: &str) -> TaskState {
+    TaskState::from_aria2_status(aria2_status)
 }
 
 /// 获取状态排序分数（用于任务列表排序）
-pub fn get_state_score(state: &str) -> i32 {
-    TaskState::from(state).score()
+pub fn get_state_score(state: TaskState) -> i32 {
+    state.score()
 }
 
 /// 判断是否为活跃任务状态（下载中、等待中、已暂停）
-pub fn is_active_state(state: &str) -> bool {
-    TaskState::from(state).is_active()
+pub fn is_active_state(state: TaskState) -> bool {
+    state.is_active()
 }
 
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
@@ -244,7 +243,8 @@ pub fn build_aria2_options(
 
     // Custom Headers and Cookie
     if let Some(h_str) = headers {
-        for h in h_str.split(';') {
+        // 支持分号或换行符分隔
+        for h in h_str.split(|c| c == ';' || c == '\n') {
             let trim_h = h.trim();
             if !trim_h.is_empty() {
                 header_list.push(serde_json::Value::String(trim_h.to_string()));

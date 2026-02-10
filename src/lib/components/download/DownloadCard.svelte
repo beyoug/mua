@@ -37,7 +37,7 @@
 		downloaded = '',
 		total = '',
 		remaining = '',
-		state: downloadState = 'downloading',
+		state: downloadState = 'active',
 		onPause,
 		onResume,
 		onCancel,
@@ -82,7 +82,7 @@
 	}
 </script>
 
-<article class="download-card" class:completed={downloadState === 'completed'} class:menu-open={showMenu}>
+<article class="download-card" class:completed={downloadState === 'complete'} class:menu-open={showMenu}>
 	<div class="card-header">
 		{#if selectionMode}
 			<div class="checkbox-wrapper" transition:fade={{ duration: 150 }}>
@@ -100,7 +100,7 @@
 		{/if}
 		<!-- 文件图标和名称 -->
 		<div class="file-info">
-			{#if downloadState === 'completed'}
+			{#if downloadState === 'complete'}
 				<span class="icon-wrapper completed">
 					<CheckCircle size={18} />
 				</span>
@@ -108,11 +108,11 @@
 				<span class="icon-wrapper error">
 					<AlertCircle size={18} />
 				</span>
-			{:else if downloadState === 'cancelled'}
+			{:else if downloadState === 'removed'}
 				<span class="icon-wrapper cancelled">
 					<X size={18} />
 				</span>
-			{:else if downloadState === 'downloading'}
+			{:else if downloadState === 'active'}
 				<span class="icon-wrapper active">
 					<File size={18} />
 				</span>
@@ -126,20 +126,20 @@
 
 		<!-- 操作按钮 -->
 		<div class="actions">
-			{#if downloadState === 'downloading' || downloadState === 'waiting'}
+			{#if downloadState === 'active' || downloadState === 'waiting'}
 				<button class="action-btn" onclick={() => onPause?.()} title="暂停">
 					<Pause size={15} />
 				</button>
-			{:else if downloadState === 'paused' || downloadState === 'cancelled'}
+			{:else if downloadState === 'paused' || downloadState === 'removed'}
 				<button class="action-btn resume" onclick={() => onResume?.()} title="继续">
 					<Play size={15} />
 				</button>
-            {:else if ['completed', 'error', 'missing'].includes(downloadState)}
+            {:else if ['complete', 'error', 'missing'].includes(downloadState)}
                 <button class="action-btn resume" onclick={() => onResume?.()} title="重新下载">
 					<RefreshCw size={15} />
 				</button>
 			{/if}
-			{#if downloadState !== 'completed' && downloadState !== 'missing'}
+			{#if downloadState !== 'complete' && downloadState !== 'missing'}
 				<button class="action-btn cancel" onclick={() => onCancel?.()} title="取消">
 					<X size={15} />
 				</button>
@@ -164,18 +164,15 @@
 		</div>
 	</div>
 
-	<!-- 进度条 -->
-	{#if downloadState !== 'completed'}
-		<ProgressBar {progress} state={downloadState} />
-	{/if}
+	<ProgressBar progress={downloadState === 'complete' ? 100 : progress} state={downloadState} />
 
 	<!-- 状态信息栏 - 现代化设计 -->
 	<div class="card-footer">
 		<!-- 左区域：动态状态信息 -->
 		<div class="footer-status">
-			{#if downloadState === 'downloading'}
+			{#if downloadState === 'active'}
                 {@const sParts = (speed || '0|B/s').split('|')}
-				<span class="status-indicator downloading">
+				<span class="status-indicator active">
 					<span class="status-icon">↓</span>
                     <span class="speed-num">{sParts[0]}</span>
                     <span class="speed-unit-text">{sParts[1]}</span>
@@ -189,8 +186,8 @@
 					<span class="status-icon">⏸</span>
 					<span class="status-text">已暂停</span>
 				</span>
-			{:else if downloadState === 'completed'}
-				<span class="status-indicator completed">
+			{:else if downloadState === 'complete'}
+				<span class="status-indicator complete">
 					<span class="status-icon">✓</span>
 					<span class="status-text">已完成</span>
 				</span>
@@ -199,8 +196,8 @@
 					<span class="status-icon">◦</span>
 					<span class="status-text">等待中</span>
 				</span>
-			{:else if downloadState === 'cancelled'}
-				<span class="status-indicator cancelled">
+			{:else if downloadState === 'removed'}
+				<span class="status-indicator removed">
 					<span class="status-icon">✕</span>
 					<span class="status-text">已取消</span>
 				</span>
@@ -225,9 +222,9 @@
 		
 		<!-- 右区域：文件大小和时间 -->
 		<div class="footer-meta">
-			{#if downloadState === 'downloading' || downloadState === 'paused'}
+			{#if downloadState === 'active' || downloadState === 'paused'}
 				<span class="size-info">{downloaded} / {total}</span>
-			{:else if downloadState === 'completed'}
+			{:else if downloadState === 'complete'}
 				<span class="size-info">{total}</span>
 			{/if}
 		</div>
@@ -267,8 +264,8 @@
 		z-index: 10;
 	}
 
-	.download-card.completed {
-		border-left: 3px solid var(--accent-primary);
+	.download-card.complete {
+		border-color: var(--success-glow);
 	}
 
 	.card-header {
@@ -302,9 +299,9 @@
 		color: var(--accent-text);
 	}
 
-	.icon-wrapper.completed {
-		background: var(--accent-active-bg);
-		color: var(--accent-text);
+	.icon-wrapper.complete {
+		background: var(--success-glow);
+		color: var(--success-color);
 	}
 
 	.icon-wrapper.error {
@@ -312,9 +309,9 @@
 		color: #f87171;
 	}
 
-	.icon-wrapper.cancelled {
-		background: var(--bg-hover);
-		color: var(--text-muted);
+	.icon-wrapper.removed {
+		background: var(--danger-glow);
+		color: var(--danger-color);
 	}
 
 	.filename {
@@ -403,7 +400,7 @@
 		line-height: 1;
 	}
 
-	.status-indicator.downloading {
+	.status-indicator.active {
 		color: var(--accent-text);
 	}
 
@@ -411,7 +408,7 @@
 		color: var(--warning-color, #f59e0b);
 	}
 
-	.status-indicator.completed {
+	.status-indicator.complete {
 		color: var(--semantic-success, #10b981);
 	}
 
@@ -419,7 +416,7 @@
 		color: var(--text-muted);
 	}
 
-	.status-indicator.cancelled {
+	.status-indicator.removed {
 		color: var(--text-muted);
 	}
 
@@ -438,7 +435,6 @@
 		text-align: right;
 		min-width: 3.2em; /* 刚好容纳 0.00 */
 		font-variant-numeric: tabular-nums;
-		font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 	}
 
     .speed-unit-text {
@@ -457,10 +453,8 @@
 	}
 
 	.time-remaining {
-		color: var(--text-secondary);
-		display: inline-flex;
 		justify-content: flex-start;
-        font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        font-variant-numeric: tabular-nums;
 	}
 
 	.status-text {

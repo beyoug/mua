@@ -9,7 +9,7 @@ import {
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
 
-export type NavType = 'active' | 'completed' | 'history';
+export type NavType = 'active' | 'complete' | 'history';
 
 export class TaskController {
     // Navigation State

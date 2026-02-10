@@ -17,13 +17,7 @@ static SPEED_HISTORY: std::sync::OnceLock<std::sync::Mutex<HashMap<String, (f64,
 
 /// 计算剩余时间（带 EMA 平滑）
 /// 返回格式化后的剩余时间字符串
-fn calculate_eta(
-    gid: &str,
-    state: &str,
-    raw_speed: u64,
-    total: u64,
-    completed: u64,
-) -> String {
+fn calculate_eta(gid: &str, state: &str, raw_speed: u64, total: u64, completed: u64) -> String {
     let history_map = SPEED_HISTORY.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
     let mut history = history_map.lock().unwrap();
     let now = std::time::SystemTime::now()
@@ -38,14 +32,14 @@ fn calculate_eta(
 
     // 更新 EMA 速度
     let task_state = TaskState::from(state);
-    if task_state == TaskState::Downloading {
+    if task_state == TaskState::Active {
         *ema_speed = (raw_speed as f64 * 0.2) + (*ema_speed * 0.8);
     } else {
         *ema_speed = 0.0;
     }
 
     // 计算剩余时间
-    if task_state == TaskState::Downloading && *ema_speed > 0.1 && total > completed {
+    if task_state == TaskState::Active && *ema_speed > 0.1 && total > completed {
         if now > *last_update {
             let seconds = ((total - completed) as f64 / *ema_speed) as u64;
             let new_remaining = crate::utils::format_duration(seconds);
@@ -61,7 +55,6 @@ fn calculate_eta(
         String::new()
     }
 }
-
 
 // 前端 DTO (视图模型) - 从 commands.rs 移至此处
 #[derive(Debug, Clone, serde::Serialize)]
@@ -91,12 +84,11 @@ pub struct FrontendTask {
     pub headers: Vec<String>,
     #[serde(rename = "maxDownloadLimit")]
     pub max_download_limit: String,
+    #[serde(rename = "completedAt")]
+    pub completed_at: Option<String>,
 }
 
-pub async fn sync_tasks(
-    state: &TaskStore,
-    app_handle: &AppHandle,
-) -> AppResult<Vec<FrontendTask>> {
+pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<Vec<FrontendTask>> {
     // 1. 从 Store 获取所有任务
     let mut store_tasks = state.get_all();
 
@@ -138,30 +130,39 @@ pub async fn sync_tasks(
     // 4. 同步逻辑 & 构造视图模型
     for task in store_tasks.iter_mut() {
         let aria_task = aria2_map.get(&task.gid);
-        
-        let raw_status = if let Some(at) = aria_task {
-            at.status.clone()
-        } else {
-            task.state.clone()
-        };
 
-        // 确定映射后的状态
-        let mut mapped_state = crate::utils::map_status(&raw_status);
+        let mut mapped_state = if let Some(at) = aria_task {
+            crate::utils::map_status(&at.status)
+        } else {
+            task.state
+        };
 
         // 终态时的文件存在性检查
         // "missing" 只适用于已完成但文件被删除的情况
         // "error" 状态保持不变（下载失败本来就没有文件）
-        if TaskState::from(mapped_state.as_str()) == TaskState::Completed {
+        if mapped_state == TaskState::Complete {
             let full_path = std::path::Path::new(&task.save_path).join(&task.filename);
             if !full_path.exists() {
-                mapped_state = "missing".to_string();
+                mapped_state = TaskState::Missing;
             }
         }
 
         // 如果状态发生变化，同步回 Store
         if task.state != mapped_state {
-            task.state = mapped_state.clone();
+            let old_state = task.state;
+            task.state = mapped_state;
             dirty = true;
+
+            // 记录进入终态或暂停的时间
+            if task.state.is_terminal() || task.state == TaskState::Paused {
+                // 如果是第一次进入该状态（针对 Pause/Error 等可重复进入的状态），或者是 Complete 状态
+                if task.completed_at.is_none() || old_state != TaskState::Complete {
+                    task.completed_at = Some(chrono::Local::now().to_rfc3339());
+                }
+            } else if task.state == TaskState::Active || task.state == TaskState::Waiting {
+                // 恢复活跃状态时，清除结束时间
+                task.completed_at = None;
+            }
         }
 
         // 如果存在 aria2 数据，则同步其他字段
@@ -195,10 +196,10 @@ pub async fn sync_tasks(
                     }
                 }
             }
-        } else if mapped_state != "missing"
-            && mapped_state != "error"
-            && mapped_state != "completed"
-            && mapped_state != "cancelled"
+        } else if mapped_state != TaskState::Missing
+            && mapped_state != TaskState::Error
+            && mapped_state != TaskState::Complete
+            && mapped_state != TaskState::Removed
         {
             match aria2_client::tell_status(
                 task.gid.clone(),
@@ -217,7 +218,7 @@ pub async fn sync_tasks(
             .await
             {
                 Ok(aria_task) => {
-                    task.state = aria_task.status.clone();
+                    task.state = crate::utils::map_status(&aria_task.status);
                     task.total_length = aria_task.total_length.clone();
                     task.completed_length = aria_task.completed_length.clone();
                     task.download_speed = aria_task.download_speed.clone();
@@ -240,12 +241,9 @@ pub async fn sync_tasks(
                     }
                 }
                 Err(e) => {
-                    let lower_msg = e.to_string().to_lowercase();
-                    if lower_msg.contains("not found")
-                        || lower_msg.contains("error 1")
-                        || lower_msg.contains("http error")
+                    let _lower_msg = e.to_string().to_lowercase();
                     {
-                        task.state = "error".to_string();
+                        task.state = TaskState::Error;
                         task.download_speed = "0".to_string();
                         dirty = true;
                     }
@@ -258,7 +256,8 @@ pub async fn sync_tasks(
         let raw_speed = task.download_speed.parse::<u64>().unwrap_or(0);
 
         // 使用辅助函数计算剩余时间
-        let current_remaining = calculate_eta(&task.gid, &task.state, raw_speed, total, completed);
+        let current_remaining =
+            calculate_eta(&task.gid, task.state.as_str(), raw_speed, total, completed);
 
         let progress = if total > 0 {
             (completed as f64 / total as f64) * 100.0
@@ -266,7 +265,7 @@ pub async fn sync_tasks(
             0.0
         };
 
-        if TaskState::from(task.state.as_str()) == TaskState::Downloading {
+        if task.state == TaskState::Active {
             total_dl += raw_speed;
         }
 
@@ -282,7 +281,7 @@ pub async fn sync_tasks(
             total: crate::utils::format_size(total),
             total_u64: total,
             remaining: current_remaining,
-            state: task.state.clone(), // 使用持久化状态！
+            state: task.state.to_string(), // 使用持久化状态！
             added_at: task.added_at.clone(),
             save_path: task.save_path.clone(),
             error_message: task.error_message.clone(),
@@ -291,6 +290,7 @@ pub async fn sync_tasks(
             proxy: task.proxy.clone(),
             headers: task.headers.clone(),
             max_download_limit: task.max_download_limit.clone(),
+            completed_at: task.completed_at.clone(),
         });
     }
 
@@ -318,8 +318,8 @@ pub async fn sync_tasks(
 
     // 结果排序：分数降序 -> 添加时间降序
     result.sort_by(|a, b| {
-        let score_a = crate::utils::get_state_score(&a.state);
-        let score_b = crate::utils::get_state_score(&b.state);
+        let score_a = crate::utils::get_state_score(TaskState::from(a.state.as_str()));
+        let score_b = crate::utils::get_state_score(TaskState::from(b.state.as_str()));
 
         if score_a != score_b {
             return score_b.cmp(&score_a); // 分数高的排在前面
@@ -360,9 +360,7 @@ pub fn start_background_sync(app_handle: AppHandle) {
                     for task in &tasks {
                         // 自适应轮询检查
                         let task_state = TaskState::from(task.state.as_str());
-                        if task_state == TaskState::Downloading
-                            || task_state == TaskState::Waiting
-                        {
+                        if crate::utils::is_active_state(task_state) {
                             has_active_tasks = true;
                         }
 
@@ -371,11 +369,14 @@ pub fn start_background_sync(app_handle: AppHandle) {
                             .cloned()
                             .unwrap_or("unknown".to_string());
 
-                        if task_state == TaskState::Completed && prev != "completed" && prev != "unknown" {
+                        if task_state == TaskState::Complete
+                            && prev != "complete"
+                            && prev != "unknown"
+                        {
                             // 检测到状态转变！
                             log::info!("任务已完成: {}", task.filename);
-                            if let Err(e) = app_handle.emit("task-completed", task.clone()) {
-                                log::warn!("发送 task-completed 事件失败: {}", e);
+                            if let Err(e) = app_handle.emit("task-complete", task.clone()) {
+                                log::warn!("发送 task-complete 事件失败: {}", e);
                             }
                         }
 

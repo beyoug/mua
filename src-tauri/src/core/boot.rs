@@ -1,11 +1,12 @@
-use tauri::{App, Manager};
-use crate::ui::tray;
+use crate::aria2::sidecar;
+use crate::core::commands;
 use crate::core::config::{self, ConfigState};
 use crate::core::store::TaskStore;
-use crate::aria2::sidecar;
 use crate::core::sync;
-use crate::core::commands;
+use crate::core::types::TaskState;
+use crate::ui::tray;
 use std::sync::Mutex;
+use tauri::{App, Manager};
 
 /// 运行应用启动链路
 /// 官方术语：生命周期流水线核心执行器
@@ -50,9 +51,9 @@ pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
             let store_tasks = state.get_all();
 
             for task in store_tasks {
-                if task.state == "paused"
-                    || task.state == "waiting"
-                    || task.state == "downloading"
+                if task.state == TaskState::Paused
+                    || task.state == TaskState::Waiting
+                    || task.state == TaskState::Active
                 {
                     log::info!("Auto-resuming task: {}", task.gid);
                     let _ = commands::resume_task(state.clone(), task.gid).await;

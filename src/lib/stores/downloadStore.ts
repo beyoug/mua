@@ -117,7 +117,7 @@ export const activeTasks: Readable<DownloadTask[]> = derived(
 /**
  * 已完成任务列表
  */
-export const completedTasks: Readable<DownloadTask[]> = derived(
+export const completeTasks: Readable<DownloadTask[]> = derived(
     { subscribe: subscribeTasks },
     ($tasks) => $tasks
         .filter(task => isCompletedTask(task.state))
@@ -151,7 +151,7 @@ export const downloadStats: Readable<DownloadStats> = derived(
             totalSpeed: formatSpeed(totalSpeedBytes),
             totalSpeedBytes,
             activeCount: activeDownloads.length,
-            completedCount: completedDownloads.length
+            completeCount: completedDownloads.length
         };
     }
 );
@@ -245,7 +245,7 @@ export async function pauseTask(id: string): Promise<void> {
 /**
  * 恢复任务
  * 对于 'paused' 任务：调用 aria2.unpause
- * 对于 'cancelled'/'error' 任务：重新添加任务 (Retry)
+ * 对于 'removed'/'error' 任务：重新添加任务 (Retry)
  */
 export async function resumeTask(id: string): Promise<void> {
     try {
@@ -286,9 +286,9 @@ export async function resumeTask(id: string): Promise<void> {
 
         } else {
             // 标准恢复
-            // 乐观更新 - 假设变回 downloading
+            // 乐观更新 - 假设变回 active
             updateTasks(tasks => tasks.map(t =>
-                t.id === id ? { ...t, state: 'downloading' } : t
+                t.id === id ? { ...t, state: 'active' } : t
             ));
         }
 
@@ -318,7 +318,7 @@ export async function cancelTask(id: string): Promise<void> {
                 originalState = task.state;
             }
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'cancelled' } : t
+                t.id === id ? { ...t, state: 'removed' } : t
             );
         });
 
@@ -395,7 +395,7 @@ export async function cancelTasks(ids: Set<string>): Promise<void> {
         // 乐观更新
         updateTasks(tasks => tasks.map(task =>
             ids.has(task.id) && isActiveTask(task.state)
-                ? { ...task, state: 'cancelled' }
+                ? { ...task, state: 'removed' }
                 : task
         ));
     } catch (e) {
@@ -418,7 +418,7 @@ export async function pauseAll(): Promise<void> {
             });
             // 乐观更新：所有 active -> paused
             return tasks.map(t =>
-                (t.state === 'downloading' || t.state === 'waiting')
+                (t.state === 'active' || t.state === 'waiting')
                     ? { ...t, state: 'paused', speed: '0.00|B/s' }
                     : t
             );

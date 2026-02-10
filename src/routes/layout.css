@@ -93,8 +93,8 @@
   --dialog-bg: rgba(15, 23, 42, 0.75);
   /* 内部覆盖层背景 */
   --overlay-bg: rgba(15, 23, 42, 0.9);
-  /* 菜单背景 - 75% 透明度 + 5% 主题色混合 */
-  --glass-menu-bg: color-mix(in srgb, rgba(20, 20, 28, 0.75), var(--accent-primary) 5%);
+  /* 菜单背景 - 85% 透明度 + 5% 主题色混合 - 提高不透明度以防穿透 */
+  --glass-menu-bg: color-mix(in srgb, rgba(20, 20, 28, 0.85), var(--accent-primary) 5%);
 
   /* ===== 语义化颜色 ===== */
   --semantic-danger: #ef4444;
@@ -116,7 +116,7 @@
   --success-color: var(--semantic-success);
 
   /* 字体 */
-  --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  --font-mono: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 
   /* 默认主题变量 (深空 - Deep Space) */
   --accent-primary: #ffffff;
@@ -183,8 +183,8 @@ html.light {
   --dialog-overlay-bg: rgba(0, 0, 0, 0.2);
   /* 内部覆盖层背景 - 与弹窗保持一致 */
   --overlay-bg: rgba(255, 255, 255, 0.85);
-  /* 菜单背景 - 75% 透明度 + 5% 主题色混合 */
-  --glass-menu-bg: color-mix(in srgb, rgba(255, 255, 255, 0.75), var(--accent-primary) 5%);
+  /* 菜单背景 - 85% 透明度 + 5% 主题色混合 - 提高不透明度以防穿透 */
+  --glass-menu-bg: color-mix(in srgb, rgba(255, 255, 255, 0.85), var(--accent-primary) 5%);
 
   /* ===== 语义化颜色 - 浅色模式优化 ===== */
   --semantic-danger: #dc2626;
@@ -206,7 +206,7 @@ html.light {
   --success-color: var(--semantic-success);
 
   /* 字体 (浅色模式使用相同值) */
-  --font-mono: 'SF Mono', 'Monaco', 'Cascadia Code', 'Roboto Mono', monospace;
+  --font-mono: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
 
   /* 默认主题变量 fallback (类似深空) */
   --accent-primary: #ffffff;

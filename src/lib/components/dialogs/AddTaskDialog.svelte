@@ -1,16 +1,17 @@
 <!--
   AddTaskDialog.svelte
-  添加下载任务对话框 - 支持高级设置覆盖层
+  添加下载任务对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, Trash2 } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, Trash2, ChevronDown } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { fade, scale } from 'svelte/transition';
+	import { fade } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { createScrollLockEffect, isValidDownloadUrl, validateUrl } from '$lib';
+	import { isValidDownloadUrl, validateUrl, clickOutside } from '$lib';
 	import { appSettings, saveAppSettings } from '$lib/stores/settings';
+	import BaseModal from '../common/BaseModal.svelte';
 
-	// 基础预设 (如果历史记录中没有，可以作为参考)
+	// 基础预设
 	const BUILTIN_UAS = [
 		{ name: 'Chrome', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
 		{ name: 'Firefox', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0' },
@@ -30,9 +31,10 @@
 	let savePath = $state($appSettings.defaultSavePath || '~/Downloads');
 	let filename = $state('');
 
-	// 高级设置面板
+	// 高级设置管理
 	let showAdvanced = $state(false);
-	let selectedUaValue = $state(''); // 改为直接存储选中的 UA 字符串
+    let advancedSnapshot = $state<any>(null);
+	let selectedUaValue = $state('');
     let isUaDropdownOpen = $state(false);
 	let customUserAgent = $state('');
 	let referer = $state('');
@@ -74,19 +76,13 @@
         return ua;
     }
 
-	// 计算实际 User Agent
 	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
 
     async function removeUaHistoryItem(uaValue: string) {
         const history = $appSettings.uaHistory || [];
         const newHistory = history.filter(v => v !== uaValue);
-        await saveAppSettings({
-            ...$appSettings,
-            uaHistory: newHistory
-        });
-        if (selectedUaValue === uaValue) {
-            selectedUaValue = '';
-        }
+        await saveAppSettings({ ...$appSettings, uaHistory: newHistory });
+        if (selectedUaValue === uaValue) selectedUaValue = '';
     }
 
     function handleUaSelect(value: string) {
@@ -94,43 +90,27 @@
         isUaDropdownOpen = false;
     }
 
-	// 注：URL 验证函数已迁移至 utils/validators.ts
-
-	// 计算是否可以提交
 	const canSubmit = $derived(isValidDownloadUrl(urls.trim()));
-
     const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
-
-	// 提交状态
 	let isSubmitting = $state(false);
 
 	async function handleSubmit() {
 		if (isSubmitting) return;
 		isSubmitting = true;
 
-		// 执行验证
 		const error = validateUrl(urls);
 		validationError = error;
-		
 		if (error) {
 			isSubmitting = false;
-			return; // 阻止提交
+			return;
 		}
 		
 		const trimmedUrl = urls.trim();
-		
 		try {
-            // Svelte binds input type="number" as number, so we need to stringify
             const limitStr = String(maxDownloadLimitValue || '').trim();
             const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
-
-			/* 
-             * 移除内部直接调用，完全依赖 onSubmit 回调
-             * 防止 +page.svelte 中处理 onSubmit 时造成重复添加
-             */
-			
-			// 可选：通知父组件或显示成功toast
             const finalUa = effectiveUserAgent;
+			
 			onSubmit?.({
 				urls: [trimmedUrl],
 				savePath,
@@ -142,18 +122,11 @@
 				maxDownloadLimit: limit
 			});
 
-            // 更新 UA 历史记录
             if (finalUa && !BUILTIN_UAS.some(b => b.value === finalUa)) {
                 let history = [...($appSettings.uaHistory || [])];
-                // 移动到最前面 (LRU)
                 history = [finalUa, ...history.filter(ua => ua !== finalUa)];
-                // 限制长度为 10
                 if (history.length > 10) history = history.slice(0, 10);
-                
-                await saveAppSettings({
-                    ...$appSettings,
-                    uaHistory: history
-                });
+                await saveAppSettings({ ...$appSettings, uaHistory: history });
             }
 
 			resetForm();
@@ -190,68 +163,63 @@
 				multiple: false,
 				title: '选择下载目录'
 			});
-			if (selected) {
-				savePath = selected as string;
-			}
-		} catch (e) {
-			// 非 Tauri 环境或用户取消
-		}
+			if (selected) savePath = selected as string;
+		} catch (e) {}
 	}
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape') {
-			if (showAdvanced) {
-				showAdvanced = false;
-			} else {
-				onClose();
-			}
-		}
-	}
+    function openAdvanced() {
+        // 进入高级设置前记录快照，用于取消时还原
+        advancedSnapshot = {
+            selectedUaValue,
+            customUserAgent,
+            referer,
+            headers,
+            proxy,
+            maxDownloadLimitValue,
+            maxDownloadLimitUnit
+        };
+        showAdvanced = true;
+    }
 
-	// 使用统一的滚动锁定工具
-	$effect(() => {
-		return createScrollLockEffect(open);
-	});
+    function handleBack() {
+        if (advancedSnapshot) {
+            // 还原到进入前的状态
+            selectedUaValue = advancedSnapshot.selectedUaValue;
+            customUserAgent = advancedSnapshot.customUserAgent;
+            referer = advancedSnapshot.referer;
+            headers = advancedSnapshot.headers;
+            proxy = advancedSnapshot.proxy;
+            maxDownloadLimitValue = advancedSnapshot.maxDownloadLimitValue;
+            maxDownloadLimitUnit = advancedSnapshot.maxDownloadLimitUnit;
+            advancedSnapshot = null;
+        }
+        showAdvanced = false;
+    }
 
-	// 清理定时器（组件卸载时）
+	// 清理定时器
 	$effect(() => {
 		return () => {
-			if (validationTimer) {
-				clearTimeout(validationTimer);
-			}
+			if (validationTimer) clearTimeout(validationTimer);
 		};
 	});
 
-	// 当URL输入框失去焦点时立即验证
 	function handleUrlBlur() {
-		// 取消防抖定时器
 		if (validationTimer) {
 			clearTimeout(validationTimer);
 			validationTimer = null;
 		}
-		
-		// 立即验证
 		if (urls.trim()) {
-			const error = validateUrl(urls);
-			validationError = error;
+			validationError = validateUrl(urls);
 		} else {
-			// 如果输入为空，清除错误提示
 			validationError = '';
 		}
 	}
 
-	// 当用户输入时防抖验证
 	function handleUrlInput() {
-		// 清除之前的定时器
-		if (validationTimer) {
-			clearTimeout(validationTimer);
-		}
-		
-		// 设置新的防抖定时器 (500ms)
+		if (validationTimer) clearTimeout(validationTimer);
 		validationTimer = setTimeout(() => {
 			if (urls.trim()) {
-				const error = validateUrl(urls);
-				validationError = error;
+				validationError = validateUrl(urls);
 			} else {
 				validationError = '';
 			}
@@ -259,632 +227,428 @@
 	}
 </script>
 
-{#if open}
-	<!-- svelte-ignore a11y_no_static_element_interactions -->
-	<div class="dialog-overlay" 
-		in:fade={{ duration: 150 }} 
-		out:fade={{ duration: 100 }}
-		onkeydown={handleKeydown}>
-		<!-- svelte-ignore a11y_no_static_element_interactions -->
-		<!-- svelte-ignore a11y_click_events_have_key_events -->
-		<div class="dialog" 
-			in:scale={{ duration: 150, start: 0.95, opacity: 0.5 }}
-			out:fade={{ duration: 80 }}
-			onclick={(e) => e.stopPropagation()}>
-			{#if !showAdvanced}
-				<!-- 主面板 -->
-				<div class="view-main" transition:fade={{ duration: 300 }}>
-					<header class="dialog-header">
-						<h2>添加下载任务</h2>
-						<button class="close-btn" onclick={onClose}>
-							<X size={18} />
-						</button>
-					</header>
+<BaseModal 
+    {open} 
+    onClose={onClose} 
+    size="md" 
+    minHeight="480px"
+    showClose={!showAdvanced}
+    closeOnClickOutside={false}
+    closeOnEscape={false}
+>
+    {#snippet header()}
+        {#if !showAdvanced}
+            <h2 class="modal-title">添加下载任务</h2>
+        {:else}
+            <div class="advanced-header">
+                <button class="back-link" onclick={handleBack}>
+                    <ArrowLeft size={18} />
+                </button>
+                <div class="breadcrumb">
+                    <span class="crumb-parent">添加下载任务</span>
+                    <ChevronRight size={14} class="crumb-sep" />
+                    <span class="crumb-current">高级设置</span>
+                </div>
+            </div>
+        {/if}
+    {/snippet}
 
-					<div class="dialog-body">
-						<!-- 下载链接 -->
-						<div class="form-group">
-							<label for="urls">
-								<Link size={14} />
-								<span>下载链接</span>
-								{#if validationError}
-									<span class="error-inline">
-										<AlertCircle size={12} />
-										{validationError}
-									</span>
-								{/if}
-							</label>
-							<textarea
-								id="urls"
-								placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
-								bind:value={urls}
-								oninput={handleUrlInput}
-								onblur={handleUrlBlur}
-								class:error={!!validationError}
-							></textarea>
-						</div>
+    <div class="modal-content-stack">
+        {#if !showAdvanced}
+            <!-- 主面板 -->
+            <div class="view-main" in:fade={{ duration: 150 }}>
+                <div class="dialog-body">
+                    <!-- 下载链接 -->
+                    <div class="form-group">
+                        <label for="urls">
+                            <Link size={14} />
+                            <span>下载链接</span>
+                            {#if validationError}
+                                <span class="error-inline">
+                                    <AlertCircle size={12} />
+                                    {validationError}
+                                </span>
+                            {/if}
+                        </label>
+                        <textarea
+                            id="urls"
+                            placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
+                            bind:value={urls}
+                            oninput={handleUrlInput}
+                            onblur={handleUrlBlur}
+                            class:error={!!validationError}
+                        ></textarea>
+                    </div>
 
-						<!-- 保存位置 -->
-						<div class="form-group">
-							<label>
-								<FolderOpen size={14} />
-								<span>保存位置</span>
-							</label>
-							<button class="path-selector" onclick={selectFolder}>
-								<span class="path-text">{savePath}</span>
-								<FolderOpen size={14} />
-							</button>
-						</div>
+                    <!-- 保存位置 -->
+                    <div class="form-group">
+                        <label>
+                            <FolderOpen size={14} />
+                            <span>保存位置</span>
+                        </label>
+                        <button class="path-selector" onclick={selectFolder}>
+                            <span class="path-text">{savePath}</span>
+                            <FolderOpen size={14} />
+                        </button>
+                    </div>
 
-						<!-- 保存文件名 -->
-						<div class="form-group">
-							<label>
-								<FileText size={14} />
-								<span>保存文件名</span>
-							</label>
-							<input
-								type="text"
-								class="text-input"
-								placeholder="留空则使用原始文件名"
-								bind:value={filename}
-							/>
-						</div>
-					</div>
+                    <!-- 保存文件名 -->
+                    <div class="form-group">
+                        <label>
+                            <FileText size={14} />
+                            <span>保存文件名</span>
+                        </label>
+                        <input
+                            type="text"
+                            class="text-input"
+                            placeholder="留空则使用原始文件名"
+                            bind:value={filename}
+                        />
+                    </div>
+                </div>
+            </div>
+        {:else}
+            <!-- 高级设置面板 -->
+            <div class="advanced-panel" in:fade={{ duration: 150 }}>
+                <div class="panel-body">
+                    <div class="form-row">
+                        <label>
+                            <Globe size={14} />
+                            <span>User Agent</span>
+                        </label>
+                        <div class="ua-manager" use:clickOutside={() => isUaDropdownOpen = false}>
+                            <button 
+                                class="ua-dropdown-trigger" 
+                                class:open={isUaDropdownOpen}
+                                onclick={() => isUaDropdownOpen = !isUaDropdownOpen}
+                            >
+                                <span class="trigger-text">{activeUaName}</span>
+                                <ChevronRight size={14} class="chevron" />
+                            </button>
 
-					<footer class="dialog-footer">
-						<button class="btn btn-advanced" onclick={() => showAdvanced = true}>
-							<Settings size={14} />
-							<span>高级设置</span>
-						</button>
-						<div class="footer-right">
-							<button 
-								class="btn btn-primary" 
-								onclick={handleSubmit}
-								disabled={!canSubmit || isSubmitting}
-							>
-								{#if isSubmitting}
-									<!-- 简单的 loading 状态 -->
-									<span>提交中...</span>
-								{:else}
-									<Download size={14} />
-									<span>开始下载</span>
-								{/if}
-							</button>
-						</div>
-					</footer>
-				</div>
-			{:else}
-				<!-- 高级设置面板 (直接渲染，共享背景) -->
-				<div class="advanced-panel" transition:fade={{ duration: 300 }}>
-					<header class="panel-header">
-						<button class="back-btn" onclick={() => showAdvanced = false}>
-							<ArrowLeft size={18} />
-						</button>
-						<div class="breadcrumb">
-							<span class="crumb-parent">添加下载任务</span>
-							<ChevronRight size={14} class="crumb-sep" />
-							<span class="crumb-current">高级设置</span>
-						</div>
-					</header>
-
-					<div class="panel-body">
-						<div class="form-row">
-							<label>
-								<Globe size={14} />
-								<span>User Agent</span>
-							</label>
-							<div class="ua-manager">
-                                <button 
-                                    class="ua-dropdown-trigger" 
-                                    class:open={isUaDropdownOpen}
-                                    onclick={() => isUaDropdownOpen = !isUaDropdownOpen}
-                                >
-                                    <span class="trigger-text">{activeUaName}</span>
-                                    <ChevronRight size={14} class="chevron" />
-                                </button>
-
-                                {#if isUaDropdownOpen}
-                                    <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
-                                        <div class="ua-list-container">
-                                            {#each displayUas as ua}
-                                                <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
-                                                    <button class="ua-select-btn" onclick={() => handleUaSelect(ua.value)}>
-                                                        <span class="ua-name">{ua.name}</span>
-                                                    </button>
-                                                    {#if !ua.builtin}
-                                                        <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
-                                                            <Trash2 size={12} />
-                                                        </button>
-                                                    {/if}
-                                                </div>
-                                            {/each}
-                                            <div class="ua-option" class:active={selectedUaValue === 'custom'}>
-                                                <button class="ua-select-btn" onclick={() => handleUaSelect('custom')}>
-                                                    <span class="ua-name">自定义...</span>
+                            {#if isUaDropdownOpen}
+                                <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
+                                    <div class="ua-list-container">
+                                        {#each displayUas as ua}
+                                            <div class="ua-option" class:active={selectedUaValue === ua.value && selectedUaValue !== 'custom'}>
+                                                <button class="ua-select-btn" onclick={() => handleUaSelect(ua.value)}>
+                                                    <span class="ua-name">{ua.name}</span>
                                                 </button>
+                                                {#if !ua.builtin}
+                                                    <button class="ua-delete-btn" onclick={() => removeUaHistoryItem(ua.value)} title="删除记录">
+                                                        <Trash2 size={12} />
+                                                    </button>
+                                                {/if}
                                             </div>
+                                        {/each}
+                                        <div class="ua-option" class:active={selectedUaValue === 'custom'}>
+                                            <button class="ua-select-btn" onclick={() => handleUaSelect('custom')}>
+                                                <span class="ua-name">自定义...</span>
+                                            </button>
                                         </div>
                                     </div>
-                                {/if}
+                                </div>
+                            {/if}
 
-								{#if selectedUaValue === 'custom'}
-									<input
-										type="text"
-                                        class="ua-custom-input"
-                                        class:error={isCustomUaInvalid}
-										placeholder="输入自定义 User Agent"
-										bind:value={customUserAgent}
-                                        transition:fade={{ duration: 150 }}
-									/>
-								{/if}
-							</div>
-						</div>
+                            {#if selectedUaValue === 'custom'}
+                                <input
+                                    type="text"
+                                    class="ua-custom-input"
+                                    class:error={isCustomUaInvalid}
+                                    placeholder="输入自定义 User Agent"
+                                    bind:value={customUserAgent}
+                                    transition:fade={{ duration: 150 }}
+                                />
+                            {/if}
+                        </div>
+                    </div>
 
-						<!-- Referer -->
-						<div class="form-row">
-							<label>
-								<Link size={14} />
-								<span>Referer</span>
-							</label>
-							<input
-								type="text"
-								placeholder="https://example.com"
-								bind:value={referer}
-							/>
-						</div>
+                    <!-- Referer -->
+                    <div class="form-row">
+                        <label>
+                            <Link size={14} />
+                            <span>Referer</span>
+                        </label>
+                        <input type="text" placeholder="https://example.com" bind:value={referer} />
+                    </div>
 
-						<!-- 自定义 Header -->
-						<div class="form-row">
-							<label>
-								<FileText size={14} />
-								<span>自定义 Header</span>
-							</label>
-							<input
-								type="text"
-								placeholder="Key: Value (多个用分号分隔)"
-								bind:value={headers}
-							/>
-						</div>
+                    <!-- 自定义 Header -->
+                    <div class="form-row">
+                        <label>
+                            <FileText size={14} />
+                            <span>自定义 Header</span>
+                        </label>
+                        <textarea 
+                            placeholder="Key: Value (每行一个)" 
+                            bind:value={headers}
+                            rows="2"
+                            class="headers-textarea"
+                        ></textarea>
+                    </div>
 
-						<!-- 代理服务器 -->
-						<div class="form-row">
-							<label>
-								<Shield size={14} />
-								<span>代理服务器</span>
-							</label>
-							<input
-								type="text"
-								placeholder="[user:pass@]host:port (支持 http/socks5)"
-								bind:value={proxy}
-							/>
-						</div>
+                    <!-- 代理服务器 -->
+                    <div class="form-row">
+                        <label>
+                            <Shield size={14} />
+                            <span>代理服务器</span>
+                        </label>
+                        <input type="text" placeholder="[user:pass@]host:port (支持 http/socks5)" bind:value={proxy} />
+                    </div>
 
-						<!-- 速度限制 -->
-						<div class="form-row">
-							<label>
-								<Gauge size={14} />
-								<span>速度限制</span>
-							</label>
-							<div class="rate-limit-input">
-								<input
-									type="number"
-									min="0"
-									placeholder="0"
-									bind:value={maxDownloadLimitValue}
-								/>
-								<select bind:value={maxDownloadLimitUnit}>
-									<option value="M">MB/s</option>
-									<option value="K">KB/s</option>
-								</select>
-							</div>
-						</div>
-					</div>
+                    <!-- 速度限制 -->
+                    <div class="form-row">
+                        <label>
+                            <Gauge size={14} />
+                            <span>速度限制</span>
+                        </label>
+                        <div class="input-group">
+                            <input 
+                                type="number" 
+                                min="0" 
+                                placeholder="0" 
+                                class="grouped-input"
+                                bind:value={maxDownloadLimitValue} 
+                            />
+                            <div class="input-divider"></div>
+                            <div class="select-wrapper">
+                                <select class="grouped-select" bind:value={maxDownloadLimitUnit}>
+                                    <option value="M">MB/s</option>
+                                    <option value="K">KB/s</option>
+                                </select>
+                                <ChevronDown size={14} class="select-icon" />
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {/if}
+    </div>
 
-					<footer class="panel-footer">
-						<button 
-                            class="btn btn-primary" 
-                            onclick={() => showAdvanced = false}
-                            disabled={isCustomUaInvalid}
-                        >
-							确定
-						</button>
-					</footer>
-				</div>
-			{/if}
-		</div>
-	</div>
-{/if}
+    {#snippet footer()}
+        {#if !showAdvanced}
+            <div class="footer-layout">
+                <button class="btn-ghost" onclick={openAdvanced}>
+                    <Settings size={14} />
+                    <span>高级设置</span>
+                </button>
+                <button 
+                    class="btn-primary" 
+                    onclick={handleSubmit}
+                    disabled={!canSubmit || isSubmitting}
+                >
+                    {#if isSubmitting}
+                        <span>提交中...</span>
+                    {:else}
+                        <Download size={14} />
+                        <span>开始下载</span>
+                    {/if}
+                </button>
+            </div>
+        {:else}
+            <button 
+                class="btn-primary" 
+                onclick={() => { showAdvanced = false; advancedSnapshot = null; }}
+                disabled={isCustomUaInvalid}
+            >
+                完成设置
+            </button>
+        {/if}
+    {/snippet}
+</BaseModal>
 
 <style>
-	.dialog-overlay {
-		position: fixed;
-		inset: 0;
-		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.5));
-		backdrop-filter: blur(8px);
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		z-index: 2000;
-	}
-
-	.dialog {
-		width: 90%;
-		min-width: 520px;
-		max-width: 600px;
-        max-height: 95vh;
-		background: var(--dialog-bg);
-		backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
-		border-radius: 18px;
-		overflow: hidden;
-		box-shadow: var(--glass-shadow);
-		position: relative;
-		/* Grid Stack for Transition */
-		display: grid;
-		grid-template-rows: 1fr;
-		grid-template-columns: 1fr;
-        
-        /* 平滑尺寸过渡 */
-        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-	}
-	
-	.view-main, .advanced-panel {
-		grid-area: 1 / 1;
-		width: 100%;
-		display: flex;
-		flex-direction: column;
-	}
-
-	.dialog-header {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 16px 24px;
-		border-bottom: 1px solid var(--border-color);
-	}
-
-	.dialog-header h2 {
+    .modal-title {
 		font-size: 16px;
-		font-weight: 500;
+		font-weight: 600;
 		color: var(--text-primary);
 		margin: 0;
-		letter-spacing: -0.01em;
 	}
 
-	.close-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		height: 28px;
-		background: transparent;
-		border: none;
-		border-radius: 6px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.close-btn:hover {
-		background: var(--input-bg);
-		color: var(--text-primary);
-	}
-
-	.dialog-body {
-		padding: 24px;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		min-height: 340px;
-        max-height: calc(90vh - 120px);
-        flex: 1;
-		overflow-y: auto;
-
-        /* 自定义滚动条样式 */
-        scrollbar-width: thin;
-        scrollbar-color: var(--border-subtle) transparent;
-	}
-
-    .dialog-body::-webkit-scrollbar {
-        width: 6px;
+    .advanced-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
     }
 
-    .dialog-body::-webkit-scrollbar-track {
+    .back-link {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
         background: transparent;
+        border: none;
+        border-radius: 8px;
+        color: var(--text-muted);
+        cursor: pointer;
+        transition: all 0.2s;
+        margin-left: -8px;
     }
 
-    .dialog-body::-webkit-scrollbar-thumb {
-        background: var(--border-subtle);
-        border-radius: 10px;
+    .back-link:hover {
+        background: var(--surface-hover);
+        color: var(--text-primary);
     }
 
-    .dialog-body::-webkit-scrollbar-thumb:hover {
-        background: var(--border-normal);
+    .breadcrumb {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 14px;
     }
 
-	.form-group {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
+    .crumb-parent { color: var(--text-muted); }
+    .crumb-sep { color: var(--text-tertiary); opacity: 0.5; }
+    .crumb-current { color: var(--text-primary); font-weight: 500; }
 
-	.form-group label {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 13px;
-		font-weight: 400;
-		color: var(--text-secondary);
-	}
-
-	/* Inline 错误提示 */
-	.error-inline {
-		display: flex;
-		align-items: center;
-		gap: 4px;
-		margin-left: auto;
-		font-size: 12px;
-		color: var(--danger-color);
-		font-weight: 400;
-	}
-
-	.form-group textarea {
-		padding: 12px 14px;
-		background: var(--input-bg);
-		border: 1px solid var(--border-normal);
-		border-radius: 10px;
-		color: var(--text-primary);
-		font-size: 14px;
-		font-weight: 400;
-		font-family: inherit;
-		outline: none;
-		resize: none;
-		height: 100px;
-		transition: border-color 0s, box-shadow 0.15s ease;
-	}
-
-	.form-group textarea:focus {
-		border-color: var(--border-strong);
-		box-shadow: 0 0 0 3px var(--surface-active);
-	}
-
-	.form-group textarea::placeholder {
-		color: var(--text-muted);
-	}
-
-	/* 错误状态 */
-	.form-group textarea.error {
-		border-color: var(--danger-color);
-	}
-
-	.form-group textarea.error:focus {
-		border-color: var(--danger-color);
-		box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-	}
-
-	.path-selector {
-		display: flex;
-		align-items: center;
-		justify-content: space-between;
-		padding: 12px 14px;
-		background: var(--input-bg);
-		border: 1px solid var(--border-color);
-		border-radius: 10px;
-		color: var(--text-secondary);
-		font-size: 14px;
-		cursor: pointer;
-		transition: border-color 0s;
-	}
-
-	.path-selector:hover {
-		border-color: var(--accent-primary);
-	}
-
-	.path-text {
-		overflow: hidden;
-		text-overflow: ellipsis;
-		white-space: nowrap;
-	}
-
-	.text-input {
-		padding: 12px 14px;
-		background: var(--input-bg);
-		border: 1px solid var(--border-normal);
-		border-radius: 10px;
-		color: var(--text-primary);
-		font-size: 14px;
-		font-weight: 400;
-		outline: none;
-		transition: border-color 0s, box-shadow 0.15s ease;
-	}
-
-	.text-input:focus {
-		border-color: var(--border-strong);
-		box-shadow: 0 0 0 3px var(--surface-active);
-	}
-
-	.text-input::placeholder {
-		color: var(--text-muted);
-	}
-
-	.dialog-footer {
-		display: flex;
-		justify-content: space-between;
-		align-items: center;
-		padding: 16px 24px;
-		border-top: 1px solid var(--border-color);
-	}
-
-	.footer-right {
-		display: flex;
-		gap: 10px;
-	}
-
-	.btn {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		padding: 10px 18px;
-		border: none;
-		border-radius: 8px;
-		font-size: 13px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.btn-advanced {
-		background: transparent;
-		border: 1px dashed var(--border-color);
-		color: var(--text-muted);
-		padding: 8px 14px;
-	}
-
-	.btn-advanced:hover {
-		background: var(--input-bg);
-		border-color: var(--accent-primary);
-		color: var(--accent-text);
-	}
-
-
-
-	.btn-primary {
-		background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-		color: var(--accent-btn-text, #ffffff);
-		box-shadow: 0 2px 8px var(--accent-glow);
-	}
-
-	.btn-primary:hover:not(:disabled) {
-		transform: translateY(-1px);
-		box-shadow: 0 4px 12px var(--accent-glow);
-	}
-
-	.btn-primary:disabled {
-		opacity: 0.5;
-		cursor: not-allowed;
-	}
-
-
-
-	.advanced-panel {
-		height: 100%;
-	}
-
-	.panel-header {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		padding: 16px 24px;
-		border-bottom: 1px solid var(--border-color);
-	}
-
-	.back-btn {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		width: 28px;
-		height: 28px;
-		background: transparent;
-		border: none;
-		border-radius: 8px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: all 0.15s ease;
-	}
-
-	.back-btn:hover {
-		background: var(--input-bg);
-		color: var(--text-primary);
-	}
-
-	.breadcrumb {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 14px;
-	}
-	
-	.crumb-parent {
-		color: var(--text-secondary);
-		font-weight: 400;
-	}
-	
-	/* Global style for lucide icon if needed, or inline style */
-	:global(.crumb-sep) {
-		color: var(--text-tertiary);
-		opacity: 0.7;
-	}
-
-	.crumb-current {
-		color: var(--text-primary);
-		font-weight: 600;
-		font-size: 15px;
-	}
-
-	.panel-body {
-		padding: 24px;
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		min-height: 340px;
-        max-height: calc(90vh - 120px);
+    .modal-content-stack {
+        display: grid;
+        grid-template-rows: 1fr;
+        grid-template-columns: 1fr;
         flex: 1;
-		overflow-y: auto;
-	}
+    }
 
-	.form-row {
-		display: flex;
-		flex-direction: column;
-		gap: 8px;
-	}
+    .view-main, .advanced-panel {
+        grid-area: 1 / 1;
+        padding: 24px;
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
 
-	.form-row label {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: 13px;
-		color: var(--text-secondary);
-	}
+    .dialog-body, .panel-body {
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+    }
 
-	.form-row input,
-	.form-row select {
-		padding: 10px 12px;
-		background: var(--input-bg);
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		color: var(--text-primary);
-		font-size: 13px;
-		outline: none;
-		transition: border-color 0s, box-shadow 0.15s ease;
-	}
+    .form-group, .form-row {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
 
-	.form-row input:focus,
-	.form-row select:focus {
-		border-color: var(--accent-primary);
-		box-shadow: 0 0 0 2px var(--accent-active-bg);
-	}
+    .form-group label, .form-row label {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        color: var(--text-secondary);
+    }
 
-	.form-row input::placeholder {
-		color: var(--text-muted);
-	}
+    .error-inline {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        margin-left: auto;
+        font-size: 12px;
+        color: var(--danger-color);
+    }
 
-	.form-row select {
-		cursor: pointer;
-		appearance: none;
-		background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%239ca3af' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
-		background-repeat: no-repeat;
-		background-position: right 12px center;
-		padding-right: 32px;
-	}
+    textarea, input, .path-selector {
+        padding: 12px 14px;
+        background: var(--input-bg, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 14px;
+        outline: none;
+        transition: all 0.2s ease;
+    }
 
-	.ua-manager {
-		display: flex;
-		flex-direction: column;
-		gap: 10px;
-        position: relative;
-	}
+    textarea:focus, input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    }
 
+    textarea { height: 100px; resize: none; }
+    textarea.error { border-color: var(--danger-color); }
+
+    .path-selector {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        cursor: pointer;
+        text-align: left;
+    }
+
+    .path-selector:hover { border-color: var(--accent-primary); }
+    .path-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .footer-layout {
+        display: flex;
+        width: 100%;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .btn-primary {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        padding: 10px 20px;
+        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        color: white;
+        border: none;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.2s;
+        box-shadow: 0 4px 12px var(--accent-glow);
+    }
+
+    .btn-primary:hover:not(:disabled) {
+        transform: translateY(-1px);
+        filter: brightness(1.1);
+    }
+
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .btn-ghost {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 8px 14px;
+        background: transparent;
+        border: 1px dashed var(--border-color);
+        color: var(--text-muted);
+        border-radius: 8px;
+        font-size: 13px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-ghost:hover {
+        border-color: var(--accent-primary);
+        color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
+    }
+
+    .form-row input:focus,
+    .form-row textarea:focus {
+        border-color: var(--accent-primary);
+        background: var(--surface-hover);
+    }
+
+    .headers-textarea {
+        width: 100%;
+        padding: 10px 14px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 13px;
+        outline: none;
+        transition: all 0.2s;
+        resize: vertical;
+        min-height: 80px;
+        font-family: var(--font-mono, monospace);
+        line-height: 1.5;
+    }
+
+    /* UA Manager */
+    .ua-manager { display: flex; flex-direction: column; gap: 8px; position: relative; }
     .ua-dropdown-trigger {
         display: flex;
         align-items: center;
@@ -894,144 +658,160 @@
         border: 1px solid var(--border-color);
         border-radius: 10px;
         color: var(--text-primary);
-        font-size: 13px;
         cursor: pointer;
-        transition: all 0.2s ease;
     }
-
-    .ua-dropdown-trigger:hover {
-        border-color: var(--accent-primary);
-    }
-
-    .ua-dropdown-trigger.open {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px var(--accent-active-bg);
-    }
-
-    .trigger-text {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        margin-right: 8px;
-    }
-
-    :global(.chevron) {
-        transition: transform 0.2s ease;
-        color: var(--text-muted);
-    }
-
-    .ua-dropdown-trigger.open :global(.chevron) {
-        transform: rotate(90deg);
-        color: var(--accent-primary);
-    }
+    .ua-dropdown-trigger:hover { border-color: var(--accent-primary); }
+    .ua-dropdown-trigger .chevron { transition: transform 0.2s; }
+    .ua-dropdown-trigger.open .chevron { transform: rotate(90deg); }
 
     .ua-dropdown-content {
         position: absolute;
-        top: calc(100% + 4px);
+        top: 100%;
         left: 0;
         right: 0;
-        z-index: 100;
-        background: var(--dialog-bg);
-        backdrop-filter: blur(12px);
-        -webkit-backdrop-filter: blur(12px);
-        border: 1px solid var(--glass-border);
+        margin-top: 4px;
+        /* 使用主题适配的覆盖层背景，保证在不同主题下都能清晰显示 */
+        background: var(--overlay-bg, var(--dialog-bg));
+        backdrop-filter: blur(20px) saturate(180%);
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
         border-radius: 12px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
-        padding: 6px;
+        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        z-index: 1000;
+        overflow: hidden;
     }
 
-    .ua-list-container {
-        display: flex;
-        flex-direction: column;
-        gap: 4px;
-        max-height: 200px;
-        overflow-y: auto;
-    }
-
+    .ua-list-container { max-height: 240px; overflow-y: auto; }
     .ua-option {
         display: flex;
         align-items: center;
-        gap: 4px;
-        border-radius: 8px;
-        transition: all 0.15s ease;
+        padding: 2px 8px;
     }
-
-    .ua-option:hover {
-        background: var(--surface-active);
-        box-shadow: inset 0 0 0 1px var(--glass-border);
-    }
-
-    .ua-option.active {
-        background: var(--accent-active-bg);
-        color: var(--accent-primary);
-        box-shadow: inset 0 0 0 1px var(--accent-primary);
-    }
+    .ua-option:hover { background: var(--surface-hover); }
+    .ua-option.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 5%, transparent); }
 
     .ua-select-btn {
         flex: 1;
-        display: flex;
-        align-items: center;
-        padding: 8px 12px;
+        text-align: left;
+        padding: 8px;
         background: transparent;
         border: none;
         color: inherit;
         font-size: 13px;
         cursor: pointer;
-        text-align: left;
-    }
-
-    .ua-name {
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
     }
 
     .ua-delete-btn {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 28px;
-        height: 28px;
+        padding: 6px;
         background: transparent;
         border: none;
-        color: var(--text-muted);
+        color: var(--text-tertiary);
         cursor: pointer;
-        border-radius: 6px;
-        margin-right: 2px;
-        transition: all 0.15s ease;
+        border-radius: 4px;
     }
-
-    .ua-delete-btn:hover {
-        background: var(--danger-color);
-        color: white;
-    }
+    .ua-delete-btn:hover { color: var(--danger-color); background: rgba(239, 68, 68, 0.1); }
 
     .ua-custom-input {
+        margin-top: 8px;
         width: 100%;
+        padding: 10px 14px;
+        background: var(--input-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 10px;
+        color: var(--text-primary);
+        font-size: 13px;
+        outline: none;
+        transition: all 0.2s;
+    }
+
+    .ua-custom-input:focus {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 
     .ua-custom-input.error {
         border-color: var(--danger-color);
-        box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+        background: color-mix(in srgb, var(--danger-color) 4%, var(--input-bg));
     }
 
-	.panel-footer {
-		padding: 16px 24px;
-		border-top: 1px solid var(--border-color);
-		display: flex;
-		justify-content: flex-end;
-	}
+    .ua-custom-input.error:focus {
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger-color) 15%, transparent);
+    }
 
-	.rate-limit-input {
-		display: flex;
-		gap: 8px;
-	}
+    .input-group {
+        display: flex;
+        align-items: stretch;
+        background: var(--input-bg, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        border-radius: 12px;
+        overflow: hidden;
+        transition: all 0.2s ease;
+    }
 
-	.rate-limit-input input {
-		flex: 1;
-	}
+    .input-group:focus-within {
+        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+    }
 
-	.rate-limit-input select {
-		width: 100px;
-	}
+    .grouped-input {
+        flex: 1;
+        background: transparent;
+        border: none;
+        padding: 12px 14px;
+        color: var(--text-primary);
+        font-size: 14px;
+        outline: none;
+        min-width: 0;
+    }
+
+    .input-divider {
+        width: 1px;
+        background: var(--border-color, rgba(255, 255, 255, 0.1));
+        margin: 8px 0;
+    }
+
+    .select-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+        padding-right: 12px;
+    }
+
+    .grouped-select {
+        background: transparent;
+        border: none;
+        padding: 0 28px 0 16px;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        outline: none;
+        cursor: pointer;
+        transition: color 0.2s;
+        -webkit-appearance: none;
+        appearance: none;
+        text-align: left;
+        z-index: 1;
+    }
+
+    .grouped-select:hover {
+        color: var(--text-primary);
+    }
+
+    .grouped-select:hover + :global(.select-icon) {
+        color: var(--text-primary);
+    }
+
+    :global(.select-icon) {
+        position: absolute;
+        right: 12px;
+        pointer-events: none;
+        color: var(--text-tertiary);
+        transition: color 0.2s;
+    }
+
+    /* 针对 select 的 Firefox 样式微调 */
+    @-moz-document url-prefix() {
+        .grouped-select {
+            padding: 0 12px;
+        }
+    }
 </style>

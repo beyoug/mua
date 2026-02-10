@@ -8,6 +8,7 @@ export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll
 export { formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
 export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';
 export { isValidDownloadUrl, validateUrl, validateDownloadConfig } from './utils/validators';
+export { clickOutside } from './utils/click-outside';
 export {
     DownloadStateGroups,
     isActiveTask,
@@ -26,7 +27,7 @@ export {
 // Stores
 export {
     activeTasks,
-    completedTasks,
+    completeTasks,
     allTasks,
     downloadStats,
     addDownloadTask,

@@ -8,13 +8,13 @@ import type { DownloadState } from '$lib/types/download';
  */
 export const DownloadStateGroups = {
     /** 活跃任务：进行中、等待中、已暂停 */
-    ACTIVE: ['downloading', 'waiting', 'paused'] as const,
+    ACTIVE: ['active', 'waiting', 'paused'] as const,
     /** 已完成任务 */
-    COMPLETED: ['completed'] as const,
-    /** 可恢复任务：已暂停、已取消 */
-    RESUMABLE: ['paused', 'cancelled'] as const,
-    /** 可删除任务：已完成、已取消、错误 */
-    REMOVABLE: ['completed', 'cancelled', 'error'] as const,
+    COMPLETED: ['complete'] as const,
+    /** 可恢复任务：已暂停、已移除 */
+    RESUMABLE: ['paused', 'removed'] as const,
+    /** 可删除任务：已完成、已移除、错误 */
+    REMOVABLE: ['complete', 'removed', 'error'] as const,
 } as const;
 
 /**
@@ -28,7 +28,7 @@ export function isActiveTask(state: DownloadState): boolean {
  * 判断是否为已完成任务
  */
 export function isCompletedTask(state: DownloadState): boolean {
-    return state === 'completed';
+    return state === 'complete';
 }
 
 /**
@@ -49,7 +49,7 @@ export function isPausedTask(state: DownloadState): boolean {
  * 判断是否为下载中任务
  */
 export function isDownloadingTask(state: DownloadState): boolean {
-    return state === 'downloading';
+    return state === 'active';
 }
 
 /**
@@ -67,10 +67,10 @@ export function isErrorTask(state: DownloadState): boolean {
 }
 
 /**
- * 判断是否为已取消任务
+ * 判断是否为已移除任务
  */
 export function isCancelledTask(state: DownloadState): boolean {
-    return state === 'cancelled';
+    return state === 'removed';
 }
 
 /**
@@ -88,8 +88,8 @@ export function isResumableTask(state: DownloadState): boolean {
 }
 
 /**
- * 判断是否为终态任务（已完成、已取消、错误、缺失）
+ * 判断是否为终态任务（已完成、已移除、错误、缺失）
  */
 export function isTerminalTask(state: DownloadState): boolean {
-    return ['completed', 'cancelled', 'error', 'missing'].includes(state);
+    return ['complete', 'removed', 'error', 'missing'].includes(state);
 }
