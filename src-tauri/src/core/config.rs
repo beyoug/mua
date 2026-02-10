@@ -118,7 +118,10 @@ pub fn load_config(app: &AppHandle) -> AppConfig {
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(mut config) = serde_json::from_str::<AppConfig>(&content) {
-                    log::info!("[Config] Successfully loaded from disk. startMinimized: {}", config.start_minimized);
+                    log::info!(
+                        "[Config] Successfully loaded from disk. startMinimized: {}",
+                        config.start_minimized
+                    );
                     // Ensure secret exists
                     if config.rpc_secret.is_none() {
                         let secret = uuid::Uuid::new_v4().to_string();

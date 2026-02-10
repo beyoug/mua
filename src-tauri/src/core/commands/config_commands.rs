@@ -30,7 +30,7 @@ pub async fn save_app_config(
         "max-concurrent-downloads".to_string(),
         serde_json::Value::String(config.max_concurrent_downloads.to_string()),
     );
-    
+
     if !config.global_max_download_limit.is_empty() {
         options.insert(
             "max-download-limit".to_string(),

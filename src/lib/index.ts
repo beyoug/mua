@@ -31,6 +31,7 @@ export {
     allTasks,
     downloadStats,
     addDownloadTask,
+    addBatchDownloadTasks,
     pauseTask,
     resumeTask,
     cancelTask,

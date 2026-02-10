@@ -6,14 +6,20 @@ use tauri::{AppHandle, Manager};
 
 #[tauri::command]
 pub async fn get_aria2_config_path(app: AppHandle) -> AppResult<String> {
-    let config_dir = app.path().app_config_dir().map_err(|e| AppError::config(e.to_string()))?;
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
     let path = config_dir.join("aria2.conf");
     Ok(path.to_string_lossy().to_string())
 }
 
 #[tauri::command]
 pub async fn read_aria2_config(app: AppHandle) -> AppResult<String> {
-    let config_dir = app.path().app_config_dir().map_err(|e| AppError::config(e.to_string()))?;
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
     let path = config_dir.join("aria2.conf");
 
     if path.exists() {
@@ -25,7 +31,10 @@ pub async fn read_aria2_config(app: AppHandle) -> AppResult<String> {
 
 #[tauri::command]
 pub async fn import_aria2_config(app: AppHandle, path: String) -> AppResult<String> {
-    let config_dir = app.path().app_config_dir().map_err(|e| AppError::config(e.to_string()))?;
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
 
     if !config_dir.exists() {
         std::fs::create_dir_all(&config_dir)?;
@@ -44,7 +53,10 @@ pub async fn import_custom_binary(app: AppHandle, file_path: String) -> AppResul
     use std::path::Path;
 
     // 1. 准备目标路径
-    let config_dir = app.path().app_config_dir().map_err(|e| AppError::config(e.to_string()))?;
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
     let bin_dir = config_dir.join("custom-bin");
     if !bin_dir.exists() {
         std::fs::create_dir_all(&bin_dir)?;
@@ -88,7 +100,9 @@ pub async fn import_custom_binary(app: AppHandle, file_path: String) -> AppResul
     let stdout = String::from_utf8_lossy(&output.stdout);
     if !stdout.contains("aria2 version") {
         let _ = std::fs::remove_file(&target_path);
-        return Err(AppError::validation("验证失败：不是有效的 aria2 二进制文件"));
+        return Err(AppError::validation(
+            "验证失败：不是有效的 aria2 二进制文件",
+        ));
     }
 
     let version_line = stdout.lines().next().unwrap_or("Unknown");
@@ -107,7 +121,10 @@ pub struct Aria2VersionInfo {
 
 #[tauri::command]
 pub async fn get_aria2_version_info(app: AppHandle) -> AppResult<Aria2VersionInfo> {
-    let config_dir = app.path().app_config_dir().map_err(|e| AppError::config(e.to_string()))?;
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
     let target_name = if cfg!(windows) {
         "aria2c.exe"
     } else {

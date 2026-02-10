@@ -4,6 +4,7 @@ import {
     cancelTask,
     cancelTasks,
     addDownloadTask,
+    addBatchDownloadTasks,
     resumeTask,
     isActiveTask,
     isCompletedTask,
@@ -164,8 +165,12 @@ export class TaskController {
     /**
      * 添加下载任务并自动跳转至进行中
      */
-    handleAddTask(config: DownloadConfig) {
-        addDownloadTask(config);
+    async handleAddTask(config: DownloadConfig | DownloadConfig[]) {
+        if (Array.isArray(config)) {
+            await addBatchDownloadTasks(config);
+        } else {
+            await addDownloadTask(config);
+        }
         this.handleNavChange('active');
     }
 

@@ -11,6 +11,7 @@ use ui::tray::update_tray_icon_with_speed;
 
 pub fn run() {
     tauri::Builder::default()
+        .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
         .plugin(tauri_plugin_shell::init())
@@ -41,6 +42,7 @@ pub fn run() {
         })
         .invoke_handler(tauri::generate_handler![
             add_download_task,
+            add_download_tasks,
             get_tasks,
             pause_task,
             resume_task,

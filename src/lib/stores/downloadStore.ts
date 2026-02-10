@@ -25,6 +25,7 @@ import {
 import {
     getTasks,
     addDownloadTask as addDownloadTaskCmd,
+    addDownloadTasksCmd,
     pauseTask as pauseTaskCmd,
     resumeTask as resumeTaskCmd,
     cancelTaskCmd,
@@ -237,6 +238,57 @@ export async function addDownloadTask(config: DownloadConfig): Promise<void> {
         });
     } catch (e) {
         console.error('添加任务失败:', e);
+        throw e;
+    }
+}
+
+/**
+ * 批量添加下载任务
+ */
+export async function addBatchDownloadTasks(configs: DownloadConfig[]): Promise<void> {
+    try {
+        const results = await addDownloadTasksCmd(configs);
+
+        updateTasks(tasks => {
+            const newTasks: DownloadTask[] = [];
+
+            for (let i = 0; i < configs.length; i++) {
+                const gid = results[i];
+                if (!gid) continue;
+
+                // Prevent duplicates
+                if (tasks.some(t => t.id === gid) || newTasks.some(t => t.id === gid)) continue;
+
+                const config = configs[i];
+                const primaryUrl = config.urls[0] || '';
+
+                const newTask: DownloadTask = {
+                    id: gid,
+                    filename: config.filename || extractFilenameFromUrl(primaryUrl),
+                    url: primaryUrl,
+                    progress: 0,
+                    speed: { value: '0', unit: 'B/s' },
+                    speed_u64: 0,
+                    downloaded: '0 B',
+                    downloaded_u64: 0,
+                    total: '?',
+                    total_u64: 0,
+                    remaining: '',
+                    state: 'waiting',
+                    addedAt: formatAddedAt(),
+                    savePath: config.savePath || '',
+                    userAgent: config.userAgent,
+                    referer: config.referer,
+                    proxy: config.proxy,
+                    maxDownloadLimit: config.maxDownloadLimit,
+                    headers: config.headers ? config.headers.split(';').map(h => h.trim()).filter(h => h !== '') : []
+                };
+                newTasks.push(newTask);
+            }
+            return [...tasks, ...newTasks];
+        });
+    } catch (e) {
+        console.error('Batch add failed:', e);
         throw e;
     }
 }

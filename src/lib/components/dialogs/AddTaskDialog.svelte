@@ -3,29 +3,36 @@
   添加下载任务对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown } from '@lucide/svelte';
+	import { X, Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown, Layers, FileJson } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-	import { fade } from 'svelte/transition';
+    // @ts-ignore
+	import { confirm } from '@tauri-apps/plugin-dialog';
+	import { fade, slide } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
 	import { isValidDownloadUrl, validateUrl } from '$lib';
 	import { appSettings, saveAppSettings } from '$lib/stores/settings';
 	import BaseModal from '../common/BaseModal.svelte';
 	import UaSelector from './UaSelector.svelte';
-
-
+    import BatchImportPanel from './BatchImportPanel.svelte';
+    import type { ParsedTask } from '$lib/utils/imports/types';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
-		onSubmit?: (config: DownloadConfig) => void;
+		onSubmit?: (config: DownloadConfig | DownloadConfig[]) => void;
 	}
 
 	let { open, onClose, onSubmit }: Props = $props();
 
-	// 基础设置
+    // Tab 状态
+    let activeTab = $state<'normal' | 'batch'>('normal');
+
+	// 基础设置 (Normal Tab)
 	let urls = $state('');
 	let savePath = $state($appSettings.defaultSavePath || '~/Downloads');
 	let filename = $state('');
+
+
 
 	// 高级设置管理
 	let showAdvanced = $state(false);
@@ -42,42 +49,62 @@
 	let validationError = $state<string>('');
 	let validationTimer: ReturnType<typeof setTimeout> | null = null;
 
-
-
 	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
-	const canSubmit = $derived(isValidDownloadUrl(urls.trim()));
+    // 普通模式提交条件：URL 非空且验证通过
+	const canSubmitNormal = $derived(!validateInputUrls(urls));
+    
     const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
 
 	let uaSelectorRef = $state<UaSelector>();
 	let isSubmitting = $state(false);
 
+    // 验证多行 URL
+    function validateInputUrls(input: string): string {
+        if (!input.trim()) return ''; // 空时不报错，但 disable button
+        
+        const lines = input.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length === 0) return '';
+        
+        for (let i = 0; i < lines.length; i++) {
+            if (!isValidDownloadUrl(lines[i])) {
+                return lines.length > 1 ? `第 ${i + 1} 行链接无效` : '无效的链接格式';
+            }
+        }
+        return '';
+    }
+
 	async function handleSubmit() {
 		if (isSubmitting) return;
-		isSubmitting = true;
-
-		const error = validateUrl(urls);
-		validationError = error;
-		if (error) {
-			isSubmitting = false;
+        
+        const error = validateInputUrls(urls);
+		if (error || !urls.trim()) {
+            validationError = error || '请输入下载链接';
 			return;
-		}
+        }
+
+		isSubmitting = true;
 		
-		const trimmedUrl = urls.trim();
 		try {
             const limitStr = String(maxDownloadLimitValue || '').trim();
             const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
             const finalUa = effectiveUserAgent;
+            
+            const lines = urls.split('\n').map(l => l.trim()).filter(l => l);
+            const isMulti = lines.length > 1;
 			
-			onSubmit?.({
-				urls: [trimmedUrl],
-				savePath,
-				filename,
-				userAgent: finalUa,
-				referer,
-				headers,
-				proxy,
-				maxDownloadLimit: limit
-			});
+            const configs: DownloadConfig[] = lines.map(url => ({
+                urls: [url],
+                savePath,
+                // 如果是多任务，忽略手动输入的文件名，使用自动推断；单任务则使用输入值
+                filename: isMulti ? '' : filename,
+                userAgent: finalUa,
+                referer,
+                headers,
+                proxy,
+                maxDownloadLimit: limit
+            }));
+
+			onSubmit?.(configs); // TaskController 现在支持数组
 
             if (finalUa && uaSelectorRef && !uaSelectorRef.isBuiltinUa(finalUa)) {
                 let history = [...($appSettings.uaHistory || [])];
@@ -96,8 +123,37 @@
 		}
 	}
 
+    function handleBatchSubmit(tasks: ParsedTask[]) {
+        if (isSubmitting) return;
+        isSubmitting = true;
+
+        try {
+            const configs: DownloadConfig[] = tasks.map(t => ({
+                urls: [t.url],
+                savePath,
+                filename: t.filename,
+                userAgent: t.userAgent,
+                referer: t.referer,
+                // headers 转换为 string
+                headers: t.headers ? Object.entries(t.headers).map(([k, v]) => `${k}: ${v}`).join('\n') : undefined,
+                proxy: t.proxy
+            }));
+
+            onSubmit?.(configs);
+            resetForm();
+            onClose();
+        } catch (e) {
+            console.error('Batch submit failed', e);
+        } finally {
+            isSubmitting = false;
+        }
+    }
+
 	function resetForm() {
+        activeTab = 'normal';
 		urls = '';
+        // batchContent = '';
+        // batchError = '';
         savePath = $appSettings.defaultSavePath || '~/Downloads';
 		filename = '';
 		selectedUaValue = '';
@@ -124,7 +180,6 @@
 	}
 
     function openAdvanced() {
-        // 进入高级设置前记录快照，用于取消时还原
         advancedSnapshot = {
             selectedUaValue,
             customUserAgent,
@@ -139,7 +194,6 @@
 
     function handleBack() {
         if (advancedSnapshot) {
-            // 还原到进入前的状态
             selectedUaValue = advancedSnapshot.selectedUaValue;
             customUserAgent = advancedSnapshot.customUserAgent;
             referer = advancedSnapshot.referer;
@@ -152,7 +206,6 @@
         showAdvanced = false;
     }
 
-	// 清理定时器
 	$effect(() => {
 		return () => {
 			if (validationTimer) clearTimeout(validationTimer);
@@ -164,8 +217,17 @@
 			clearTimeout(validationTimer);
 			validationTimer = null;
 		}
+        
+        // 格式化：去除每行首尾空格，去除空行
+        if (urls) {
+            urls = urls.split('\n')
+                .map(l => l.trim())
+                .filter(l => l)
+                .join('\n');
+        }
+
 		if (urls.trim()) {
-			validationError = validateUrl(urls);
+			validationError = validateInputUrls(urls);
 		} else {
 			validationError = '';
 		}
@@ -173,9 +235,10 @@
 
 	function handleUrlInput() {
 		if (validationTimer) clearTimeout(validationTimer);
+        // 简单防抖
 		validationTimer = setTimeout(() => {
 			if (urls.trim()) {
-				validationError = validateUrl(urls);
+				validationError = validateInputUrls(urls);
 			} else {
 				validationError = '';
 			}
@@ -187,84 +250,114 @@
     {open} 
     onClose={onClose} 
     size="md" 
-    minHeight="480px"
+    minHeight="520px"
     showClose={!showAdvanced}
     closeOnClickOutside={false}
     closeOnEscape={false}
 >
     {#snippet header()}
-        {#if !showAdvanced}
-            <h2 class="modal-title">添加下载任务</h2>
-        {:else}
-            <div class="advanced-header">
-                <button class="back-link" onclick={handleBack}>
-                    <ArrowLeft size={18} />
-                </button>
-                <div class="breadcrumb">
-                    <span class="crumb-parent">添加下载任务</span>
-                    <ChevronRight size={14} class="crumb-sep" />
-                    <span class="crumb-current">高级设置</span>
+        <div class="header-container">
+            {#if !showAdvanced}
+                <div class="tabs">
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'normal'} 
+                        onclick={() => activeTab = 'normal'}
+                    >
+                        <Link size={16} />
+                        <span>添加链接</span>
+                    </button>
+                    <button 
+                        class="tab-btn" 
+                        class:active={activeTab === 'batch'} 
+                        onclick={() => activeTab = 'batch'}
+                    >
+                        <Layers size={16} />
+                        <span>批量导入</span>
+                    </button>
                 </div>
-            </div>
-        {/if}
+            {:else}
+                <div class="advanced-header">
+                    <button class="back-link" onclick={handleBack}>
+                        <ArrowLeft size={18} />
+                    </button>
+                    <div class="breadcrumb">
+                        <span class="crumb-parent">{activeTab === 'normal' ? '添加链接' : '批量导入'}</span>
+                        <ChevronRight size={14} class="crumb-sep" />
+                        <span class="crumb-current">高级设置</span>
+                    </div>
+                </div>
+            {/if}
+        </div>
     {/snippet}
 
     <div class="modal-content-stack">
         {#if !showAdvanced}
             <!-- 主面板 -->
             <div class="view-main" in:fade={{ duration: 150 }}>
-                <div class="dialog-body">
-                    <!-- 下载链接 -->
-                    <div class="form-group">
-                        <label for="urls">
-                            <Link size={14} />
-                            <span>下载链接</span>
-                            {#if validationError}
-                                <span class="error-inline">
-                                    <AlertCircle size={12} />
-                                    {validationError}
-                                </span>
-                            {/if}
-                        </label>
-                        <textarea
-                            id="urls"
-                            placeholder="输入单个下载 URL（支持 http/https/ftp 协议）"
-                            bind:value={urls}
-                            oninput={handleUrlInput}
-                            onblur={handleUrlBlur}
-                            class:error={!!validationError}
-                        ></textarea>
+                
+                {#if activeTab === 'normal'}
+                    <!-- 普通模式: URL 输入 -->
+                    <div class="dialog-body" in:fade={{ duration: 150 }}>
+                        <!-- 下载链接 -->
+                        <div class="form-group">
+                            <label for="urls">
+                                <Link size={14} />
+                                <span>下载链接 (每行一个)</span>
+                                {#if validationError}
+                                    <span class="error-inline">
+                                        <AlertCircle size={12} />
+                                        {validationError}
+                                    </span>
+                                {/if}
+                            </label>
+                            <textarea
+                                id="urls"
+                                placeholder="输入下载链接，支持多行批量添加"
+                                bind:value={urls}
+                                oninput={handleUrlInput}
+                                onblur={handleUrlBlur}
+                                class:error={!!validationError}
+                            ></textarea>
+                        </div>
+
+                        <!-- 保存位置 -->
+                        <div class="form-group">
+                            <label>
+                                <FolderOpen size={14} />
+                                <span>保存位置</span>
+                            </label>
+                            <button class="path-selector" onclick={selectFolder}>
+                                <span class="path-text">{savePath}</span>
+                                <FolderOpen size={14} />
+                            </button>
+                        </div>
+
+                        <!-- 保存文件名 -->
+                        <div class="form-group">
+                            <label>
+                                <FileText size={14} />
+                                <span>保存文件名</span>
+                            </label>
+                            <input
+                                type="text"
+                                class="text-input"
+                                placeholder="留空则使用原始文件名"
+                                bind:value={filename}
+                            />
+                        </div>
                     </div>
 
-                    <!-- 保存位置 -->
-                    <div class="form-group">
-                        <label>
-                            <FolderOpen size={14} />
-                            <span>保存位置</span>
-                        </label>
-                        <button class="path-selector" onclick={selectFolder}>
-                            <span class="path-text">{savePath}</span>
-                            <FolderOpen size={14} />
-                        </button>
+                {:else}
+                    <!-- 批量模式: 文件导入面板 -->
+                    <div class="dialog-body h-full" in:fade={{ duration: 150 }}>
+                        <BatchImportPanel onsubmit={handleBatchSubmit} />
                     </div>
+                {/if}
 
-                    <!-- 保存文件名 -->
-                    <div class="form-group">
-                        <label>
-                            <FileText size={14} />
-                            <span>保存文件名</span>
-                        </label>
-                        <input
-                            type="text"
-                            class="text-input"
-                            placeholder="留空则使用原始文件名"
-                            bind:value={filename}
-                        />
-                    </div>
-                </div>
             </div>
         {:else}
-            <!-- 高级设置面板 -->
+            <!-- 高级设置面板 (仅对 Normal 模式有效，因为 Batch 模式直接解析) -->
             <div class="advanced-panel" in:fade={{ duration: 150 }}>
                 <div class="panel-body">
                     <div class="form-row">
@@ -345,22 +438,27 @@
     {#snippet footer()}
         {#if !showAdvanced}
             <div class="footer-layout">
-                <button class="btn-ghost" onclick={openAdvanced}>
-                    <Settings size={14} />
-                    <span>高级设置</span>
-                </button>
-                <button 
-                    class="btn-primary" 
-                    onclick={handleSubmit}
-                    disabled={!canSubmit || isSubmitting}
-                >
-                    {#if isSubmitting}
-                        <span>提交中...</span>
-                    {:else}
-                        <Download size={14} />
-                        <span>开始下载</span>
-                    {/if}
-                </button>
+                {#if activeTab === 'normal'}
+                    <button class="btn-ghost" onclick={openAdvanced}>
+                        <Settings size={14} />
+                        <span>高级设置</span>
+                    </button>
+                    <button 
+                        class="btn-primary" 
+                        onclick={handleSubmit}
+                        disabled={!canSubmitNormal || isSubmitting}
+                    >
+                        {#if isSubmitting}
+                            <span>提交中...</span>
+                        {:else}
+                            <Download size={14} />
+                            <span>开始下载</span>
+                        {/if}
+                    </button>
+                {:else}
+                     <!-- Batch Mode Footer 由组件自己管理，这里只需要占位或者空 -->
+                     <!-- 如果需要统一关闭按钮也可以放 -->
+                {/if}
             </div>
         {:else}
             <button 
@@ -375,12 +473,46 @@
 </BaseModal>
 
 <style>
-    .modal-title {
-		font-size: 16px;
-		font-weight: 600;
-		color: var(--text-primary);
-		margin: 0;
-	}
+    .header-container {
+        display: flex;
+        align-items: center;
+        width: 100%;
+    }
+
+    /* Tabs 样式 */
+    .tabs {
+        display: flex;
+        gap: 4px;
+        background: var(--surface-bg, rgba(0, 0, 0, 0.05));
+        padding: 4px;
+        border-radius: 10px;
+    }
+
+    .tab-btn {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 12px;
+        border: none;
+        background: transparent;
+        color: var(--text-secondary);
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .tab-btn:hover {
+        color: var(--text-primary);
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    .tab-btn.active {
+        background: var(--glass-bg); /* 高亮背景 */
+        color: var(--accent-primary);
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    }
 
     .advanced-header {
         display: flex;
@@ -424,6 +556,7 @@
         grid-template-rows: 1fr;
         grid-template-columns: 1fr;
         flex: 1;
+        min-height: 0; /* 防止溢出 */
     }
 
     .view-main, .advanced-panel {
@@ -432,18 +565,26 @@
         display: flex;
         flex-direction: column;
         gap: 20px;
+        height: 100%; /* 填满父容器 */
     }
 
     .dialog-body, .panel-body {
         display: flex;
         flex-direction: column;
         gap: 16px;
+        flex: 1; /* 允许扩展 */
     }
 
     .form-group, .form-row {
         display: flex;
         flex-direction: column;
         gap: 8px;
+    }
+
+    .form-group.full-height {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
     }
 
     .form-group label, .form-row label {
@@ -499,6 +640,8 @@
         justify-content: space-between;
         align-items: center;
     }
+
+
 
     .btn-primary {
         display: flex;
@@ -564,8 +707,6 @@
         font-family: var(--font-mono, monospace);
         line-height: 1.5;
     }
-
-
 
     .input-group {
         display: flex;

@@ -114,7 +114,7 @@
 
 	// ============ Event Handlers ============
 
-	function handleAddTask(config: DownloadConfig) {
+	function handleAddTask(config: DownloadConfig | DownloadConfig[]) {
 		controller.handleAddTask(config);
         showAddDialog = false;
 	}

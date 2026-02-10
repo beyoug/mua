@@ -3,7 +3,7 @@
 
 use crate::aria2::client as aria2_client;
 use crate::core::error::{AppError, AppResult};
-use crate::core::types::TaskState;
+use crate::core::types::{DownloadConfig, TaskState};
 use crate::utils;
 use futures::future::join_all;
 use tauri::AppHandle;
@@ -25,51 +25,88 @@ pub async fn add_download_task(
     proxy: Option<String>,
     max_download_limit: Option<String>,
 ) -> AppResult<String> {
-    log::info!("add_download_task called with urls: {:?}", urls);
+    let config = DownloadConfig {
+        urls,
+        save_path,
+        filename,
+        user_agent,
+        referer,
+        headers,
+        proxy,
+        max_download_limit,
+    };
+    add_download_task_inner(&state, config).await
+}
 
-    // 验证
-    for url in &urls {
+#[tauri::command]
+pub async fn add_download_tasks(
+    state: tauri::State<'_, TaskStore>,
+    configs: Vec<DownloadConfig>,
+) -> AppResult<Vec<Option<String>>> {
+    let futures = configs
+        .into_iter()
+        .map(|cfg| add_download_task_inner(&state, cfg));
+
+    // 并发执行添加
+    let results = join_all(futures).await;
+
+    let mut gids = Vec::new();
+    let mut errors = Vec::new();
+
+    for res in results {
+        match res {
+            Ok(gid) => gids.push(Some(gid)),
+            Err(e) => {
+                errors.push(e.to_string());
+                gids.push(None);
+            }
+        }
+    }
+
+    if !errors.is_empty() {
+        log::warn!("批量添加遇到 {} 个错误: {:?}", errors.len(), errors);
+    }
+
+    Ok(gids)
+}
+
+async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppResult<String> {
+    log::info!("Adding download task: {:?}", cfg.urls);
+
+    for url in &cfg.urls {
         if !utils::is_valid_url(url) {
             return Err(AppError::validation(format!("无效的 URL: {}", url)));
         }
     }
 
-    // 1. 构建选项（使用 utils 中的辅助函数）
-    let deduced_name = utils::deduce_filename(filename.clone(), &urls);
+    let deduced_name = utils::deduce_filename(cfg.filename.clone(), &cfg.urls);
 
-    // 智能文件名解析
-    let resolved_save_path = if let Some(ref path) = save_path {
+    let resolved_save_path = if let Some(ref path) = cfg.save_path {
         utils::resolve_path(path)
     } else {
         ".".to_string()
     };
 
-    // 获取活跃文件名以防止与正在运行的任务冲突
     let active_names = state.get_active_filenames();
-
-    // 生成唯一名称
     let unique_filename =
         utils::get_unique_filename(&resolved_save_path, &deduced_name, &active_names);
 
-    // 现在构建 aria2 选项，强制 'out' 为 unique_filename
     let (options, final_save_path) = utils::build_aria2_options(
-        save_path,
+        cfg.save_path,
         Some(unique_filename.clone()),
-        user_agent.clone(),
-        referer.clone(),
-        headers.clone(),
-        proxy.clone(),
-        max_download_limit.clone(),
+        cfg.user_agent.clone(),
+        cfg.referer.clone(),
+        cfg.headers.clone(),
+        cfg.proxy.clone(),
+        cfg.max_download_limit.clone(),
     );
 
-    // 调用 Aria2
-    match aria2_client::add_uri(urls.clone(), Some(options)).await {
+    match aria2_client::add_uri(cfg.urls.clone(), Some(options)).await {
         Ok(gid) => {
-            // 持久化到存储 (Store)
             let task = PersistedTask {
                 gid: gid.clone(),
                 filename: unique_filename,
-                url: urls.get(0).cloned().unwrap_or_default(),
+                url: cfg.urls.get(0).cloned().unwrap_or_default(),
                 save_path: final_save_path,
                 added_at: Local::now().to_rfc3339(),
                 state: TaskState::Waiting,
@@ -78,16 +115,17 @@ pub async fn add_download_task(
                 download_speed: "0 B/s".to_string(),
                 completed_at: None,
                 error_message: "".to_string(),
-                user_agent: user_agent.unwrap_or_default(),
-                referer: referer.unwrap_or_default(),
-                proxy: proxy.unwrap_or_default(),
-                headers: headers
+                user_agent: cfg.user_agent.unwrap_or_default(),
+                referer: cfg.referer.unwrap_or_default(),
+                proxy: cfg.proxy.unwrap_or_default(),
+                headers: cfg
+                    .headers
                     .unwrap_or_default()
                     .split(|c| c == ';' || c == '\n')
                     .filter(|s| !s.trim().is_empty())
                     .map(|s| s.trim().to_string())
                     .collect(),
-                max_download_limit: max_download_limit.unwrap_or_default(),
+                max_download_limit: cfg.max_download_limit.unwrap_or_default(),
             };
             state.add_task(task);
             Ok(gid)

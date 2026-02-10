@@ -21,6 +21,18 @@
       ]
     },
     "notification:default",
-    "process:default"
+    "process:default",
+    "fs:default",
+    {
+      "identifier": "fs:allow-read-text-file",
+      "allow": [
+        {
+          "path": "$HOME/**"
+        },
+        {
+          "path": "$DOWNLOAD/**"
+        }
+      ]
+    }
   ]
 }

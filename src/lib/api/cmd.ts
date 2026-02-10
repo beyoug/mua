@@ -32,6 +32,13 @@ export async function addDownloadTask(config: DownloadConfig): Promise<string> {
 }
 
 /**
+ * 批量添加下载任务
+ */
+export async function addDownloadTasksCmd(configs: DownloadConfig[]): Promise<(string | null)[]> {
+    return invoke<(string | null)[]>('add_download_tasks', { configs });
+}
+
+/**
  * 暂停任务
  */
 export async function pauseTask(gid: string): Promise<string> {

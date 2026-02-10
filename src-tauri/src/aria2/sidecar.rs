@@ -255,12 +255,12 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     CommandEvent::Stdout(line) => {
                         let log = String::from_utf8_lossy(&line);
                         let log_trimmed = log.trim();
-                        
+
                         // 跳过空行
                         if log_trimmed.is_empty() {
                             continue;
                         }
-                        
+
                         if log_trimmed.contains("Serialized session to") {
                             log::debug!("Aria2 stdout: {}", log_trimmed);
                         } else {

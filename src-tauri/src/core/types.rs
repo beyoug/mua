@@ -101,3 +101,17 @@ impl From<String> for TaskState {
         Self::from(s.as_str())
     }
 }
+
+/// 下载任务配置（用于前端传参）
+#[derive(Debug, Deserialize, Serialize, Clone)]
+#[serde(rename_all = "camelCase")]
+pub struct DownloadConfig {
+    pub urls: Vec<String>,
+    pub save_path: Option<String>,
+    pub filename: Option<String>,
+    pub user_agent: Option<String>,
+    pub referer: Option<String>,
+    pub headers: Option<String>,
+    pub proxy: Option<String>,
+    pub max_download_limit: Option<String>,
+}

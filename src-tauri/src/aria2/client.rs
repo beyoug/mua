@@ -105,20 +105,28 @@ where
         .map_err(|e| AppError::aria2(e.to_string()))?;
 
     if !response.status().is_success() {
-        return Err(AppError::aria2(format!("HTTP Error: {}", response.status())));
+        return Err(AppError::aria2(format!(
+            "HTTP Error: {}",
+            response.status()
+        )));
     }
 
-    let body: Value = response.json().await.map_err(|e| AppError::aria2(e.to_string()))?;
+    let body: Value = response
+        .json()
+        .await
+        .map_err(|e| AppError::aria2(e.to_string()))?;
 
     if let Some(error) = body.get("error") {
         return Err(AppError::aria2(error.to_string()));
     }
 
     if let Some(result) = body.get("result") {
-        serde_json::from_value(result.clone()).map_err(|e| AppError::aria2(format!("Failed to parse result: {}", e)))
+        serde_json::from_value(result.clone())
+            .map_err(|e| AppError::aria2(format!("Failed to parse result: {}", e)))
     } else {
         // Void 返回通常只是 null 或 "OK"，具体取决于方法，但对于 JSON-RPC 2.0，成功时必须包含 result。
-        serde_json::from_value(Value::Null).map_err(|e| AppError::aria2(format!("Missing result: {}", e)))
+        serde_json::from_value(Value::Null)
+            .map_err(|e| AppError::aria2(format!("Missing result: {}", e)))
     }
 }
 
@@ -178,7 +186,10 @@ pub async fn get_all_tasks() -> AppResult<Vec<Aria2Task>> {
     match client.post(&url).json(&payload).send().await {
         Ok(response) => {
             if response.status().is_success() {
-                let body: Value = response.json().await.map_err(|e| AppError::aria2(e.to_string()))?;
+                let body: Value = response
+                    .json()
+                    .await
+                    .map_err(|e| AppError::aria2(e.to_string()))?;
 
                 if let Some(results) = body.get("result") {
                     if let Some(results_array) = results.as_array() {
@@ -209,7 +220,10 @@ pub async fn get_all_tasks() -> AppResult<Vec<Aria2Task>> {
                     Err(AppError::aria2("Unknown response format"))
                 }
             } else {
-                Err(AppError::aria2(format!("HTTP Error: {}", response.status())))
+                Err(AppError::aria2(format!(
+                    "HTTP Error: {}",
+                    response.status()
+                )))
             }
         }
         Err(e) => Err(AppError::aria2(e.to_string())),
@@ -220,11 +234,7 @@ pub async fn tell_active(keys: Vec<&str>) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>("aria2.tellActive", vec![json!(keys)]).await
 }
 
-pub async fn tell_waiting(
-    offset: usize,
-    num: usize,
-    keys: Vec<&str>,
-) -> AppResult<Vec<Aria2Task>> {
+pub async fn tell_waiting(offset: usize, num: usize, keys: Vec<&str>) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>(
         "aria2.tellWaiting",
         vec![json!(offset), json!(num), json!(keys)],
@@ -232,11 +242,7 @@ pub async fn tell_waiting(
     .await
 }
 
-pub async fn tell_stopped(
-    offset: usize,
-    num: usize,
-    keys: Vec<&str>,
-) -> AppResult<Vec<Aria2Task>> {
+pub async fn tell_stopped(offset: usize, num: usize, keys: Vec<&str>) -> AppResult<Vec<Aria2Task>> {
     send_rpc_request::<Vec<Aria2Task>>(
         "aria2.tellStopped",
         vec![json!(offset), json!(num), json!(keys)],
