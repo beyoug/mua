@@ -4,8 +4,7 @@
 
 // Utils
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
-export { formatSpeed, formatAddedAt, extractFilenameFromUrl, formatBytes } from './utils/formatters';
-export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';
+export { formatSpeed, formatAddedAt, extractFilenameFromUrl, formatBytes, formatDuration } from './utils/formatters';
 export { isValidDownloadUrl, isMagnetUrl, validateUrl, validateDownloadConfig } from './utils/validators';
 export { clickOutside } from './utils/click-outside';
 export {
@@ -18,7 +17,6 @@ export {
     isWaitingTask,
     isErrorTask,
     isCancelledTask,
-    isMissingTask,
     isResumableTask,
     isTerminalTask
 } from './utils/downloadStates';

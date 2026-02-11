@@ -74,13 +74,6 @@ export function isCancelledTask(state: DownloadState): boolean {
 }
 
 /**
- * 判断是否为文件缺失任务
- */
-export function isMissingTask(state: DownloadState): boolean {
-    return state === 'missing';
-}
-
-/**
  * 判断是否为可恢复任务（暂停、取消、错误）
  */
 export function isResumableTask(state: DownloadState): boolean {

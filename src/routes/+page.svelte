@@ -52,7 +52,6 @@
 			const interval = setInterval(() => {
 				// 如果超过 300ms 没有收到 drag-over 事件，认为拖拽已结束
 				if (Date.now() - lastDragTime > 300) {
-					console.log('[DragDrop] Watchdog reset');
 					isDragOver = false;
 				}
 			}, 100);
@@ -68,21 +67,19 @@
 			try {
 				const { listen } = await import('@tauri-apps/api/event');
 
-				const u1 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-enter', (event) => {
-					console.log('[DragDrop] enter', event.payload);
+				const u1 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-enter', () => {
 					isDragOver = true;
 					lastDragTime = Date.now();
 				});
 				unlisteners.push(u1);
 
-				const u2 = await listen<{ position: { x: number; y: number } }>('tauri://drag-over', (event) => {
+				const u2 = await listen<{ position: { x: number; y: number } }>('tauri://drag-over', () => {
 					// 持续触发，更新时间戳
 					lastDragTime = Date.now();
 				});
 				unlisteners.push(u2);
 
 				const u3 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-drop', (event) => {
-					console.log('[DragDrop] drop', event.payload);
 					isDragOver = false;
 					const paths = event.payload.paths;
 					if (paths && paths.length > 0) {
@@ -92,12 +89,9 @@
 				unlisteners.push(u3);
 
 				const u4 = await listen('tauri://drag-leave', () => {
-					console.log('[DragDrop] leave');
 					isDragOver = false;
 				});
 				unlisteners.push(u4);
-
-				console.log('[DragDrop] All listeners registered');
 			} catch (e) {
 				console.error('[DragDrop] Failed to register handlers:', e);
 			}
@@ -119,7 +113,7 @@
 		// 后台异步解析，不阻塞 UI
 		parseTorrent(path).then(info => {
 			if (info.files.length > 1000) {
-				console.warn('[Torrent] Large file count', info.files.length);
+				console.warn('[Torrent] Large file count:', info.files.length);
 			}
 			pendingTorrentInfo = info;
 		}).catch(e => {
@@ -137,7 +131,6 @@
 	}
 
 	function handleTorrentConfirm(result: TorrentDialogResult) {
-		console.log('[TorrentConfirm] received:', result);
 		const config: DownloadConfig = {
 			urls: [],
 			savePath: result.savePath,

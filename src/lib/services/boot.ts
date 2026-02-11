@@ -8,7 +8,6 @@ import { initNotifications, cleanupNotifications } from '$lib/services/notificat
  * 官方术语：前端生命周期治理服务
  */
 export async function bootApp() {
-    console.log('[Boot] Frontend initialization sequence started...');
 
     try {
         // 1. 环境治理：禁用系统级右键菜单（原子化控制）
@@ -33,11 +32,8 @@ export async function bootApp() {
             );
         });
 
-        console.log('[Boot] Frontend services activated successfully.');
-
         // 返回销毁函数块
         return () => {
-            console.log('[Boot] Cleaning up frontend resources...');
             unlistenSidecar();
             cleanupNotifications();
         };

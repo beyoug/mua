@@ -35,74 +35,6 @@ pub fn show_in_file_manager(path: &str) {
     }
 }
 
-pub fn format_size(bytes: u64) -> String {
-    if bytes == 0 {
-        return "0 B".to_string();
-    }
-    let k = 1024.0;
-    let sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-    let i = (bytes as f64).log(k).floor() as usize;
-    if i >= sizes.len() {
-        return format!("{} {}", bytes, sizes[0]);
-    }
-    format!("{:.2} {}", (bytes as f64) / k.powf(i as f64), sizes[i])
-}
-
-/// 格式化速度为 (数值, 单位) 元组
-/// 例: format_speed(1536) -> ("1.50", "KB/s")
-pub fn format_speed(bytes_per_sec: u64) -> (String, String) {
-    if bytes_per_sec == 0 {
-        return ("0".to_string(), "B/s".to_string());
-    }
-    let k = 1024.0;
-    let sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
-    let i = (bytes_per_sec as f64).log(k).floor() as usize;
-    let unit = if i < sizes.len() {
-        format!("{}/s", sizes[i])
-    } else {
-        "B/s".to_string()
-    };
-    let value = format!("{:.2}", (bytes_per_sec as f64) / k.powf(i as f64));
-    (value, unit)
-}
-
-pub fn format_duration(seconds: u64) -> String {
-    if seconds == 0 {
-        return "".to_string();
-    }
-    // Easter Egg: If > 30 days, just say "Thinking of you" (A long time)
-    if seconds > 2592000 {
-        return "很久很久".to_string();
-    }
-    if seconds >= 86400 {
-        let days = seconds / 86400;
-        let hours = (seconds % 86400) / 3600;
-        if hours > 0 {
-            format!("{}天{}小时", days, hours)
-        } else {
-            format!("{}天", days)
-        }
-    } else if seconds >= 3600 {
-        let hours = seconds / 3600;
-        let mins = (seconds % 3600) / 60;
-        if mins > 0 {
-            format!("{}小时{}分钟", hours, mins)
-        } else {
-            format!("{}小时", hours)
-        }
-    } else if seconds >= 60 {
-        let mins = seconds / 60;
-        let secs = seconds % 60;
-        if secs > 0 {
-            format!("{}分钟{}秒", mins, secs)
-        } else {
-            format!("{}分钟", mins)
-        }
-    } else {
-        format!("{}秒", seconds)
-    }
-}
-
 pub fn get_full_path(save_path: &str, filename: &str) -> String {
     if save_path.is_empty() {
         return resolve_path(filename);
@@ -120,22 +52,6 @@ pub fn is_valid_url(url: &str) -> bool {
         || lower.starts_with("ftp://")
         || lower.starts_with("ftps://")
         || lower.starts_with("magnet:")
-}
-use crate::core::types::TaskState;
-
-/// 将 Aria2 状态映射为应用状态枚举
-pub fn map_status(aria2_status: &str) -> TaskState {
-    TaskState::from_aria2_status(aria2_status)
-}
-
-/// 获取状态排序分数（用于任务列表排序）
-pub fn get_state_score(state: TaskState) -> i32 {
-    state.score()
-}
-
-/// 判断是否为活跃任务状态（下载中、等待中、已暂停）
-pub fn is_active_state(state: TaskState) -> bool {
-    state.is_active()
 }
 
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {

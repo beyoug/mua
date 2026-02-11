@@ -1,42 +1,64 @@
 /**
  * notifications.ts - 系统通知服务
- * 
- * 职责：监听后端事件并发送系统通知
- * 独立于 Store，可在 App 根组件初始化
+ *
+ * 职责：监听任务状态变化并发送系统通知
+ * 通过订阅 store 检测任务完成，不依赖后端事件
  */
 
-import { listen } from '@tauri-apps/api/event';
-import type { UnlistenFn } from '@tauri-apps/api/event';
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import type { DownloadTask } from '$lib/types/download';
+import { allTasks } from '$lib/stores/downloadStore';
 
-let unlistenFn: UnlistenFn | null = null;
+let unsubscribeFn: (() => void) | null = null;
+let previousStates = new Map<string, string>();
+let initialized = false;
 
 /**
  * 初始化通知监听器
- * 应在 App 根组件调用（如 +layout.svelte）
+ * 通过 store 订阅检测任务完成状态变化
  */
 export async function initNotifications(): Promise<void> {
-    if (unlistenFn) return; // 已初始化
+    if (unsubscribeFn) return;
 
-    try {
-        unlistenFn = await listen<DownloadTask>('task-complete', async (event) => {
-            const task = event.payload;
-            await showCompletionNotification(task);
-        });
-    } catch (e) {
-        console.error('Failed to setup notification listener:', e);
-    }
+    unsubscribeFn = allTasks.subscribe((tasks) => {
+        if (!initialized) {
+            // 首次订阅时，初始化状态快照（不触发通知）
+            for (const task of tasks) {
+                previousStates.set(task.id, task.state);
+            }
+            initialized = true;
+            return;
+        }
+
+        // 检测状态变化：非完成 → 完成
+        for (const task of tasks) {
+            const prev = previousStates.get(task.id);
+            if (task.state === 'complete' && prev && prev !== 'complete') {
+                showCompletionNotification(task);
+            }
+            previousStates.set(task.id, task.state);
+        }
+
+        // 清理已移除的任务
+        const currentIds = new Set(tasks.map(t => t.id));
+        for (const id of previousStates.keys()) {
+            if (!currentIds.has(id)) {
+                previousStates.delete(id);
+            }
+        }
+    });
 }
 
 /**
  * 清理通知监听器
  */
 export function cleanupNotifications(): void {
-    if (unlistenFn) {
-        unlistenFn();
-        unlistenFn = null;
+    if (unsubscribeFn) {
+        unsubscribeFn();
+        unsubscribeFn = null;
     }
+    previousStates.clear();
+    initialized = false;
 }
 
 /**

@@ -2,13 +2,6 @@ use crate::core::error::{AppError, AppResult};
 use serde::{Deserialize, Serialize};
 use std::path::Path;
 
-#[derive(Debug, Deserialize)]
-struct Method {
-    // files: Option<Vec<File>>,
-    name: String,
-    // length: Option<i64>,
-}
-
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct TorrentInfo {
     pub name: String,

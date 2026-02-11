@@ -1,6 +1,6 @@
 /**
  * downloadStore.ts - 集中式下载任务状态管理
- * 
+ *
  * 职责：
  * 1. 管理下载任务数组
  * 2. 提供任务 CRUD 操作方法
@@ -74,16 +74,15 @@ function tasksChanged(prev: DownloadTask[], next: DownloadTask[]): boolean {
             p.state !== n.state ||
             p.progress !== n.progress ||
             p.speed !== n.speed ||
-            p.downloaded !== n.downloaded ||
+            p.completed !== n.completed ||
             p.total !== n.total ||
-            p.remaining !== n.remaining
+            p.remainingSecs !== n.remainingSecs
         ) return true;
     }
     return false;
 }
 
 // 后端推送的事件监听器
-// 替换轮询：监听后端 'tasks-update' 事件
 import { listen } from '@tauri-apps/api/event';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 
@@ -138,16 +137,32 @@ if (typeof window !== 'undefined') {
 }
 
 
+// ============ 排序辅助 ============
+
+/** 状态排序分数：活跃任务排在前面 */
+function stateScore(state: DownloadState): number {
+    if (state === 'active' || state === 'waiting' || state === 'paused') return 1;
+    return 0;
+}
+
+/** 按状态分数降序 → 添加时间降序排列 */
+function sortTasks(tasks: DownloadTask[]): DownloadTask[] {
+    return tasks.slice().sort((a, b) => {
+        const sa = stateScore(a.state), sb = stateScore(b.state);
+        if (sa !== sb) return sb - sa;
+        return b.addedAt.localeCompare(a.addedAt);
+    });
+}
+
+
 // ============ 导出的 Derived Stores ============
 
 /**
  * 活跃任务列表（进行中、等待中、已暂停）
- * 后端已经按分数（降序）-> 时间（降序）对任务进行了排序
  */
 export const activeTasks: Readable<DownloadTask[]> = derived(
     { subscribe: subscribeTasks },
-    ($tasks) => $tasks
-        .filter(task => isActiveTask(task.state))
+    ($tasks) => sortTasks($tasks.filter(task => isActiveTask(task.state)))
 );
 
 /**
@@ -157,6 +172,7 @@ export const completeTasks: Readable<DownloadTask[]> = derived(
     { subscribe: subscribeTasks },
     ($tasks) => $tasks
         .filter(task => isCompletedTask(task.state))
+        .sort((a, b) => b.addedAt.localeCompare(a.addedAt))
 );
 
 /**
@@ -164,7 +180,7 @@ export const completeTasks: Readable<DownloadTask[]> = derived(
  */
 export const allTasks: Readable<DownloadTask[]> = derived(
     { subscribe: subscribeTasks },
-    ($tasks) => $tasks
+    ($tasks) => sortTasks($tasks)
 );
 
 /**
@@ -178,9 +194,8 @@ export const downloadStats: Readable<DownloadStats> = derived(
         );
         const completedDownloads = $tasks.filter(d => isCompletedTask(d.state));
 
-        // 计算总速度（使用来自后端的原始 u64 值）
         const totalSpeedBytes = activeDownloads
-            .map(d => d.speed_u64 || 0)
+            .map(d => d.speed || 0)
             .reduce((a, b) => a + b, 0);
 
         return {
@@ -220,13 +235,10 @@ export async function addDownloadTasks(configOrConfigs: DownloadConfig | Downloa
                     filename: config.filename || extractFilenameFromUrl(primaryUrl),
                     url: primaryUrl,
                     progress: 0,
-                    speed: { value: '0', unit: 'B/s' },
-                    speed_u64: 0,
-                    downloaded: '0 B',
-                    downloaded_u64: 0,
-                    total: '?',
-                    total_u64: 0,
-                    remaining: '',
+                    speed: 0,
+                    completed: 0,
+                    total: 0,
+                    remainingSecs: 0,
                     state: 'waiting',
                     addedAt: formatAddedAt(),
                     savePath: config.savePath || '',
@@ -265,7 +277,7 @@ export async function pauseTask(id: string): Promise<void> {
             }
             // 乐观更新
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'paused', speed: { value: '0', unit: 'B/s' }, completedAt: new Date().toISOString() } : t
+                t.id === id ? { ...t, state: 'paused' as DownloadState, speed: 0, completedAt: new Date().toISOString() } : t
             );
         });
 
@@ -293,49 +305,38 @@ export async function resumeTask(id: string): Promise<void> {
         // 锁定状态以防止 UI 闪烁
         addPendingLock(id);
 
-        // 调用后端恢复 - 现在处理智能逻辑（如果需要则自动重新提交）
-        // 如果发生了智能恢复，返回新的 GID；如果是取消暂停，返回 "OK" (gid)。
         const newGid = await resumeTaskCmd(id);
 
         if (newGid && newGid !== id) {
             // 发生了智能恢复：ID 已更改。
-            // 不仅仅是移除旧 ID，我们应该乐观地将其替换为新 ID
-            // 以防止 UI 闪烁（任务消失后又重新出现）。
             updateTasks(tasks => {
                 const oldTask = tasks.find(t => t.id === id);
-                if (!oldTask) return tasks; // 不应该发生
+                if (!oldTask) return tasks;
 
                 const newTask: DownloadTask = {
                     ...oldTask,
                     id: newGid,
-                    state: 'waiting', // 或 downloading
+                    state: 'waiting',
                     progress: 0,
-                    speed: { value: '0', unit: 'B/s' },
-                    speed_u64: 0,
-                    remaining: '',
-                    // 重置统计信息，因为它是一个全新的下载
+                    speed: 0,
+                    remainingSecs: 0,
                 };
 
-                // 用新任务替换旧任务
                 return tasks.map(t => t.id === id ? newTask : t);
             });
 
-            // 锁定新 ID 以防止抖动，直到后端赶上
             addPendingLock(newGid);
-            // 同时删除旧 ID 的锁定，以防万一
             pendingStateChanges.delete(id);
 
         } else {
             // 标准恢复
-            // 乐观更新 - 假设变回 active
             updateTasks(tasks => tasks.map(t =>
-                t.id === id ? { ...t, state: 'active', completedAt: null } : t
+                t.id === id ? { ...t, state: 'active' as DownloadState, completedAt: null } : t
             ));
         }
 
     } catch (e) {
         console.error(`恢复任务 ${id} 失败:`, e);
-        // 如果后端智能恢复也失败，进行错误处理
         pendingStateChanges.delete(id);
     }
 }
@@ -349,7 +350,7 @@ export async function cancelTask(id: string): Promise<void> {
     let originalState: DownloadState | undefined;
 
     try {
-        // 锁定状态以避免抖动 (防止轮询在 Aria2 处理完成前覆盖本地状态)
+        // 锁定状态以避免抖动
         addPendingLock(id);
 
         // 获取原始状态并乐观更新
@@ -359,7 +360,7 @@ export async function cancelTask(id: string): Promise<void> {
                 originalState = task.state;
             }
             return tasks.map(t =>
-                t.id === id ? { ...t, state: 'removed', completedAt: new Date().toISOString() } : t
+                t.id === id ? { ...t, state: 'removed' as DownloadState, completedAt: new Date().toISOString() } : t
             );
         });
 
@@ -385,14 +386,6 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
         const taskToDelete = tasks.find(t => t.id === id);
         if (!taskToDelete) return tasks;
 
-        // 后端 (remove_task_record -> remove_task_inner) 现在处理：
-        // 1. 确定任务是否活跃。
-        // 2. 如果活跃：取消 -> 清理。
-        // 3. 如果不活跃：清理。
-        // 4. 文件删除逻辑。
-        // 所以我们可以直接调用。
-
-        // 如果任务是活跃的，锁定 UI 以防止抖动
         if (isActiveTask(taskToDelete.state)) {
             addPendingLock(id);
         }
@@ -400,11 +393,9 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
         removeTaskRecord(id, deleteFile)
             .catch(e => {
                 console.error("删除任务失败:", e);
-                // 出错时解锁
                 pendingStateChanges.delete(id);
             });
 
-        // 乐观地从本地列表中移除
         return tasks.filter(t => t.id !== id);
     });
 }
@@ -416,7 +407,6 @@ export async function removeTasks(ids: Set<string>, deleteFile: boolean = false)
     const idArray = Array.from(ids);
     try {
         await removeTasksCmd(idArray, deleteFile);
-        // 乐观更新
         updateTasks(tasks => tasks.filter(t => !ids.has(t.id)));
     } catch (e) {
         console.error("Batch remove failed", e);
@@ -428,15 +418,13 @@ export async function removeTasks(ids: Set<string>, deleteFile: boolean = false)
  */
 export async function cancelTasks(ids: Set<string>): Promise<void> {
     const idArray = Array.from(ids);
-    // 锁定状态
     ids.forEach(id => addPendingLock(id));
 
     try {
         await cancelTasksCmd(idArray);
-        // 乐观更新
         updateTasks(tasks => tasks.map(task =>
             ids.has(task.id) && isActiveTask(task.state)
-                ? { ...task, state: 'removed' }
+                ? { ...task, state: 'removed' as DownloadState }
                 : task
         ));
     } catch (e) {
@@ -449,7 +437,6 @@ export async function cancelTasks(ids: Set<string>): Promise<void> {
  * 全局暂停所有下载中的任务
  */
 export async function pauseAll(): Promise<void> {
-    // 保存原始状态用于回滚
     const snapshot = get({ subscribe: subscribeTasks });
     const affectedIds: string[] = [];
 
@@ -461,11 +448,10 @@ export async function pauseAll(): Promise<void> {
                     affectedIds.push(t.id);
                 }
             });
-            // 乐观更新：所有 active -> paused
             const now = new Date().toISOString();
             return tasks.map(t =>
                 (t.state === 'active' || t.state === 'waiting')
-                    ? { ...t, state: 'paused', speed: { value: '0', unit: 'B/s' }, completedAt: now }
+                    ? { ...t, state: 'paused' as DownloadState, speed: 0, completedAt: now }
                     : t
             );
         });
@@ -473,7 +459,6 @@ export async function pauseAll(): Promise<void> {
         await pauseAllTasks();
     } catch (e) {
         console.error("Pause all failed", e);
-        // 回滚到操作前状态
         affectedIds.forEach(id => pendingStateChanges.delete(id));
         setTasks(snapshot);
     }
@@ -483,7 +468,6 @@ export async function pauseAll(): Promise<void> {
  * 全局恢复所有暂停的任务
  */
 export async function resumeAll(): Promise<void> {
-    // 保存原始状态用于回滚
     const snapshot = get({ subscribe: subscribeTasks });
     const affectedIds: string[] = [];
 
@@ -495,10 +479,9 @@ export async function resumeAll(): Promise<void> {
                     affectedIds.push(t.id);
                 }
             });
-            // 乐观更新：所有 paused -> waiting
             return tasks.map(t =>
                 isPausedTask(t.state)
-                    ? { ...t, state: 'waiting', completedAt: null }
+                    ? { ...t, state: 'waiting' as DownloadState, completedAt: null }
                     : t
             );
         });
@@ -506,7 +489,6 @@ export async function resumeAll(): Promise<void> {
         await resumeAllTasks();
     } catch (e) {
         console.error("Resume all failed", e);
-        // 回滚到操作前状态
         affectedIds.forEach(id => pendingStateChanges.delete(id));
         setTasks(snapshot);
     }
