@@ -23,20 +23,17 @@ export interface SpeedInfo {
 }
 
 /**
- * 下载任务接口
+ * 下载任务接口 - 只包含原始数值，格式化由前端负责
  */
 export interface DownloadTask {
 	id: string;
 	filename: string;
 	url: string;
 	progress: number;
-	speed: SpeedInfo;
-	speed_u64: number;
-	downloaded: string;
-	downloaded_u64: number;
-	total: string;
-	total_u64: number;
-	remaining: string;
+	speed: number;           // 原始 bytes/s
+	completed: number;       // 原始 bytes
+	total: number;           // 原始 bytes
+	remainingSecs: number;   // 原始秒数
 	state: DownloadState;
 	addedAt: string;
 	savePath: string;

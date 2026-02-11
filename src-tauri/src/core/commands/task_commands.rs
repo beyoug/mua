@@ -152,14 +152,7 @@ async fn add_torrent_task_inner(
     let content = std::fs::read(&path).map_err(|e| AppError::Fs(e.to_string()))?;
     let torrent_b64 = base64::engine::general_purpose::STANDARD.encode(&content);
 
-    // 1. Resolve save path
-    let _resolved_save_path = if let Some(ref p) = base_cfg.save_path {
-        utils::resolve_path(p)
-    } else {
-        ".".to_string()
-    };
-
-    // 2. Build options
+    // Build options
     let (mut options_val, final_save_path) = utils::build_aria2_options(
         base_cfg.save_path.clone(),
         None, // Torrent usually has its own name structure, avoid forcing filename unless single file?
@@ -380,7 +373,7 @@ pub async fn remove_tasks(
             tasks_info
                 .iter()
                 .find(|t| &t.gid == gid)
-                .map(|t| utils::is_active_state(t.state))
+                .map(|t| t.state.is_active())
                 .unwrap_or(false)
         });
 
@@ -430,7 +423,7 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
 
     let is_active = task_opt
         .as_ref()
-        .map_or(false, |t| utils::is_active_state(t.state));
+        .map_or(false, |t| t.state.is_active());
 
     if is_active {
         let _ = aria2_client::remove(gid.clone()).await;

@@ -11,72 +11,26 @@ use tauri::AppHandle;
 static LAST_CONNECTION_STATUS: std::sync::atomic::AtomicBool =
     std::sync::atomic::AtomicBool::new(true);
 
-// EMA & 频率跟踪器: GID -> (EMA_速度, 上次更新时间戳_秒, 上次剩余时间字符串)
-static SPEED_HISTORY: std::sync::OnceLock<std::sync::Mutex<HashMap<String, (f64, u64, String)>>> =
-    std::sync::OnceLock::new();
-
-/// 计算剩余时间（带 EMA 平滑）
-/// 返回格式化后的剩余时间字符串
-fn calculate_eta(gid: &str, state: &str, raw_speed: u64, total: u64, completed: u64) -> String {
-    let history_map = SPEED_HISTORY.get_or_init(|| std::sync::Mutex::new(HashMap::new()));
-    let mut history = history_map.lock().unwrap();
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .unwrap()
-        .as_secs();
-
-    let (ema_speed, last_update, last_remaining) =
-        history
-            .entry(gid.to_string())
-            .or_insert((raw_speed as f64, 0, String::new()));
-
-    // 更新 EMA 速度
-    let task_state = TaskState::from(state);
-    if task_state == TaskState::Active {
-        *ema_speed = (raw_speed as f64 * 0.2) + (*ema_speed * 0.8);
-    } else {
-        *ema_speed = 0.0;
+/// 计算剩余秒数（纯数值，不含格式化）
+fn calculate_remaining_secs(raw_speed: u64, total: u64, completed: u64) -> u64 {
+    if raw_speed == 0 || total <= completed {
+        return 0;
     }
-
-    // 计算剩余时间
-    if task_state == TaskState::Active && *ema_speed > 0.1 && total > completed {
-        if now > *last_update {
-            let seconds = ((total - completed) as f64 / *ema_speed) as u64;
-            let new_remaining = crate::utils::format_duration(seconds);
-            *last_update = now;
-            *last_remaining = new_remaining.clone();
-            new_remaining
-        } else {
-            last_remaining.clone()
-        }
-    } else {
-        *last_update = 0;
-        *last_remaining = String::new();
-        String::new()
-    }
+    (total - completed) / raw_speed
 }
 
-/// 速度信息结构体 - 分离数值与单位，便于前端直接渲染
-#[derive(Debug, Clone, serde::Serialize)]
-pub struct SpeedInfo {
-    pub value: String,
-    pub unit: String,
-}
-
-// 前端 DTO (视图模型) - 从 commands.rs 移至此处
+// 前端 DTO - 只传输原始数值，格式化由前端负责
 #[derive(Debug, Clone, serde::Serialize)]
 pub struct FrontendTask {
     pub id: String,
     pub filename: String,
     pub url: String,
     pub progress: f64,
-    pub speed: SpeedInfo,
-    pub speed_u64: u64, // 用于统计的原始值
-    pub downloaded: String,
-    pub downloaded_u64: u64, // 原始值
-    pub total: String,
-    pub total_u64: u64, // 原始值
-    pub remaining: String,
+    pub speed: u64,
+    pub completed: u64,
+    pub total: u64,
+    #[serde(rename = "remainingSecs")]
+    pub remaining_secs: u64,
     pub state: String,
     #[serde(rename = "addedAt")]
     pub added_at: String,
@@ -139,7 +93,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         let aria_task = aria2_map.get(&task.gid);
 
         let mut mapped_state = if let Some(at) = aria_task {
-            crate::utils::map_status(&at.status)
+            TaskState::from_aria2_status(&at.status)
         } else {
             task.state
         };
@@ -225,7 +179,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
             .await
             {
                 Ok(aria_task) => {
-                    task.state = crate::utils::map_status(&aria_task.status);
+                    task.state = TaskState::from_aria2_status(&aria_task.status);
                     task.total_length = aria_task.total_length.clone();
                     task.completed_length = aria_task.completed_length.clone();
                     task.download_speed = aria_task.download_speed.clone();
@@ -262,9 +216,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         let completed = task.completed_length.parse::<u64>().unwrap_or(0);
         let raw_speed = task.download_speed.parse::<u64>().unwrap_or(0);
 
-        // 使用辅助函数计算剩余时间
-        let current_remaining =
-            calculate_eta(&task.gid, task.state.as_str(), raw_speed, total, completed);
+        let remaining_secs = calculate_remaining_secs(raw_speed, total, completed);
 
         let progress = if total > 0 {
             (completed as f64 / total as f64) * 100.0
@@ -281,17 +233,11 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
             filename: task.filename.clone(),
             url: task.url.clone(),
             progress,
-            speed: {
-                let (v, u) = crate::utils::format_speed(raw_speed);
-                SpeedInfo { value: v, unit: u }
-            },
-            speed_u64: raw_speed,
-            downloaded: crate::utils::format_size(completed),
-            downloaded_u64: completed,
-            total: crate::utils::format_size(total),
-            total_u64: total,
-            remaining: current_remaining,
-            state: task.state.to_string(), // 使用持久化状态！
+            speed: raw_speed,
+            completed,
+            total,
+            remaining_secs,
+            state: task.state.to_string(),
             added_at: task.added_at.clone(),
             save_path: task.save_path.clone(),
             error_message: task.error_message.clone(),
@@ -326,19 +272,6 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         state.update_all(store_tasks);
     }
 
-    // 结果排序：分数降序 -> 添加时间降序
-    result.sort_by(|a, b| {
-        let score_a = crate::utils::get_state_score(TaskState::from(a.state.as_str()));
-        let score_b = crate::utils::get_state_score(TaskState::from(b.state.as_str()));
-
-        if score_a != score_b {
-            return score_b.cmp(&score_a); // 分数高的排在前面
-        }
-
-        // 如果分数相等，按时间排序（最新的排在前面）
-        b.added_at.cmp(&a.added_at)
-    });
-
     // 更新任务栏图标
     let _ =
         crate::ui::tray::update_tray_icon_with_speed(app_handle.clone(), total_dl, total_ul).await;
@@ -350,69 +283,40 @@ pub fn start_background_sync(app_handle: AppHandle) {
     use tauri::Emitter;
     use tauri::Manager;
 
-    // 通知状态跟踪器: GID -> State
-    let mut previous_states: std::collections::HashMap<String, String> =
-        std::collections::HashMap::new();
-
     tauri::async_runtime::spawn(async move {
         // 启动宽限期：等待 Sidecar 完全初始化（绑定端口）
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
         loop {
-            // 获取状态（线程安全获取）
             let state = app_handle.state::<crate::core::store::TaskStore>();
             let mut has_active_tasks = false;
 
-            // 运行同步
             match sync_tasks(&state, &app_handle).await {
                 Ok(tasks) => {
-                    // 检查完成情况和活跃状态
+                    // 检查是否有活跃任务（用于自适应轮询）
                     for task in &tasks {
-                        // 自适应轮询检查
                         let task_state = TaskState::from(task.state.as_str());
-                        if crate::utils::is_active_state(task_state) {
+                        if task_state.is_active() {
                             has_active_tasks = true;
+                            break;
                         }
-
-                        let prev = previous_states
-                            .get(&task.id)
-                            .cloned()
-                            .unwrap_or("unknown".to_string());
-
-                        if task_state == TaskState::Complete
-                            && prev != "complete"
-                            && prev != "unknown"
-                        {
-                            // 检测到状态转变！
-                            log::info!("任务已完成: {}", task.filename);
-                            if let Err(e) = app_handle.emit("task-complete", task.clone()) {
-                                log::warn!("发送 task-complete 事件失败: {}", e);
-                            }
-                        }
-
-                        previous_states.insert(task.id.clone(), task.state.clone());
                     }
 
-                    // 发送事件
                     if let Err(e) = app_handle.emit("tasks-update", tasks) {
                         log::warn!("发送 tasks-update 事件失败: {}", e);
                     }
                 }
                 Err(e) => {
-                    // 同步模块会处理静默模式日志，所以我们这里不需要记录 ERROR
-                    // 除非需要调试信息。
                     log::debug!("后台同步失败: {}", e);
-                    // 发生错误时，假设没有活跃任务以退避，或者保持标准频率？
-                    // 让我们假设在错误时退避。
                     has_active_tasks = false;
                 }
             }
 
             // 自适应休眠
             let sleep_duration = if has_active_tasks {
-                std::time::Duration::from_millis(200) // 超快模式（实时）
+                std::time::Duration::from_millis(200)
             } else {
-                std::time::Duration::from_secs(2) // 空闲模式
+                std::time::Duration::from_secs(2)
             };
 
             tokio::time::sleep(sleep_duration).await;

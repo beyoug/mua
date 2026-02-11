@@ -134,10 +134,8 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 "--disable-ipv6".to_string(),
                 "--log-level=warn".to_string(),
                 format!("--max-concurrent-downloads={}", max_concurrent),
-                format!("--max-concurrent-downloads={}", max_concurrent),
                 format!("--stop-with-process={}", std::process::id()), // 父进程退出时自动关闭
                 format!("--enable-dht={}", enable_dht),
-                format!("--enable-peer-exchange={}", enable_peer_exchange),
                 format!("--enable-peer-exchange={}", enable_peer_exchange),
                 format!("--seed-ratio={}", seed_ratio),
                 // 如果启用做种，不传 seed-time (默认无限/受 ratio 控制)

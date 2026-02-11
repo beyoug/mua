@@ -9,6 +9,7 @@
     import DownloadCardMenu from './DownloadCardMenu.svelte';
     import StatusIndicator from './StatusIndicator.svelte';
 	import type { DownloadTask } from '$lib/types/download';
+	import { formatSpeed, formatBytes, formatDuration } from '$lib/utils/formatters';
 
 	interface Props {
 		/** 完整的任务对象（单一 prop 减少 diff 开销） */
@@ -40,11 +41,13 @@
 	const filename = $derived(task.filename);
 	const url = $derived(task.url);
 	const progress = $derived(task.progress);
-	const speed = $derived(task.speed);
-	const downloaded = $derived(task.downloaded);
-	const total = $derived(task.total);
-	const remaining = $derived(task.remaining);
 	const errorMessage = $derived(task.errorMessage ?? '');
+
+	// 格式化展示数据（从原始数值实时计算）
+	const speed = $derived(formatSpeed(task.speed));
+	const downloaded = $derived(formatBytes(task.completed));
+	const total = $derived(formatBytes(task.total));
+	const remaining = $derived(formatDuration(task.remainingSecs));
 
 	let showMenu = $state(false);
 

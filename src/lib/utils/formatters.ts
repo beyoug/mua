@@ -1,7 +1,7 @@
 import type { SpeedInfo } from '$lib/types/download';
 
 /**
- * 格式化字节为人类可读的速度（用于前端聚合统计）
+ * 格式化字节为人类可读的速度
  * @param bytesPerSecond - 每秒字节数
  * @returns SpeedInfo 对象，如 { value: "12.50", unit: "MB/s" }
  */
@@ -13,6 +13,33 @@ export function formatSpeed(bytesPerSecond: number): SpeedInfo {
     const value = (bytesPerSecond / Math.pow(k, i)).toFixed(2);
     const unit = i < sizes.length ? `${sizes[i]}/s` : 'B/s';
     return { value, unit };
+}
+
+/**
+ * 格式化秒数为人类可读的持续时间
+ * @param seconds - 秒数
+ * @returns 格式化后的字符串，如 "2天3小时"、"5分钟30秒"
+ */
+export function formatDuration(seconds: number): string {
+    if (seconds <= 0) return '';
+    if (seconds > 2592000) return '很久很久';
+
+    if (seconds >= 86400) {
+        const days = Math.floor(seconds / 86400);
+        const hours = Math.floor((seconds % 86400) / 3600);
+        return hours > 0 ? `${days}天${hours}小时` : `${days}天`;
+    }
+    if (seconds >= 3600) {
+        const hours = Math.floor(seconds / 3600);
+        const mins = Math.floor((seconds % 3600) / 60);
+        return mins > 0 ? `${hours}小时${mins}分钟` : `${hours}小时`;
+    }
+    if (seconds >= 60) {
+        const mins = Math.floor(seconds / 60);
+        const secs = Math.floor(seconds % 60);
+        return secs > 0 ? `${mins}分钟${secs}秒` : `${mins}分钟`;
+    }
+    return `${Math.floor(seconds)}秒`;
 }
 
 /**

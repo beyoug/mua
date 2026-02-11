@@ -6,6 +6,7 @@
 <script lang="ts">
 import { onMount, onDestroy } from 'svelte';
 import { downloadStats } from '$lib/stores/downloadStore';
+import { getEmitRate, getSpeedMultiplier } from '$lib/utils/particles';
 
 interface Particle {
   x: number;
@@ -55,16 +56,6 @@ const unsubscribeSpeed = downloadStats.subscribe((stats) => {
   currentSpeedMbps = stats.totalSpeedBytes / (1024 * 1024);
 });
 
-function getEmitRate(): number {
-  if (currentSpeedMbps <= 0) return 0;
-  return Math.min(4 + currentSpeedMbps * 0.4, 40);
-}
-
-function getSpeedMultiplier(): number {
-  if (currentSpeedMbps <= 0) return 1;
-  return 1 + Math.min(currentSpeedMbps / 150, 0.8);
-}
-
 // 获取粒子颜色（主题感知）
 function updateColorCache() {
   const now = performance.now();
@@ -99,7 +90,7 @@ function getParticleFromPool(): Particle | null {
   const baseAngle = Math.PI / 4 + (Math.random() - 0.5) * 0.4;
   const angleVariation = (Math.random() - 0.5) * 0.7;
   const angle = baseAngle + angleVariation;
-  const speedMultiplier = getSpeedMultiplier();
+  const speedMultiplier = getSpeedMultiplier(currentSpeedMbps);
   const speed = (25 + Math.random() * 35) * speedMultiplier;
   
   // 更宽的发射区域 - 从左下角扩展
@@ -127,7 +118,7 @@ function updateParticles(deltaTime: number) {
   const dt = deltaTime / 1000;
   
   // 释放新粒子
-  const emitRate = getEmitRate();
+  const emitRate = getEmitRate(currentSpeedMbps);
   if (emitRate > 0) {
     emitAccumulator += emitRate * dt;
     while (emitAccumulator >= 1) {
