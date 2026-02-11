@@ -1,4 +1,5 @@
 use chrono::Local;
+use serde_json::json;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
@@ -38,7 +39,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             // 启动前检查是否正在关闭（防止启动过快）
             if let Some(state) = app.try_state::<ShutdownState>() {
                 if state.0.load(std::sync::atomic::Ordering::SeqCst) {
-                    log::info!("应用正在关闭，停止 sidecar 循环。");
+                    crate::app_info!("Aria2::Sidecar", "shutdown_flag_detected");
                     break;
                 }
             }
@@ -46,7 +47,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             let sidecar_command = match app.shell().sidecar("aria2c") {
                 Ok(cmd) => cmd,
                 Err(e) => {
-                    log::error!("创建 aria2 sidecar 命令失败: {}。5秒后重试...", e);
+                    crate::app_error!(
+                        "Aria2::Sidecar",
+                        "sidecar_command_create_failed",
+                        json!({ "error": e.to_string(), "retry_in_secs": 5 })
+                    );
                     tokio::time::sleep(Duration::from_secs(5)).await;
                     continue;
                 }
@@ -104,18 +109,26 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     )
                 }
             };
-            log::info!("首选 Aria2 端口: {}", preferred_port);
+            crate::app_info!(
+                "Aria2::Sidecar",
+                "port_preferred",
+                json!({ "port": preferred_port })
+            );
 
             // 2. 查找可用端口
             let port = match find_available_port(preferred_port) {
                 Ok(p) => p,
                 Err(e) => {
-                    log::error!("{}", e);
+                    crate::app_error!(
+                        "Aria2::Sidecar",
+                        "port_allocate_failed",
+                        json!({ "error": e })
+                    );
                     tokio::time::sleep(Duration::from_secs(10)).await;
                     continue;
                 }
             };
-            log::info!("为 Aria2 选择的端口: {}", port);
+            crate::app_info!("Aria2::Sidecar", "port_selected", json!({ "port": port }));
 
             // 3. 更新客户端配置（端口 + Secret）
             crate::aria2::client::set_aria2_port(port);
@@ -172,7 +185,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 // 1. 自定义配置
                 let conf_path = config_dir.join("aria2.conf");
                 if conf_path.exists() {
-                    log::info!("发现自定义 aria2 配置: {:?}", conf_path);
+                    crate::app_info!(
+                        "Aria2::Sidecar",
+                        "custom_config_detected",
+                        json!({ "path": conf_path.to_string_lossy() })
+                    );
                     args.push(format!("--conf-path={}", conf_path.to_string_lossy()));
                 }
 
@@ -180,7 +197,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 let session_path = config_dir.join("aria2.session");
                 if !session_path.exists() {
                     if let Err(e) = std::fs::File::create(&session_path) {
-                        log::error!("创建会话文件失败: {}", e);
+                        crate::app_error!(
+                            "Aria2::Sidecar",
+                            "session_file_create_failed",
+                            json!({ "path": session_path.to_string_lossy(), "error": e.to_string() })
+                        );
                     }
                 }
 
@@ -190,7 +211,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 args.push(format!("--save-session-interval={}", save_session_interval));
             }
 
-            log::info!("正在启动 Aria2 sidecar...");
+            crate::app_info!("Aria2::Sidecar", "start_requested");
 
             // --- 自定义二进制逻辑 ---
             let config_state = app.state::<crate::core::config::ConfigState>();
@@ -209,10 +230,14 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     };
                     let bin_path = config_dir.join("custom-bin").join(target_name);
                     if bin_path.exists() {
-                        log::info!("正在使用自定义 Aria2 二进制文件: {:?}", bin_path);
+                        crate::app_info!(
+                            "Aria2::Sidecar",
+                            "custom_binary_selected",
+                            json!({ "path": bin_path.to_string_lossy() })
+                        );
                         Some(std::process::Command::new(bin_path))
                     } else {
-                        log::warn!("启用了自定义 Aria2 但未找到文件，回退到内置版本。");
+                        crate::app_warn!("Aria2::Sidecar", "custom_binary_missing_fallback_builtin");
                         None
                     }
                 } else {
@@ -273,7 +298,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         (rx, pid)
                     }
                     Err(e) => {
-                        log::error!("生成自定义二进制进程失败: {}", e);
+                        crate::app_error!(
+                            "Aria2::Sidecar",
+                            "custom_binary_spawn_failed",
+                            json!({ "error": e.to_string() })
+                        );
                         tokio::time::sleep(Duration::from_secs(5)).await;
                         continue;
                     }
@@ -292,14 +321,22 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         (rx, pid)
                     }
                     Err(e) => {
-                        log::error!("生成 sidecar 进程失败: {}", e);
+                        crate::app_error!(
+                            "Aria2::Sidecar",
+                            "builtin_sidecar_spawn_failed",
+                            json!({ "error": e.to_string() })
+                        );
                         tokio::time::sleep(Duration::from_secs(5)).await;
                         continue;
                     }
                 }
             };
 
-            log::info!("Aria2 已启动，PID: {}", child_pid);
+            crate::app_info!(
+                "Aria2::Sidecar",
+                "started",
+                json!({ "pid": child_pid, "port": port })
+            );
 
             // 监控进程
             let mut manually_exited = false;
@@ -317,9 +354,17 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         }
 
                         if log_trimmed.contains("Serialized session to") {
-                            log::debug!("Aria2 stdout: {}", log_trimmed);
+                            crate::app_debug!(
+                                "Aria2::Sidecar",
+                                "stdout_session_persisted",
+                                json!({ "line": log_trimmed })
+                            );
                         } else {
-                            log::info!("Aria2 stdout: {}", log_trimmed);
+                            crate::app_debug!(
+                                "Aria2::Sidecar",
+                                "stdout",
+                                json!({ "line": log_trimmed })
+                            );
                         }
 
                         let now = Local::now().format("%H:%M:%S");
@@ -348,7 +393,11 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         let log = String::from_utf8_lossy(&line);
                         let now = Local::now().format("%H:%M:%S");
                         let log_str = format!("[{}] [ERROR] {}", now, log.trim());
-                        log::warn!("Aria2 stderr: {}", log);
+                        crate::app_warn!(
+                            "Aria2::Sidecar",
+                            "stderr",
+                            json!({ "line": log.trim() })
+                        );
                         stderr_buffer.push(log.to_string());
                         if stderr_buffer.len() > 20 {
                             stderr_buffer.remove(0);
@@ -377,20 +426,27 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         // 首先检查是否正在关闭
                         if let Some(state) = app.try_state::<ShutdownState>() {
                             if state.0.load(std::sync::atomic::Ordering::SeqCst) {
-                                log::info!("Aria2 如预期在应用关闭期间终止。");
+                                crate::app_info!(
+                                    "Aria2::Sidecar",
+                                    "terminated_during_shutdown"
+                                );
                                 manually_exited = true;
                                 break;
                             }
                         }
 
-                        log::warn!("Aria2 已终止: {:?}", payload);
+                        crate::app_warn!(
+                            "Aria2::Sidecar",
+                            "terminated",
+                            json!({ "code": payload.code, "signal": payload.signal })
+                        );
 
                         // 如果是异常退出（非0状态码或被信号终止），发送事件到前端
                         let is_error = payload.code.map(|c| c != 0).unwrap_or(true)
                             || payload.signal.is_some();
 
                         if is_error {
-                            log::error!("Aria2 崩溃。正在发送错误事件。");
+                            crate::app_error!("Aria2::Sidecar", "unexpected_exit_emitting_event");
                             let stderr = stderr_buffer.join("");
                             let _ = app.emit(
                                 "aria2-sidecar-error",
@@ -411,18 +467,22 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             }
 
             if !manually_exited {
-                log::warn!("Aria2 通道意外关闭。");
+                crate::app_warn!("Aria2::Sidecar", "channel_closed_unexpectedly");
             }
 
             // 重启前检查关闭状态
             if let Some(state) = app.try_state::<ShutdownState>() {
                 if state.0.load(std::sync::atomic::Ordering::SeqCst) {
-                    log::info!("应用正在关闭。不再重启 sidecar。");
+                    crate::app_info!("Aria2::Sidecar", "shutdown_skip_restart");
                     break;
                 }
             }
 
-            log::info!("Aria2 sidecar 已退出。5 秒后重启...");
+            crate::app_info!(
+                "Aria2::Sidecar",
+                "restart_scheduled",
+                json!({ "delay_secs": 5 })
+            );
             tokio::time::sleep(Duration::from_secs(5)).await;
         }
     });

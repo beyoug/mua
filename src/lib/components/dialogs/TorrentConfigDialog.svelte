@@ -10,8 +10,11 @@
     import type { TorrentInfo } from '$lib/api/cmd';
     import { formatBytes } from '$lib';
     import { appSettings, updateAppSettings } from '$lib/stores/settings';
+    import { createLogger } from '$lib/utils/logger';
     import BaseModal from '../common/BaseModal.svelte';
     import TorrentFileSelector from './TorrentFileSelector.svelte';
+
+    const logger = createLogger('TorrentConfigDialog');
 
     export interface TorrentDialogResult {
         torrentPath: string;
@@ -71,7 +74,7 @@
             publicTrackers = await invoke<string[]>('fetch_public_trackers');
             showTrackerPreview = true;
         } catch (e) {
-            console.error('Failed to fetch trackers:', e);
+            logger.error('Failed to fetch trackers', { error: e });
         } finally {
             isFetchingTrackers = false;
         }
@@ -105,12 +108,10 @@
     }
 
     function handleConfirm() {
-        console.log('[TorrentConfig] handleConfirm clicked, torrentPath:', torrentPath);
-
         // Tracker 保存不阻塞提交（fire-and-forget）
         if (trackers.trim()) {
             updateAppSettings({ btTrackers: trackers })
-                .catch(e => console.error('Failed to save trackers:', e));
+                .catch(e => logger.error('Failed to save trackers', { error: e }));
         }
 
         onConfirm({

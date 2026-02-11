@@ -1,6 +1,9 @@
 <script lang="ts">
   import { Github, Globe, Heart } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-shell';
+  import { createLogger } from '$lib/utils/logger';
+
+  const logger = createLogger('AboutSettings');
 
   const version = "0.1.0";
 
@@ -8,7 +11,7 @@
     try {
       await open(url);
     } catch (e) {
-      console.error('Failed to open URL:', e);
+      logger.error('Failed to open URL', { url, error: e });
     }
   }
 </script>

@@ -2,6 +2,9 @@ import { listen } from '@tauri-apps/api/event';
 import { message } from '@tauri-apps/plugin-dialog';
 import { loadAppSettings } from '$lib/stores/settings';
 import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('Boot');
 
 interface Aria2SidecarErrorPayload {
     message?: string;
@@ -29,7 +32,7 @@ export async function bootApp() {
         // 4. 事件订阅：链路监控
         const unlistenSidecar = await listen<Aria2SidecarErrorPayload>('aria2-sidecar-error', async (event) => {
             const payload = event.payload;
-            console.error('Aria2 Sidecar Error:', payload);
+            logger.error('Received sidecar error event', { payload });
             await message(
                 `Aria2 Service Error: ${payload.message ?? 'Unknown error'}\n\nCode: ${payload.code ?? '-'}\nSignal: ${payload.signal ?? '-'}\n\nLog:\n${payload.stderr ?? ''}`,
                 {
@@ -45,7 +48,7 @@ export async function bootApp() {
             cleanupNotifications();
         };
     } catch (e) {
-        console.error('[Boot] Critical failure during frontend initialization:', e);
+        logger.error('Critical failure during frontend initialization', { error: e });
         throw e;
     }
 }

@@ -222,14 +222,28 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
     // Ensure parent dir exists
     if let Some(parent) = path.parent() {
         if let Err(e) = std::fs::create_dir_all(parent) {
-            log::error!("Failed to create directory {:?}: {}", parent, e);
+            crate::app_error!(
+                "Core::Utils",
+                "atomic_write_create_dir_failed",
+                serde_json::json!({
+                    "parent": parent.to_string_lossy(),
+                    "error": e.to_string()
+                })
+            );
             return Err(e);
         }
     }
 
     // Write content
     if let Err(e) = std::fs::write(&tmp_path, content) {
-        log::error!("Failed to write temp file {:?}: {}", tmp_path, e);
+        crate::app_error!(
+            "Core::Utils",
+            "atomic_write_temp_write_failed",
+            serde_json::json!({
+                "temp_path": tmp_path.to_string_lossy(),
+                "error": e.to_string()
+            })
+        );
         return Err(e);
     }
 
@@ -241,7 +255,15 @@ pub fn atomic_write(path: &std::path::Path, content: &str) -> std::io::Result<()
     }
 
     if let Err(e) = std::fs::rename(&tmp_path, path) {
-        log::error!("Failed to rename {:?} to {:?}: {}", tmp_path, path, e);
+        crate::app_error!(
+            "Core::Utils",
+            "atomic_write_rename_failed",
+            serde_json::json!({
+                "temp_path": tmp_path.to_string_lossy(),
+                "target_path": path.to_string_lossy(),
+                "error": e.to_string()
+            })
+        );
         return Err(e);
     }
 

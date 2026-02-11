@@ -105,12 +105,12 @@ pub fn run() {
                 };
 
                 if let Some(child) = child {
-                    log::info!("Killing aria2 sidecar process...");
+                    crate::app_info!("App::Lifecycle", "kill_builtin_sidecar_requested");
                     let _ = child.kill();
                 }
 
                 if let Some(mut child) = native_child {
-                    log::info!("Killing custom aria2 process...");
+                    crate::app_info!("App::Lifecycle", "kill_custom_sidecar_requested");
                     let _ = child.kill();
                 }
             }

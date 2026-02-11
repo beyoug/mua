@@ -24,6 +24,9 @@
 	} from '$lib';
 	import { isRemovableTask } from '$lib';
     import { TaskController } from '$lib/services/taskController.svelte';
+	import { createLogger } from '$lib/utils/logger';
+
+	const logger = createLogger('HomePage');
 
     // 实例化控制器
     const controller = new TaskController();
@@ -94,7 +97,7 @@
 				});
 				unlisteners.push(u4);
 			} catch (e) {
-				console.error('[DragDrop] Failed to register handlers:', e);
+				logger.error('Failed to register drag-drop handlers', { error: e });
 			}
 		})();
 
@@ -116,12 +119,12 @@
 		parseTorrent(path).then(info => {
 			if (requestId !== torrentParseRequestId) return;
 			if (info.files.length > 1000) {
-				console.warn('[Torrent] Large file count:', info.files.length);
+				logger.warn('Large torrent file count', { fileCount: info.files.length, path });
 			}
 			pendingTorrentInfo = info;
 		}).catch(e => {
 			if (requestId !== torrentParseRequestId) return;
-			console.error('Failed to parse torrent:', e);
+			logger.error('Failed to parse torrent', { path, error: e });
 			pendingParseError = typeof e === 'string' ? e : '种子解析失败，但仍可提交任务';
 		});
 	}
@@ -157,7 +160,7 @@
 			pendingTorrentPath = '';
 			pendingParseError = '';
 		} catch (e) {
-			console.error('[TorrentConfirm] addTask failed:', e);
+			logger.error('Failed to add task from torrent confirm', { path: result.torrentPath, error: e });
 			pendingParseError = '任务添加失败，请检查 Aria2 服务是否正常';
 		}
 	}

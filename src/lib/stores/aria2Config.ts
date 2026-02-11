@@ -1,6 +1,9 @@
 import { writable } from 'svelte/store';
 import { open as openDialog, message } from '@tauri-apps/plugin-dialog';
 import { getAria2ConfigPath, readAria2Config, importAria2Config as importAria2ConfigCmd } from '$lib/api/cmd';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('Aria2ConfigStore');
 
 export const aria2Config = writable<string>('');
 export const configPath = writable<string>('');
@@ -26,7 +29,7 @@ export async function loadAria2Config() {
         const config = await readAria2Config();
         aria2Config.set(config);
     } catch (e) {
-        console.error('Failed to load aria2 config:', e);
+        logger.error('Failed to load aria2 config', { error: e });
     }
 }
 
@@ -48,7 +51,7 @@ export async function importAria2Config() {
             await message('配置导入成功！请重启应用以生效。', { title: '导入成功', kind: 'info' });
         }
     } catch (e) {
-        console.error('Failed to import config:', e);
+        logger.error('Failed to import aria2 config', { error: e });
         await message('导入失败: ' + e, { title: '导入失败', kind: 'error' });
     } finally {
         isImporting.set(false);

@@ -11,6 +11,9 @@ import {
     type DownloadConfig
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('TaskController');
 
 export type NavType = 'active' | 'complete' | 'history';
 
@@ -157,7 +160,7 @@ export class TaskController {
         try {
             await cmd.showTaskInFolder(id);
         } catch (e) {
-            console.error('Failed to open folder', e);
+            logger.error('Failed to open task folder', { taskId: id, error: e });
         }
     }
 

@@ -1,4 +1,5 @@
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::fs;
 use std::path::PathBuf;
 use std::sync::Mutex;
@@ -146,13 +147,18 @@ pub fn get_config_path(app: &AppHandle) -> Option<PathBuf> {
 
 pub fn load_config(app: &AppHandle) -> AppConfig {
     if let Some(path) = get_config_path(app) {
-        log::info!("[Config] Checking config path: {:?}", path);
+        crate::app_info!(
+            "Core::Config",
+            "config_path_resolved",
+            json!({ "path": path.to_string_lossy() })
+        );
         if path.exists() {
             if let Ok(content) = fs::read_to_string(&path) {
                 if let Ok(mut config) = serde_json::from_str::<AppConfig>(&content) {
-                    log::info!(
-                        "[Config] Successfully loaded from disk. startMinimized: {}",
-                        config.start_minimized
+                    crate::app_info!(
+                        "Core::Config",
+                        "loaded_from_disk",
+                        json!({ "start_minimized": config.start_minimized })
                     );
                     // Ensure secret exists
                     if config.rpc_secret.is_none() {
@@ -163,19 +169,31 @@ pub fn load_config(app: &AppHandle) -> AppConfig {
                     }
                     return config;
                 } else {
-                    log::error!("[Config] Failed to deserialize config strings: {}", content);
+                    crate::app_error!(
+                        "Core::Config",
+                        "deserialize_failed",
+                        json!({ "raw": content })
+                    );
                 }
             } else {
-                log::error!("[Config] Failed to read file: {:?}", path);
+                crate::app_error!(
+                    "Core::Config",
+                    "read_failed",
+                    json!({ "path": path.to_string_lossy() })
+                );
             }
         } else {
-            log::warn!("[Config] Path does not exist: {:?}", path);
+            crate::app_warn!(
+                "Core::Config",
+                "config_file_missing",
+                json!({ "path": path.to_string_lossy() })
+            );
         }
     } else {
-        log::error!("[Config] Could not resolve app config path");
+        crate::app_error!("Core::Config", "config_path_unresolved");
     }
 
-    log::info!("[Config] Using DEFAULT config");
+    crate::app_info!("Core::Config", "fallback_default_config");
     // Default with new secret
     let mut config = AppConfig::default();
     config.rpc_secret = Some(uuid::Uuid::new_v4().to_string());

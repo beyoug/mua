@@ -8,6 +8,9 @@
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import type { DownloadTask } from '$lib/types/download';
 import { allTasks } from '$lib/stores/downloadStore';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('Notifications');
 
 let unsubscribeFn: (() => void) | null = null;
 let previousStates = new Map<string, string>();
@@ -79,6 +82,6 @@ async function showCompletionNotification(task: DownloadTask): Promise<void> {
             });
         }
     } catch (e) {
-        console.error('Failed to send notification:', e);
+        logger.error('Failed to send completion notification', { taskId: task.id, error: e });
     }
 }

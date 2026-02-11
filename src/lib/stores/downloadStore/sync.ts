@@ -3,6 +3,9 @@ import type { UnlistenFn } from '@tauri-apps/api/event';
 import type { DownloadTask } from '$lib/types/download';
 import { getTasks as getTasksCmd } from '$lib/api/cmd';
 import { clearPendingLock, hasPendingLock, setTasks, snapshotTasks } from './state';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('DownloadStoreSync');
 
 let unlistenFn: UnlistenFn | null = null;
 let initialized = false;
@@ -77,7 +80,7 @@ export async function initializeTaskSync() {
         const rawTasks = await getTasksCmd();
         handleTasksUpdate(rawTasks);
     } catch (e) {
-        console.error('初始任务获取失败:', e);
+        logger.error('Initial task fetch failed', { error: e });
     }
 
     try {
@@ -85,7 +88,7 @@ export async function initializeTaskSync() {
             handleTasksUpdate(event.payload);
         });
     } catch (e) {
-        console.error('设置事件监听器失败:', e);
+        logger.error('Failed to register tasks-update listener', { error: e });
         initialized = false;
     }
 }

@@ -24,6 +24,9 @@ import {
     snapshotTasks,
     updateTasks
 } from './state';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('DownloadStoreOps');
 
 export async function addDownloadTasks(
     configOrConfigs: DownloadConfig | DownloadConfig[]
@@ -71,7 +74,7 @@ export async function addDownloadTasks(
             return [...tasks, ...newTasks];
         });
     } catch (e) {
-        console.error('添加任务失败:', e);
+        logger.error('Failed to add tasks', { error: e });
         throw e;
     }
 }
@@ -94,7 +97,7 @@ export async function pauseTask(id: string): Promise<void> {
 
         await pauseTaskCmd(id);
     } catch (e) {
-        console.error(`暂停任务 ${id} 失败:`, e);
+        logger.error('Failed to pause task', { taskId: id, error: e });
         clearPendingLock(id);
 
         if (originalState) {
@@ -138,7 +141,7 @@ export async function resumeTask(id: string): Promise<void> {
             )
         );
     } catch (e) {
-        console.error(`恢复任务 ${id} 失败:`, e);
+        logger.error('Failed to resume task', { taskId: id, error: e });
         clearPendingLock(id);
     }
 }
@@ -159,7 +162,7 @@ export async function cancelTask(id: string): Promise<void> {
 
         await cancelTaskCmd(id);
     } catch (e) {
-        console.error(`Failed to cancel task ${id}:`, e);
+        logger.error('Failed to cancel task', { taskId: id, error: e });
         clearPendingLock(id);
 
         if (originalState) {
@@ -180,7 +183,7 @@ export function removeTask(id: string, deleteFile: boolean = false): void {
         }
 
         removeTaskRecord(id, deleteFile).catch((e) => {
-            console.error('删除任务失败:', e);
+            logger.error('Failed to remove task record', { taskId: id, deleteFile, error: e });
             clearPendingLock(id);
         });
 
@@ -194,7 +197,7 @@ export async function removeTasks(ids: Set<string>, deleteFile: boolean = false)
         await removeTasksCmd(idArray, deleteFile);
         updateTasks((tasks) => tasks.filter((t) => !ids.has(t.id)));
     } catch (e) {
-        console.error('Batch remove failed', e);
+        logger.error('Failed to remove tasks batch', { taskIds: idArray, deleteFile, error: e });
     }
 }
 
@@ -212,7 +215,7 @@ export async function cancelTasks(ids: Set<string>): Promise<void> {
             )
         );
     } catch (e) {
-        console.error('Batch cancel failed', e);
+        logger.error('Failed to cancel tasks batch', { taskIds: idArray, error: e });
         ids.forEach((id) => clearPendingLock(id));
     }
 }
@@ -239,7 +242,7 @@ export async function pauseAll(): Promise<void> {
 
         await pauseAllTasks();
     } catch (e) {
-        console.error('Pause all failed', e);
+        logger.error('Failed to pause all tasks', { taskIds: affectedIds, error: e });
         affectedIds.forEach((id) => clearPendingLock(id));
         setTasks(snapshot);
     }
@@ -266,7 +269,7 @@ export async function resumeAll(): Promise<void> {
 
         await resumeAllTasks();
     } catch (e) {
-        console.error('Resume all failed', e);
+        logger.error('Failed to resume all tasks', { taskIds: affectedIds, error: e });
         affectedIds.forEach((id) => clearPendingLock(id));
         setTasks(snapshot);
     }

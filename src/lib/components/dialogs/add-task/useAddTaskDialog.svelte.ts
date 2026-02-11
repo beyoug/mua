@@ -11,6 +11,9 @@ import {
     validateInputUrls,
     type AdvancedSettingsState
 } from './utils';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('AddTaskDialog');
 
 interface Params {
     onClose: () => void;
@@ -122,7 +125,7 @@ export function useAddTaskDialog(params: Params) {
             resetForm();
             onClose();
         } catch (e) {
-            console.error('Failed to add task:', e);
+            logger.error('Failed to add task', { error: e });
             validationError = typeof e === 'string' ? e : '添加任务失败，请检查 Aria2 服务是否正常';
         } finally {
             isSubmitting = false;
@@ -138,7 +141,7 @@ export function useAddTaskDialog(params: Params) {
             });
             if (typeof selected === 'string') savePath = selected;
         } catch (e) {
-            console.error('Select download directory failed:', e);
+            logger.error('Failed to select download directory', { error: e });
         }
     }
 
@@ -156,7 +159,7 @@ export function useAddTaskDialog(params: Params) {
                 onTorrentSelect(selected);
             }
         } catch (e) {
-            console.error('Select torrent failed:', e);
+            logger.error('Failed to select torrent file', { error: e });
         } finally {
             isSelectingFile = false;
         }

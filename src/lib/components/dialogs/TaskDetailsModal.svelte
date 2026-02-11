@@ -7,6 +7,9 @@
 	import { fade } from 'svelte/transition';
 	import type { DownloadState } from '$lib/types/download';
     import BaseModal from '../common/BaseModal.svelte';
+	import { createLogger } from '$lib/utils/logger';
+
+	const logger = createLogger('TaskDetailsModal');
 
 	interface Props {
 		open?: boolean;
@@ -101,7 +104,7 @@
                 setTimeout(() => { copiedField = null; }, 2000);
             }
 		} catch (e) {
-			console.error('Failed to copy', e);
+			logger.error('Failed to copy field value', { field, error: e });
 		}
 	}
 </script>

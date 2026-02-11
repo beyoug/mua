@@ -7,6 +7,9 @@
   import { Network, Share2, Database, HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
+  import { createLogger } from '$lib/utils/logger';
+
+  const logger = createLogger('BTSettings');
 
   // 本地状态同步
   let btTrackers = $state($appSettings.btTrackers || '');
@@ -45,7 +48,7 @@
         listenPort
       });
     } catch (e) {
-      console.error('Failed to save BT settings:', e);
+      logger.error('Failed to save BT settings', { error: e });
     }
   }
 
@@ -56,7 +59,7 @@
           publicTrackers = await invoke<string[]>('fetch_public_trackers');
           showTrackerPreview = true;
       } catch (e) {
-          console.error('Failed to fetch trackers:', e);
+          logger.error('Failed to fetch public trackers', { error: e });
       } finally {
           isFetchingTrackers = false;
       }

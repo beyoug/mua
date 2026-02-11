@@ -5,6 +5,7 @@ use crate::core::types::TaskState;
 use crate::utils;
 use chrono::Local;
 use futures::future::join_all;
+use serde_json::json;
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
@@ -80,10 +81,18 @@ pub async fn cancel_tasks(
 }
 
 async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> {
-    log::info!("正在为 GID {} 尝试智能恢复 (Smart Resume)", gid);
+    crate::app_info!(
+        "Core::TaskControl",
+        "smart_resume_started",
+        json!({ "gid": gid.clone() })
+    );
 
     if let Some(task) = state.get_task(&gid) {
-        log::info!("正在重新提交任务: {}", task.filename);
+        crate::app_info!(
+            "Core::TaskControl",
+            "smart_resume_readd_attempt",
+            json!({ "gid": gid.clone(), "filename": task.filename })
+        );
 
         let save_path_opt = if task.save_path.is_empty() {
             None
@@ -136,10 +145,18 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
 
         match aria2_client::add_uri(vec![task.url.clone()], Some(options)).await {
             Ok(new_gid) => {
-                log::info!("智能恢复成功。旧 GID: {}, 新 GID: {}", gid, new_gid);
+                crate::app_info!(
+                    "Core::TaskControl",
+                    "smart_resume_readd_succeeded",
+                    json!({ "old_gid": gid.clone(), "new_gid": new_gid.clone() })
+                );
 
                 let removed = state.remove_task(&gid);
-                log::info!("智能恢复：已移除旧任务 {}？{}", gid, removed);
+                crate::app_info!(
+                    "Core::TaskControl",
+                    "smart_resume_old_task_removed",
+                    json!({ "gid": gid.clone(), "removed": removed })
+                );
 
                 let new_task = PersistedTask {
                     gid: new_gid.clone(),
@@ -156,7 +173,11 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
                 Ok(new_gid)
             }
             Err(add_err) => {
-                log::error!("智能恢复重新添加任务失败: {}", add_err);
+                crate::app_error!(
+                    "Core::TaskControl",
+                    "smart_resume_readd_failed",
+                    json!({ "gid": gid.clone(), "error": add_err.to_string() })
+                );
                 Err(AppError::aria2(format!("智能恢复失败: {}", add_err)))
             }
         }

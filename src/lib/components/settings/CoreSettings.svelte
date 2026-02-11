@@ -7,6 +7,9 @@
     import type { Aria2VersionInfo } from '$lib/types/download';
     import { open as openDialog } from '@tauri-apps/plugin-dialog';
     import { relaunch } from '@tauri-apps/plugin-process';
+    import { createLogger } from '$lib/utils/logger';
+
+    const logger = createLogger('CoreSettings');
 
     let isDirty = $state(false);
     let showSecret = $state(false);
@@ -34,7 +37,7 @@
         try {
             aria2Version = await getAria2VersionInfo();
         } catch (e) {
-            console.error(e);
+            logger.error('Failed to load aria2 version info', { error: e });
         }
     }
 
@@ -57,7 +60,7 @@
                 await loadVersionInfo();
             }
         } catch (e) {
-            console.error(e);
+            logger.error('Failed to import custom aria2 binary', { error: e });
             alert('导入失败: ' + e);
         } finally {
             isImportingKernel = false;
@@ -83,7 +86,7 @@
             });
             isDirty = false;
         } catch (e) {
-            console.error(e);
+            logger.error('Failed to save core settings', { error: e });
         }
     }
 
@@ -100,7 +103,7 @@
             try {
                 await navigator.clipboard.writeText($appSettings.rpcSecret);
             } catch (e) {
-                console.error("Copy failed", e);
+                logger.error('Failed to copy rpc secret', { error: e });
             }
         }
     }

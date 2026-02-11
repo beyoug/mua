@@ -2,6 +2,7 @@ use crate::aria2::client::{self as aria2_client, Aria2Task};
 use crate::core::error::{AppError, AppResult};
 use crate::core::store::TaskStore;
 use crate::core::types::TaskState;
+use serde_json::json;
 use std::collections::HashMap;
 use std::sync::atomic::Ordering;
 use tauri::AppHandle;
@@ -58,7 +59,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         Ok(t) => {
             // 检查是否刚从故障中恢复
             if !LAST_CONNECTION_STATUS.load(Ordering::Relaxed) {
-                log::info!("Aria2 连接已恢复。");
+                crate::app_info!("Core::Sync", "aria2_connection_restored");
                 LAST_CONNECTION_STATUS.store(true, Ordering::Relaxed);
             }
             t
@@ -66,7 +67,11 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         Err(e) => {
             // 检查这是否是新的故障
             if LAST_CONNECTION_STATUS.load(Ordering::Relaxed) {
-                log::warn!("Aria2 连接丢失: {}。正在进入静默模式。", e);
+                crate::app_warn!(
+                    "Core::Sync",
+                    "aria2_connection_lost",
+                    json!({ "error": e.to_string() })
+                );
                 LAST_CONNECTION_STATUS.store(false, Ordering::Relaxed);
             }
             // 如果已经是 false，则保持沉默（静默模式）
@@ -289,7 +294,11 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
 
     for (gid, _) in aria2_map.iter() {
         if !store_gids.contains(gid) {
-            log::warn!("同步：在 Aria2 中发现孤儿任务: {}。正在清理...", gid);
+            crate::app_warn!(
+                "Core::Sync",
+                "orphan_task_detected",
+                json!({ "gid": gid })
+            );
             // 生成清理任务，不阻塞同步过程
             let gid_clone = gid.clone();
             tauri::async_runtime::spawn(async move {
@@ -335,11 +344,19 @@ pub fn start_background_sync(app_handle: AppHandle) {
                     }
 
                     if let Err(e) = app_handle.emit("tasks-update", tasks) {
-                        log::warn!("发送 tasks-update 事件失败: {}", e);
+                        crate::app_warn!(
+                            "Core::Sync",
+                            "tasks_update_emit_failed",
+                            json!({ "error": e.to_string() })
+                        );
                     }
                 }
                 Err(e) => {
-                    log::debug!("后台同步失败: {}", e);
+                    crate::app_debug!(
+                        "Core::Sync",
+                        "background_sync_failed",
+                        json!({ "error": e.to_string() })
+                    );
                     has_active_tasks = false;
                 }
             }

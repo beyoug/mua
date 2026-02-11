@@ -5,6 +5,7 @@ use crate::core::store::TaskStore;
 use crate::core::sync;
 use crate::core::types::TaskState;
 use crate::ui::tray;
+use serde_json::json;
 use std::sync::Mutex;
 use tauri::{App, Manager};
 
@@ -44,7 +45,7 @@ pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // --- L3: 业务逻辑层 ---
     // 6. 执行任务自动恢复 (Auto Resume)
     if config.auto_resume {
-        log::info!("Auto Resume enabled. Attempting to resume tasks...");
+        crate::app_info!("Core::Boot", "auto_resume_enabled");
         let app_handle_resume = handle.clone();
         tauri::async_runtime::spawn(async move {
             let state = app_handle_resume.state::<TaskStore>();
@@ -55,7 +56,11 @@ pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
                     || task.state == TaskState::Waiting
                     || task.state == TaskState::Active
                 {
-                    log::info!("Auto-resuming task: {}", task.gid);
+                    crate::app_info!(
+                        "Core::Boot",
+                        "auto_resume_task",
+                        json!({ "gid": task.gid })
+                    );
                     let _ = commands::resume_task(state.clone(), task.gid).await;
                 }
             }
@@ -69,14 +74,14 @@ pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     // 8. 应用窗口启动显隐策略
     if !config.start_minimized {
         if let Some(window) = app.get_webview_window("main") {
-            log::info!("[Boot] Default display: Showing main window.");
+            crate::app_info!("Core::Boot", "window_show_default");
             let _ = window.show();
             let _ = window.unminimize();
             let _ = window.set_focus();
         }
     } else {
         if let Some(window) = app.get_webview_window("main") {
-            log::info!("[Boot] Start Minimized enabled: Hiding main window.");
+            crate::app_info!("Core::Boot", "window_start_minimized");
             let _ = window.hide();
         }
     }

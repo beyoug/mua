@@ -1,5 +1,8 @@
 import { get, writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
+import { createLogger } from '$lib/utils/logger';
+
+const logger = createLogger('SettingsStore');
 
 export interface AppConfig {
     rpcPort: number;
@@ -75,7 +78,7 @@ export async function loadAppSettings() {
         const config = await invoke<AppConfig>('get_app_config');
         appSettings.set({ ...DEFAULT_CONFIG, ...config });
     } catch (e) {
-        console.error('Failed to load app settings', e);
+        logger.error('Failed to load app settings', { error: e });
     }
 }
 
@@ -84,7 +87,7 @@ export async function saveAppSettings(config: AppConfig) {
         await invoke('save_app_config', { config });
         appSettings.set(config);
     } catch (e) {
-        console.error('Failed to save app settings', e);
+        logger.error('Failed to save app settings', { error: e });
         throw e;
     }
 }
