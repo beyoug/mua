@@ -6,6 +6,19 @@ export const aria2Config = writable<string>('');
 export const configPath = writable<string>('');
 export const isImporting = writable<boolean>(false);
 
+type DialogSelection = string | { path?: string } | Array<string | { path?: string }> | null;
+
+function resolveDialogPath(selection: DialogSelection): string | null {
+    if (!selection) return null;
+    if (typeof selection === 'string') return selection;
+    if (Array.isArray(selection)) {
+        const first = selection[0];
+        if (!first) return null;
+        return typeof first === 'string' ? first : first.path ?? null;
+    }
+    return selection.path ?? null;
+}
+
 export async function loadAria2Config() {
     try {
         const path = await getAria2ConfigPath();
@@ -27,8 +40,8 @@ export async function importAria2Config() {
             }]
         });
 
-        if (selected) {
-            const path = typeof selected === 'string' ? selected : (selected as any).path;
+        const path = resolveDialogPath(selected as DialogSelection);
+        if (path) {
 
             await importAria2ConfigCmd(path);
             await loadAria2Config(); // Reload to show preview

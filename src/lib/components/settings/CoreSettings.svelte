@@ -13,6 +13,19 @@
     let aria2Version = $state<Aria2VersionInfo | null>(null);
     let isImportingKernel = $state(false);
 
+    type DialogSelection = string | { path?: string } | Array<string | { path?: string }> | null;
+
+    function resolveDialogPath(selection: DialogSelection): string | null {
+        if (!selection) return null;
+        if (typeof selection === 'string') return selection;
+        if (Array.isArray(selection)) {
+            const first = selection[0];
+            if (!first) return null;
+            return typeof first === 'string' ? first : first.path ?? null;
+        }
+        return selection.path ?? null;
+    }
+
     onMount(() => {
         loadVersionInfo();
     });
@@ -36,14 +49,12 @@
                 multiple: false
             });
 
-            if (selected) {
-                 const path = typeof selected === 'string' ? selected : (selected as any).path;
-                 if (path) {
-                     const version = await importCustomBinary(path);
-                     alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
-                     await saveSettings();
-                     await loadVersionInfo();
-                 }
+            const path = resolveDialogPath(selected as DialogSelection);
+            if (path) {
+                const version = await importCustomBinary(path);
+                alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
+                await saveSettings();
+                await loadVersionInfo();
             }
         } catch (e) {
             console.error(e);

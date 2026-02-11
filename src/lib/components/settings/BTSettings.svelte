@@ -251,7 +251,7 @@
             <div class="tracker-actions">
                 <button class="action-btn" onclick={fetchTrackers} disabled={isFetchingTrackers}>
                     {#if isFetchingTrackers}
-                        <RefreshCw size={14} class="spin" />
+                <RefreshCw size={14} style="animation: spin 1s linear infinite;" />
                     {:else}
                         <RefreshCw size={14} />
                     {/if}
@@ -628,10 +628,6 @@
       padding: 6px;
       background: rgba(0, 0, 0, 0.1);
       border-radius: 4px;
-  }
-
-  .spin {
-      animation: spin 1s linear infinite;
   }
 
   @keyframes spin {
