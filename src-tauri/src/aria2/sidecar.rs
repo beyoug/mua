@@ -9,8 +9,7 @@ use tauri_plugin_shell::ShellExt;
 fn find_available_port(start: u16) -> Result<u16, String> {
     let mut port = start;
     loop {
-        // 检查 0.0.0.0，因为 aria2c 使用 --rpc-listen-all=true
-        if std::net::TcpListener::bind(("0.0.0.0", port)).is_ok() {
+        if std::net::TcpListener::bind(("127.0.0.1", port)).is_ok() {
             return Ok(port);
         }
         port += 1;
@@ -128,8 +127,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
             let mut args = vec![
                 "--enable-rpc".to_string(),
-                "--rpc-listen-all=true".to_string(),
-                "--rpc-allow-origin-all".to_string(),
+                "--rpc-listen-all=false".to_string(),
                 format!("--rpc-listen-port={}", port),
                 "--disable-ipv6".to_string(),
                 "--log-level=warn".to_string(),

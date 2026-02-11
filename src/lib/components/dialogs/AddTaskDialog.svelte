@@ -22,6 +22,16 @@
 
 	let { open, onClose, onSubmit, onTorrentSelect }: Props = $props();
 
+	interface AdvancedSnapshot {
+		selectedUaValue: string;
+		customUserAgent: string;
+		referer: string;
+		headers: string;
+		proxy: string;
+		maxDownloadLimitValue: string;
+		maxDownloadLimitUnit: string;
+	}
+
 
 	// 基础设置 (Normal Tab)
 	let urls = $state('');
@@ -33,7 +43,7 @@
 
 	// 高级设置管理
 	let showAdvanced = $state(false);
-    let advancedSnapshot = $state<any>(null);
+	let advancedSnapshot = $state<AdvancedSnapshot | null>(null);
 	let selectedUaValue = $state('');
 	let customUserAgent = $state('');
 	let referer = $state('');
@@ -173,8 +183,10 @@
 				multiple: false,
 				title: '选择下载目录'
 			});
-			if (selected) savePath = selected as string;
-		} catch (e) {}
+			if (typeof selected === 'string') savePath = selected;
+		} catch (e) {
+			console.error('Select download directory failed:', e);
+		}
 	}
 
     async function selectTorrentFile() {
@@ -188,7 +200,9 @@
             });
             
             if (selected && onTorrentSelect) {
-                onTorrentSelect(selected as string);
+                if (typeof selected === 'string') {
+                    onTorrentSelect(selected);
+                }
             }
         } catch (e) {
             console.error('Select torrent failed:', e);

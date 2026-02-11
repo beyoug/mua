@@ -152,7 +152,7 @@
                     <span class="info-value" title={torrentPath}>{torrentPath.split('/').pop() || torrentPath}</span>
                 </div>
                 <div class="loading-content">
-                    <Loader2 size={16} class="spin" />
+                                <Loader2 size={16} style="animation: spin 1s linear infinite;" />
                     <span>解析中</span>
                 </div>
             </div>
@@ -208,7 +208,7 @@
                     </button>
                     <button class="mini-action" onclick={fetchTrackers} disabled={isFetchingTrackers}>
                         {#if isFetchingTrackers}
-                            <RefreshCw size={12} class="spin" />
+                                    <RefreshCw size={12} style="animation: spin 1s linear infinite;" />
                         {:else}
                             <RefreshCw size={12} />
                         {/if}
@@ -540,10 +540,6 @@
         opacity: 0.6;
         cursor: not-allowed;
         box-shadow: none;
-    }
-
-    .spin {
-        animation: spin 1s linear infinite;
     }
 
     @keyframes spin {

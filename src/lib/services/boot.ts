@@ -3,6 +3,13 @@ import { message } from '@tauri-apps/plugin-dialog';
 import { loadAppSettings } from '$lib/stores/settings';
 import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
 
+interface Aria2SidecarErrorPayload {
+    message?: string;
+    code?: number | string;
+    signal?: number | string;
+    stderr?: string;
+}
+
 /**
  * 应用前端启动编排器
  * 官方术语：前端生命周期治理服务
@@ -20,11 +27,11 @@ export async function bootApp() {
         await initNotifications();
 
         // 4. 事件订阅：链路监控
-        const unlistenSidecar = await listen('aria2-sidecar-error', async (event: any) => {
+        const unlistenSidecar = await listen<Aria2SidecarErrorPayload>('aria2-sidecar-error', async (event) => {
             const payload = event.payload;
             console.error('Aria2 Sidecar Error:', payload);
             await message(
-                `Aria2 Service Error: ${payload.message}\n\nCode: ${payload.code}\nSignal: ${payload.signal}\n\nLog:\n${payload.stderr}`,
+                `Aria2 Service Error: ${payload.message ?? 'Unknown error'}\n\nCode: ${payload.code ?? '-'}\nSignal: ${payload.signal ?? '-'}\n\nLog:\n${payload.stderr ?? ''}`,
                 {
                     title: 'Aria2 Sidecar Error',
                     kind: 'error'
