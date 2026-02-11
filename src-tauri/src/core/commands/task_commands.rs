@@ -368,14 +368,11 @@ pub async fn remove_tasks(
 ) -> AppResult<String> {
     let tasks_info: Vec<_> = gids.iter().filter_map(|gid| state.get_task(gid)).collect();
 
-    let (active_gids, _inactive_gids): (Vec<_>, Vec<_>) =
-        tasks_info.iter().map(|t| t.gid.clone()).partition(|gid| {
-            tasks_info
-                .iter()
-                .find(|t| &t.gid == gid)
-                .map(|t| t.state.is_active())
-                .unwrap_or(false)
-        });
+    let active_gids: Vec<String> = tasks_info
+        .iter()
+        .filter(|task| task.state.is_active())
+        .map(|task| task.gid.clone())
+        .collect();
 
     let active_futures: Vec<_> = active_gids
         .iter()

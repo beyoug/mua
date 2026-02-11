@@ -6,7 +6,7 @@
  * - 持久化到 localStorage
  */
 import { derived, get } from 'svelte/store';
-import { appSettings, saveAppSettings } from './settings';
+import { appSettings, updateAppSettings } from './settings';
 
 // ============ 主题色 ============
 export type ThemeId = 'cyberpunk' | 'cyber-purple' | 'default';
@@ -61,10 +61,9 @@ async function updateConfigKey<K extends keyof import('./settings').AppConfig>(k
 	const current = get(appSettings);
 	if (current[key] === value) return;
 
-	await saveAppSettings({
-		...current,
+	await updateAppSettings({
 		[key]: value
-	});
+	} as Pick<import('./settings').AppConfig, K>);
 }
 
 // ============ Theme Store (Derived from AppSettings) ============

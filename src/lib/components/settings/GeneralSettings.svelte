@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appSettings, saveAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/stores/settings';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
   import { onMount } from 'svelte';
 
@@ -7,8 +7,7 @@
     try {
       const enabled = await isEnabled();
       if (enabled !== $appSettings.autoStart) {
-        $appSettings.autoStart = enabled;
-        await saveAppSettings($appSettings);
+        await updateAppSettings({ autoStart: enabled });
       }
     } catch (e) {
       console.error('Failed to check autostart status', e);
@@ -22,7 +21,7 @@
       } else {
         await disable();
       }
-      await saveAppSettings($appSettings);
+      await updateAppSettings({ autoStart: $appSettings.autoStart });
     } catch (e) {
       console.error('Failed to toggle autostart', e);
       // Rollback UI
@@ -47,7 +46,7 @@
           <input 
             type="checkbox" 
             bind:checked={$appSettings.closeToTray}
-            onchange={() => saveAppSettings($appSettings)} 
+            onchange={() => updateAppSettings({ closeToTray: $appSettings.closeToTray })} 
           />
           <span class="slider"></span>
         </label>
@@ -64,7 +63,7 @@
           <input 
             type="checkbox" 
             bind:checked={$appSettings.autoResume}
-            onchange={() => saveAppSettings($appSettings)} 
+            onchange={() => updateAppSettings({ autoResume: $appSettings.autoResume })} 
           />
           <span class="slider"></span>
         </label>
@@ -100,7 +99,7 @@
           <input 
             type="checkbox" 
             bind:checked={$appSettings.startMinimized}
-            onchange={() => saveAppSettings($appSettings)}
+            onchange={() => updateAppSettings({ startMinimized: $appSettings.startMinimized })}
           />
           <span class="slider"></span>
         </label>

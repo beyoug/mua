@@ -5,12 +5,10 @@
 <script lang="ts">
 	import { Link, FolderOpen, Download, Settings, FileText, ArrowLeft, AlertCircle, ChevronRight, FileUp } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
-    // @ts-ignore
-	import { confirm } from '@tauri-apps/plugin-dialog';
 	import { fade, slide } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
 	import { isValidDownloadUrl, isMagnetUrl } from '$lib';
-	import { appSettings, saveAppSettings } from '$lib/stores/settings';
+	import { appSettings, updateAppSettings } from '$lib/stores/settings';
 	import BaseModal from '../common/BaseModal.svelte';
 	import UaSelector from './UaSelector.svelte';
     import AdvancedSettingsPanel from './AdvancedSettingsPanel.svelte';
@@ -18,7 +16,7 @@
 	interface Props {
 		open: boolean;
 		onClose: () => void;
-		onSubmit?: (config: DownloadConfig | DownloadConfig[]) => void;
+		onSubmit?: (config: DownloadConfig | DownloadConfig[]) => void | Promise<void>;
 		onTorrentSelect?: (path: string) => void;
 	}
 
@@ -123,7 +121,7 @@
 
 
             if (configs.length > 0) {
-			    onSubmit?.(configs);
+			    await onSubmit?.(configs);
             }
 
             // Save UA history
@@ -131,7 +129,7 @@
                 let history = [...($appSettings.uaHistory || [])];
                 history = [finalUa, ...history.filter(ua => ua !== finalUa)];
                 if (history.length > 10) history = history.slice(0, 10);
-                await saveAppSettings({ ...$appSettings, uaHistory: history });
+                await updateAppSettings({ uaHistory: history });
             }
 
 			resetForm();

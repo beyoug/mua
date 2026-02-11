@@ -67,16 +67,38 @@ function hasPendingLock(id: string): boolean {
 /** 浅比较两个任务数组是否有实际变化（只比较高频变化字段） */
 function tasksChanged(prev: DownloadTask[], next: DownloadTask[]): boolean {
     if (prev.length !== next.length) return true;
+
+    const sameHeaders = (a?: string[], b?: string[]) => {
+        if (a === b) return true;
+        if (!a || !b) return !a && !b;
+        if (a.length !== b.length) return false;
+        for (let i = 0; i < a.length; i++) {
+            if (a[i] !== b[i]) return false;
+        }
+        return true;
+    };
+
     for (let i = 0; i < prev.length; i++) {
         const p = prev[i], n = next[i];
         if (
             p.id !== n.id ||
+            p.filename !== n.filename ||
+            p.url !== n.url ||
             p.state !== n.state ||
             p.progress !== n.progress ||
             p.speed !== n.speed ||
             p.completed !== n.completed ||
             p.total !== n.total ||
-            p.remainingSecs !== n.remainingSecs
+            p.remainingSecs !== n.remainingSecs ||
+            p.savePath !== n.savePath ||
+            p.errorMessage !== n.errorMessage ||
+            p.userAgent !== n.userAgent ||
+            p.referer !== n.referer ||
+            p.proxy !== n.proxy ||
+            p.maxDownloadLimit !== n.maxDownloadLimit ||
+            p.addedAt !== n.addedAt ||
+            p.completedAt !== n.completedAt ||
+            !sameHeaders(p.headers, n.headers)
         ) return true;
     }
     return false;
@@ -112,12 +134,13 @@ async function setupEventListener() {
 // 统一的处理逻辑
 function handleTasksUpdate(backendTasks: DownloadTask[]) {
     const currentTasks = get({ subscribe: subscribeTasks });
+    const currentTaskMap = new Map(currentTasks.map(task => [task.id, task]));
 
     // 后端是单一事实来源（Single Source of Truth）
     // 仅对被锁定的任务保留本地状态（乐观更新）
     const nextTasks = backendTasks.map(task => {
         if (hasPendingLock(task.id)) {
-            const existing = currentTasks.find(t => t.id === task.id);
+            const existing = currentTaskMap.get(task.id);
             if (existing) {
                 pendingStateChanges.delete(task.id);
                 return { ...task, state: existing.state };

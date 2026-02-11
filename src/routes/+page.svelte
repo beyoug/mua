@@ -43,6 +43,7 @@
 	let pendingTorrentInfo = $state<TorrentInfo | null>(null);
 	let pendingTorrentPath = $state('');
 	let pendingParseError = $state('');
+	let torrentParseRequestId = 0;
 
 	// 拖拽看门狗：防止 drag-leave 丢失导致遮罩卡死
 	let lastDragTime = 0;
@@ -104,6 +105,7 @@
 
 	// 打开种子配置弹窗：统一入口（拖拽 / AddTaskDialog 选择文件 共用）
 	function openTorrentConfig(path: string) {
+		const requestId = ++torrentParseRequestId;
 		pendingTorrentPath = path;
 		pendingTorrentInfo = null;
 		pendingParseError = '';
@@ -112,11 +114,13 @@
 
 		// 后台异步解析，不阻塞 UI
 		parseTorrent(path).then(info => {
+			if (requestId !== torrentParseRequestId) return;
 			if (info.files.length > 1000) {
 				console.warn('[Torrent] Large file count:', info.files.length);
 			}
 			pendingTorrentInfo = info;
 		}).catch(e => {
+			if (requestId !== torrentParseRequestId) return;
 			console.error('Failed to parse torrent:', e);
 			pendingParseError = typeof e === 'string' ? e : '种子解析失败，但仍可提交任务';
 		});
@@ -130,7 +134,7 @@
 		}
 	}
 
-	function handleTorrentConfirm(result: TorrentDialogResult) {
+	async function handleTorrentConfirm(result: TorrentDialogResult) {
 		const config: DownloadConfig = {
 			urls: [],
 			savePath: result.savePath,
@@ -140,19 +144,26 @@
 			headers: '',
 			proxy: '',
 			maxDownloadLimit: '',
-			torrentConfig: {
-				path: result.torrentPath,
-				selectFile: result.selectedFiles,
-			}
-		};
-		controller.handleAddTask(config)
-			.catch(e => console.error('[TorrentConfirm] addTask failed:', e));
-		showTorrentConfig = false;
-		pendingTorrentInfo = null;
-		pendingTorrentPath = '';
+				torrentConfig: {
+					path: result.torrentPath,
+					selectFile: result.selectedFiles,
+				}
+			};
+
+		try {
+			await controller.handleAddTask(config);
+			showTorrentConfig = false;
+			pendingTorrentInfo = null;
+			pendingTorrentPath = '';
+			pendingParseError = '';
+		} catch (e) {
+			console.error('[TorrentConfirm] addTask failed:', e);
+			pendingParseError = '任务添加失败，请检查 Aria2 服务是否正常';
+		}
 	}
 
 	function handleTorrentCancel() {
+		torrentParseRequestId += 1;
 		showTorrentConfig = false;
 		pendingTorrentInfo = null;
 		pendingTorrentPath = '';
@@ -238,9 +249,9 @@
 
 	// ============ Event Handlers ============
 
-	function handleAddTask(config: DownloadConfig | DownloadConfig[]) {
-		controller.handleAddTask(config);
-        showAddDialog = false;
+	async function handleAddTask(config: DownloadConfig | DownloadConfig[]) {
+		await controller.handleAddTask(config);
+		showAddDialog = false;
 	}
 	
 	function handleShowDetails(task: DownloadTask) {

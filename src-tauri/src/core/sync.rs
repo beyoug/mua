@@ -132,8 +132,16 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
                 task.completed_length = at.completed_length.clone();
                 dirty = true;
             }
-            task.total_length = at.total_length.clone();
-            task.download_speed = at.download_speed.clone();
+
+            if task.total_length != at.total_length {
+                task.total_length = at.total_length.clone();
+                dirty = true;
+            }
+
+            if task.download_speed != at.download_speed {
+                task.download_speed = at.download_speed.clone();
+                dirty = true;
+            }
 
             // 同步特定字段
             if let Some(msg) = &at.error_message {
@@ -179,14 +187,33 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
             .await
             {
                 Ok(aria_task) => {
-                    task.state = TaskState::from_aria2_status(&aria_task.status);
-                    task.total_length = aria_task.total_length.clone();
-                    task.completed_length = aria_task.completed_length.clone();
-                    task.download_speed = aria_task.download_speed.clone();
-                    if let Some(msg) = &aria_task.error_message {
-                        task.error_message = msg.clone();
+                    let fallback_state = TaskState::from_aria2_status(&aria_task.status);
+                    if task.state != fallback_state {
+                        task.state = fallback_state;
+                        dirty = true;
                     }
-                    dirty = true;
+
+                    if task.total_length != aria_task.total_length {
+                        task.total_length = aria_task.total_length.clone();
+                        dirty = true;
+                    }
+
+                    if task.completed_length != aria_task.completed_length {
+                        task.completed_length = aria_task.completed_length.clone();
+                        dirty = true;
+                    }
+
+                    if task.download_speed != aria_task.download_speed {
+                        task.download_speed = aria_task.download_speed.clone();
+                        dirty = true;
+                    }
+
+                    if let Some(msg) = &aria_task.error_message {
+                        if task.error_message != *msg {
+                            task.error_message = msg.clone();
+                            dirty = true;
+                        }
+                    }
 
                     if let Some(file) = aria_task.files.get(0) {
                         if !file.path.is_empty() {
@@ -195,6 +222,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
                                 if let Some(name_str) = name.to_str() {
                                     if task.filename != name_str {
                                         task.filename = name_str.to_string();
+                                        dirty = true;
                                     }
                                 }
                             }
@@ -203,8 +231,12 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
                 }
                 Err(e) => {
                     let _lower_msg = e.to_string().to_lowercase();
-                    {
+                    if task.state != TaskState::Error {
                         task.state = TaskState::Error;
+                        dirty = true;
+                    }
+
+                    if task.download_speed != "0" {
                         task.download_speed = "0".to_string();
                         dirty = true;
                     }
