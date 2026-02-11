@@ -3,42 +3,34 @@
   添加下载任务对话框 - 使用 BaseModal 统一管理
 -->
 <script lang="ts">
-	import { Link, FolderOpen, Download, Settings, Globe, FileText, Shield, Gauge, ArrowLeft, AlertCircle, ChevronRight, ChevronDown, Layers, FileUp, Trash2 } from '@lucide/svelte';
+	import { Link, FolderOpen, Download, Settings, FileText, ArrowLeft, AlertCircle, ChevronRight, FileUp } from '@lucide/svelte';
 	import { open as openDialog } from '@tauri-apps/plugin-dialog';
     // @ts-ignore
 	import { confirm } from '@tauri-apps/plugin-dialog';
 	import { fade, slide } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
-	import { isValidDownloadUrl } from '$lib';
+	import { isValidDownloadUrl, isMagnetUrl } from '$lib';
 	import { appSettings, saveAppSettings } from '$lib/stores/settings';
-    import { parseTorrent, type TorrentInfo } from '$lib/api/cmd';
 	import BaseModal from '../common/BaseModal.svelte';
 	import UaSelector from './UaSelector.svelte';
-    import BatchImportPanel from './BatchImportPanel.svelte';
-    import TorrentFileSelector from './TorrentFileSelector.svelte';
-    import type { ParsedTask } from '$lib/utils/imports/types';
+    import AdvancedSettingsPanel from './AdvancedSettingsPanel.svelte';
 
 	interface Props {
 		open: boolean;
 		onClose: () => void;
 		onSubmit?: (config: DownloadConfig | DownloadConfig[]) => void;
+		onTorrentSelect?: (path: string) => void;
 	}
 
-	let { open, onClose, onSubmit }: Props = $props();
+	let { open, onClose, onSubmit, onTorrentSelect }: Props = $props();
 
-    // Tab 状态
-    let activeTab = $state<'normal' | 'batch'>('normal');
 
 	// 基础设置 (Normal Tab)
 	let urls = $state('');
 	let savePath = $state($appSettings.defaultSavePath || '~/Downloads');
 	let filename = $state('');
 
-    // Torrent 状态
-    let torrentPath = $state('');
-    let torrentInfo = $state<TorrentInfo | null>(null);
-    let torrentSelectedFiles = $state<string | undefined>(undefined);
-    let isParsingTorrent = $state(false);
+
 
 
 	// 高级设置管理
@@ -58,10 +50,21 @@
 
 	const effectiveUserAgent = $derived(selectedUaValue === 'custom' ? customUserAgent : selectedUaValue);
     
-    // 普通模式提交条件：(URL 非空且验证通过) 或者 (已选择 Torrent)
-	const canSubmitNormal = $derived((!validateInputUrls(urls) && urls.trim().length > 0) || !!torrentInfo);
+    // 提交条件：URL 非空且验证通过
+	const canSubmitNormal = $derived(!validateInputUrls(urls) && urls.trim().length > 0);
     
     const isCustomUaInvalid = $derived(selectedUaValue === 'custom' && !customUserAgent.trim());
+
+    // 动态链接类型检测：判断是否包含混合类型（普通链接 + Magnet）
+    const hasMixedLinks = $derived.by(() => {
+        const lines = urls.split('\n').map(l => l.trim()).filter(l => l);
+        if (lines.length < 2) return false;
+        const hasMagnet = lines.some(l => isMagnetUrl(l));
+        const hasNormal = lines.some(l => !isMagnetUrl(l));
+        return hasMagnet && hasNormal;
+    });
+    // 只有非混合链接时才能使用高级设置
+    const canUseAdvanced = $derived(!hasMixedLinks);
 
 	let uaSelectorRef = $state<UaSelector>();
 	let isSubmitting = $state(false);
@@ -85,17 +88,19 @@
 		if (isSubmitting) return;
         
         const urlError = validateInputUrls(urls);
-		if ((urlError || !urls.trim()) && !torrentInfo) {
-            validationError = urlError || '请输入下载链接或选择种子文件';
+		if (urlError || !urls.trim()) {
+            validationError = urlError || '请输入下载链接';
 			return;
         }
 
 		isSubmitting = true;
 		
 		try {
-            const limitStr = String(maxDownloadLimitValue || '').trim();
+            // 混合链接时忽略高级设置，使用默认值
+            const useAdvanced = canUseAdvanced;
+            const limitStr = useAdvanced ? String(maxDownloadLimitValue || '').trim() : '';
             const limit = limitStr ? `${limitStr}${maxDownloadLimitUnit}` : '';
-            const finalUa = effectiveUserAgent;
+            const finalUa = useAdvanced ? effectiveUserAgent : '';
             
             const configs: DownloadConfig[] = [];
 
@@ -109,30 +114,13 @@
                     savePath,
                     filename: isMulti ? '' : filename,
                     userAgent: finalUa,
-                    referer,
-                    headers,
-                    proxy,
+                    referer: useAdvanced ? referer : '',
+                    headers: useAdvanced ? headers : '',
+                    proxy: useAdvanced ? proxy : '',
                     maxDownloadLimit: limit
                 })));
             }
 
-            // 2. Add Torrent task
-            if (torrentInfo && torrentPath) {
-                 configs.push({
-                    urls: [], // No URL for local torrent parsing
-                    savePath,
-                    filename: '', // auto-detect from torrent usually
-                    userAgent: finalUa,
-                    referer,
-                    headers,
-                    proxy,
-                    maxDownloadLimit: limit,
-                    torrentConfig: {
-                        path: torrentPath,
-                        selectFile: torrentSelectedFiles
-                    }
-                });
-            }
 
             if (configs.length > 0) {
 			    onSubmit?.(configs);
@@ -156,40 +144,14 @@
 		}
 	}
 
-    function handleBatchSubmit(tasks: ParsedTask[]) {
-        if (isSubmitting) return;
-        isSubmitting = true;
 
-        try {
-            const configs: DownloadConfig[] = tasks.map(t => ({
-                urls: [t.url],
-                savePath,
-                filename: t.filename,
-                userAgent: t.userAgent,
-                referer: t.referer,
-                // headers 转换为 string
-                headers: t.headers ? Object.entries(t.headers).map(([k, v]) => `${k}: ${v}`).join('\n') : undefined,
-                proxy: t.proxy
-            }));
-
-            onSubmit?.(configs);
-            resetForm();
-            onClose();
-        } catch (e) {
-            console.error('Batch submit failed', e);
-        } finally {
-            isSubmitting = false;
-        }
-    }
 
 	function resetForm() {
-        activeTab = 'normal';
+
 		urls = '';
         savePath = $appSettings.defaultSavePath || '~/Downloads';
 		filename = '';
-        torrentPath = '';
-        torrentInfo = null;
-        torrentSelectedFiles = undefined;
+
 		selectedUaValue = '';
 		customUserAgent = '';
         isSubmitting = false;
@@ -199,8 +161,12 @@
 		maxDownloadLimitValue = '';
 		maxDownloadLimitUnit = 'M';
 		showAdvanced = false;
+
 		validationError = '';
+        isSelectingFile = false;
 	}
+
+    let isSelectingFile = $state(false);
 
 	async function selectFolder() {
 		try {
@@ -214,6 +180,8 @@
 	}
 
     async function selectTorrentFile() {
+        if (isSelectingFile) return;
+        isSelectingFile = true;
         try {
             const selected = await openDialog({
                 multiple: false,
@@ -221,29 +189,14 @@
                 title: '选择种子文件'
             });
             
-            if (selected) {
-                const path = selected as string;
-                isParsingTorrent = true;
-                try {
-                    const info = await parseTorrent(path);
-                    torrentPath = path;
-                    torrentInfo = info;
-                    // Reset URLs if torrent is selected? Maybe desirable.
-                    // urls = ''; 
-                } catch (e) {
-                    console.error("Failed to parse torrent:", e);
-                    validationError = "种子文件解析失败";
-                } finally {
-                    isParsingTorrent = false;
-                }
+            if (selected && onTorrentSelect) {
+                onTorrentSelect(selected as string);
             }
-        } catch (e) {}
-    }
-
-    function removeTorrent() {
-        torrentPath = '';
-        torrentInfo = null;
-        torrentSelectedFiles = undefined;
+        } catch (e) {
+            console.error('Select torrent failed:', e);
+        } finally {
+            isSelectingFile = false;
+        }
     }
 
     function openAdvanced() {
@@ -325,23 +278,9 @@
     {#snippet header()}
         <div class="header-container">
             {#if !showAdvanced}
-                <div class="tabs">
-                    <button 
-                        class="tab-btn" 
-                        class:active={activeTab === 'normal'} 
-                        onclick={() => activeTab = 'normal'}
-                    >
-                        <Link size={16} />
-                        <span>添加任务</span>
-                    </button>
-                    <button 
-                        class="tab-btn" 
-                        class:active={activeTab === 'batch'} 
-                        onclick={() => activeTab = 'batch'}
-                    >
-                        <Layers size={16} />
-                        <span>批量导入</span>
-                    </button>
+                <div class="dialog-title">
+                    <Link size={16} />
+                    <span>添加任务</span>
                 </div>
             {:else}
                 <div class="advanced-header">
@@ -349,7 +288,7 @@
                         <ArrowLeft size={18} />
                     </button>
                     <div class="breadcrumb">
-                        <span class="crumb-parent">{activeTab === 'normal' ? '添加任务' : '批量导入'}</span>
+                        <span class="crumb-parent">添加任务</span>
                         <ChevronRight size={14} class="crumb-sep" />
                         <span class="crumb-current">高级设置</span>
                     </div>
@@ -362,9 +301,6 @@
         {#if !showAdvanced}
             <!-- 主面板 -->
             <div class="view-main" in:fade={{ duration: 150 }}>
-                
-                {#if activeTab === 'normal'}
-                    <!-- 普通模式: URL 输入 -->
                     <div class="dialog-body" in:fade={{ duration: 150 }}>
                         <!-- 下载链接 -->
                         <div class="form-group">
@@ -372,9 +308,20 @@
                                 <Link size={14} />
                                 <span>下载链接 (支持 Magnet)</span>
                                 <div style="margin-left: auto; display: flex; gap: 8px;">
-                                    <button class="btn-xs-secondary" onclick={selectTorrentFile}>
-                                        <FileUp size={12} />
-                                        <span>打开种子文件</span>
+                                    <button 
+                                        class="btn-xs-secondary" 
+                                        onclick={selectTorrentFile}
+                                        disabled={isSelectingFile}
+                                    >
+                                        {#if isSelectingFile}
+                                            <span class="spin">
+                                                <AlertCircle size={12} />
+                                            </span>
+                                            <span>打开中...</span>
+                                        {:else}
+                                            <FileUp size={12} />
+                                            <span>打开种子文件</span>
+                                        {/if}
                                     </button>
                                 </div>
                             </label>
@@ -395,21 +342,7 @@
                                 class:error={!!validationError}
                             ></textarea>
                             
-                            {#if torrentInfo}
-                                <div class="torrent-preview" transition:slide>
-                                    <div class="tp-header">
-                                        <span class="tp-badge">种子任务</span>
-                                        <span class="tp-name">{torrentInfo.name}</span>
-                                        <button class="btn-icon-danger" onclick={removeTorrent}>
-                                            <Trash2 size={12} />
-                                        </button>
-                                    </div>
-                                    <TorrentFileSelector 
-                                        torrentInfo={torrentInfo} 
-                                        onSelectionChange={(s) => torrentSelectedFiles = s}
-                                    />
-                                </div>
-                            {/if}
+
                         </div>
 
                         <!-- 保存位置 -->
@@ -435,94 +368,31 @@
                                 class="text-input"
                                 placeholder="留空则使用默认文件名"
                                 bind:value={filename}
-                                disabled={!!torrentInfo}
+                                disabled={false}
                             />
                         </div>
                     </div>
-
-                {:else}
-                    <!-- 批量模式: 文件导入面板 -->
-                    <div class="dialog-body h-full" in:fade={{ duration: 150 }}>
-                        <BatchImportPanel onsubmit={handleBatchSubmit} />
-                    </div>
-                {/if}
-
             </div>
         {:else}
             <!-- 高级设置面板 -->
-            <div class="advanced-panel" in:fade={{ duration: 150 }}>
-                <div class="panel-body">
-                    <div class="form-row">
-                        <label>
-                            <Globe size={14} />
-                            <span>User Agent</span>
-                        </label>
-                        <UaSelector
-                            bind:this={uaSelectorRef}
-                            selectedValue={selectedUaValue}
-                            customValue={customUserAgent}
-                            onValueChange={(v) => selectedUaValue = v}
-                            onCustomChange={(v) => customUserAgent = v}
-                        />
-                    </div>
-
-                    <!-- Referer -->
-                    <div class="form-row">
-                        <label>
-                            <Link size={14} />
-                            <span>Referer</span>
-                        </label>
-                        <input type="text" placeholder="https://example.com" bind:value={referer} />
-                    </div>
-
-                    <!-- 自定义 Header -->
-                    <div class="form-row">
-                        <label>
-                            <FileText size={14} />
-                            <span>自定义 Header</span>
-                        </label>
-                        <textarea 
-                            placeholder="Key: Value (每行一个)" 
-                            bind:value={headers}
-                            rows="2"
-                            class="headers-textarea"
-                        ></textarea>
-                    </div>
-
-                    <!-- 代理服务器 -->
-                    <div class="form-row">
-                        <label>
-                            <Shield size={14} />
-                            <span>代理服务器</span>
-                        </label>
-                        <input type="text" placeholder="[user:pass@]host:port (支持 http/socks5)" bind:value={proxy} />
-                    </div>
-
-                    <!-- 速度限制 -->
-                    <div class="form-row">
-                        <label>
-                            <Gauge size={14} />
-                            <span>速度限制</span>
-                        </label>
-                        <div class="input-group">
-                            <input 
-                                type="number" 
-                                min="0" 
-                                placeholder="0" 
-                                class="grouped-input"
-                                bind:value={maxDownloadLimitValue} 
-                            />
-                            <div class="input-divider"></div>
-                            <div class="select-wrapper">
-                                <select class="grouped-select" bind:value={maxDownloadLimitUnit}>
-                                    <option value="M">MB/s</option>
-                                    <option value="K">KB/s</option>
-                                </select>
-                                <ChevronDown size={14} class="select-icon" />
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div in:fade={{ duration: 150 }}>
+                <AdvancedSettingsPanel
+                    bind:uaSelectorRef={uaSelectorRef}
+                    {selectedUaValue}
+                    {customUserAgent}
+                    {referer}
+                    {headers}
+                    {proxy}
+                    {maxDownloadLimitValue}
+                    {maxDownloadLimitUnit}
+                    onUaValueChange={(v) => selectedUaValue = v}
+                    onCustomUaChange={(v) => customUserAgent = v}
+                    onRefererChange={(v) => referer = v}
+                    onHeadersChange={(v) => headers = v}
+                    onProxyChange={(v) => proxy = v}
+                    onLimitValueChange={(v) => maxDownloadLimitValue = v}
+                    onLimitUnitChange={(v) => maxDownloadLimitUnit = v}
+                />
             </div>
         {/if}
     </div>
@@ -530,26 +400,27 @@
     {#snippet footer()}
         {#if !showAdvanced}
             <div class="footer-layout">
-                {#if activeTab === 'normal'}
-                    <button class="btn-ghost" onclick={openAdvanced}>
+                <div class="advanced-btn-wrapper">
+                    <button class="btn-ghost" onclick={openAdvanced} disabled={!canUseAdvanced}>
                         <Settings size={14} />
                         <span>高级设置</span>
                     </button>
-                    <button 
-                        class="btn-primary" 
-                        onclick={handleSubmit}
-                        disabled={!canSubmitNormal || isSubmitting}
-                    >
-                        {#if isSubmitting}
-                            <span>提交中...</span>
-                        {:else}
-                            <Download size={14} />
-                            <span>开始下载</span>
-                        {/if}
-                    </button>
-                {:else}
-                     <!-- Batch Mode Footer -->
-                {/if}
+                    {#if !canUseAdvanced}
+                        <span class="advanced-hint">混合链接不支持自定义设置</span>
+                    {/if}
+                </div>
+                <button 
+                    class="btn-primary" 
+                    onclick={handleSubmit}
+                    disabled={!canSubmitNormal || isSubmitting}
+                >
+                    {#if isSubmitting}
+                        <span>提交中...</span>
+                    {:else}
+                        <Download size={14} />
+                        <span>开始下载</span>
+                    {/if}
+                </button>
             </div>
         {:else}
             <button 
@@ -570,39 +441,13 @@
         width: 100%;
     }
 
-    /* Tabs 样式 */
-    .tabs {
-        display: flex;
-        gap: 4px;
-        background: var(--surface-bg, rgba(0, 0, 0, 0.05));
-        padding: 4px;
-        border-radius: 10px;
-    }
-
-    .tab-btn {
+    .dialog-title {
         display: flex;
         align-items: center;
-        gap: 6px;
-        padding: 6px 12px;
-        border: none;
-        background: transparent;
-        color: var(--text-secondary);
-        font-size: 13px;
-        font-weight: 500;
-        border-radius: 8px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .tab-btn:hover {
+        gap: 8px;
+        font-size: 15px;
+        font-weight: 600;
         color: var(--text-primary);
-        background: rgba(255, 255, 255, 0.05);
-    }
-
-    .tab-btn.active {
-        background: var(--glass-bg); /* 高亮背景 */
-        color: var(--accent-primary);
-        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
     }
 
     .advanced-header {
@@ -650,35 +495,31 @@
         min-height: 0; /* 防止溢出 */
     }
 
-    .view-main, .advanced-panel {
+    .view-main {
         grid-area: 1 / 1;
         padding: 24px;
         display: flex;
         flex-direction: column;
         gap: 20px;
-        height: 100%; /* 填满父容器 */
+        height: 100%;
     }
 
-    .dialog-body, .panel-body {
+    .dialog-body {
         display: flex;
         flex-direction: column;
         gap: 16px;
-        flex: 1; /* 允许扩展 */
+        flex: 1;
     }
 
-    .form-group, .form-row {
+    .form-group {
         display: flex;
         flex-direction: column;
         gap: 8px;
     }
 
-    .form-group.full-height {
-        flex: 1;
-        display: flex;
-        flex-direction: column;
-    }
 
-    .form-group label, .form-row label {
+
+    .form-group label {
         display: flex;
         align-items: center;
         gap: 6px;
@@ -712,8 +553,30 @@
         box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
-    textarea { height: 100px; resize: none; }
+    textarea {
+        height: 100px;
+        resize: none;
+        white-space: nowrap;
+        overflow-x: auto;
+    }
     textarea.error { border-color: var(--danger-color); }
+
+    .advanced-btn-wrapper {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+
+    .advanced-hint {
+        font-size: 11px;
+        color: var(--text-tertiary);
+    }
+
+    .btn-ghost:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        pointer-events: none;
+    }
 
     .path-selector {
         display: flex;
@@ -776,105 +639,7 @@
         background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
     }
 
-    .form-row input:focus,
-    .form-row textarea:focus {
-        border-color: var(--accent-primary);
-        background: var(--surface-hover);
-    }
 
-    .headers-textarea {
-        width: 100%;
-        padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        color: var(--text-primary);
-        font-size: 13px;
-        outline: none;
-        transition: all 0.2s;
-        resize: vertical;
-        min-height: 80px;
-        font-family: var(--font-mono, monospace);
-        line-height: 1.5;
-    }
-
-    .input-group {
-        display: flex;
-        align-items: stretch;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 12px;
-        overflow: hidden;
-        transition: all 0.2s ease;
-    }
-
-    .input-group:focus-within {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
-    }
-
-    .grouped-input {
-        flex: 1;
-        background: transparent;
-        border: none;
-        padding: 12px 14px;
-        color: var(--text-primary);
-        font-size: 14px;
-        outline: none;
-        min-width: 0;
-    }
-
-    .input-divider {
-        width: 1px;
-        background: var(--border-color, rgba(255, 255, 255, 0.1));
-        margin: 8px 0;
-    }
-
-    .select-wrapper {
-        position: relative;
-        display: flex;
-        align-items: center;
-        padding-right: 12px;
-    }
-
-    .grouped-select {
-        background: transparent;
-        border: none;
-        padding: 0 28px 0 16px;
-        color: var(--text-secondary);
-        font-size: 13px;
-        font-weight: 500;
-        outline: none;
-        cursor: pointer;
-        transition: color 0.2s;
-        -webkit-appearance: none;
-        appearance: none;
-        text-align: left;
-        z-index: 1;
-    }
-
-    .grouped-select:hover {
-        color: var(--text-primary);
-    }
-
-    .grouped-select:hover + :global(.select-icon) {
-        color: var(--text-primary);
-    }
-
-    :global(.select-icon) {
-        position: absolute;
-        right: 12px;
-        pointer-events: none;
-        color: var(--text-tertiary);
-        transition: color 0.2s;
-    }
-
-    /* 针对 select 的 Firefox 样式微调 */
-    @-moz-document url-prefix() {
-        .grouped-select {
-            padding: 0 12px;
-        }
-    }
 
     .btn-xs-secondary {
         display: flex;
@@ -896,56 +661,5 @@
         border-color: var(--primary-color);
     }
 
-    .torrent-preview {
-        margin-top: 8px;
-        border-radius: 8px;
-        background: var(--bg-secondary);
-        border: 1px solid var(--border-color);
-        display: flex;
-        flex-direction: column;
-    }
 
-    .tp-header {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 8px 12px;
-        background: var(--bg-tertiary);
-        border-bottom: 1px solid var(--border-color);
-        font-size: 12px;
-    }
-
-    .tp-badge {
-        background: var(--primary-color);
-        color: white;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-size: 10px;
-        font-weight: bold;
-    }
-
-    .tp-name {
-        flex: 1;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-        color: var(--text-primary);
-    }
-
-    .btn-icon-danger {
-        background: none;
-        border: none;
-        color: var(--text-tertiary);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    
-    .btn-icon-danger:hover {
-        background: var(--danger-bg-weak);
-        color: var(--danger-color);
-    }
 </style>

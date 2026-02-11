@@ -2,7 +2,7 @@
   import { slide } from 'svelte/transition';
   import { Check, File, Folder } from '@lucide/svelte';
   import type { TorrentInfo, TorrentFile } from '$lib/api/cmd';
-  import { formatBytes } from '$lib/utils/format';
+  import { formatBytes } from '$lib/utils/formatters';
 
   let { torrentInfo, onSelectionChange } = $props<{
     torrentInfo: TorrentInfo;
@@ -12,11 +12,22 @@
   let selectedIndices = $state<Set<number>>(new Set());
 
   // Initialize with all files selected by default
+  let lastProcessedName = '';
+  
+  // Initialize with all files selected by default
   $effect(() => {
     if (torrentInfo) {
-      const all = new Set(torrentInfo.files.map((f) => f.index));
+       // Guard loop
+       if (torrentInfo.name === lastProcessedName) return;
+       // console.log('[FileSelector] Init for:', torrentInfo.name);
+       lastProcessedName = torrentInfo.name;
+
+      const all = new Set<number>(torrentInfo.files.map((f: TorrentFile) => f.index));
       selectedIndices = all;
+      displayLimit = 50; // Reset pagination
       notifyChange();
+    } else {
+        lastProcessedName = '';
     }
   });
 
@@ -35,7 +46,7 @@
     if (selectedIndices.size === torrentInfo.files.length) {
       selectedIndices = new Set();
     } else {
-      selectedIndices = new Set(torrentInfo.files.map((f) => f.index));
+      selectedIndices = new Set(torrentInfo.files.map((f: TorrentFile) => f.index));
     }
     notifyChange();
   }
@@ -69,6 +80,11 @@
   function isSelected(index: number) {
     return selectedIndices.has(index);
   }
+  let displayLimit = $state(50);
+  
+  function loadMore() {
+      displayLimit += 50;
+  }
 </script>
 
 <div class="torrent-selector">
@@ -85,7 +101,7 @@
   </div>
 
   <div class="file-list">
-    {#each torrentInfo.files as file}
+    {#each torrentInfo.files.slice(0, displayLimit) as file}
       <button
         class="file-item"
         class:selected={isSelected(file.index)}
@@ -93,7 +109,7 @@
       >
         <div class="checkbox">
           {#if isSelected(file.index)}
-            <Check size={12} color="var(--primary-color)" />
+            <Check size={12} color="#fff" />
           {/if}
         </div>
         <div class="file-info">
@@ -102,6 +118,12 @@
         </div>
       </button>
     {/each}
+    
+    {#if torrentInfo.files.length > displayLimit}
+        <button class="load-more-btn" onclick={loadMore}>
+            加载更多 ({torrentInfo.files.length - displayLimit} remaining)
+        </button>
+    {/if}
   </div>
 </div>
 
@@ -192,7 +214,7 @@
 
   .file-item.selected .checkbox {
     border-color: var(--primary-color);
-    background: var(--primary-color-dim);
+    background: var(--primary-color); /* Solid background for better visibility */
   }
 
   .file-info {
@@ -214,5 +236,23 @@
   .size {
       color: var(--text-secondary);
       flex-shrink: 0;
+  }
+
+  .load-more-btn {
+      width: 100%;
+      padding: 8px;
+      margin-top: 4px;
+      background: var(--bg-tertiary);
+      border: 1px dashed var(--border-color);
+      color: var(--text-secondary);
+      font-size: 12px;
+      cursor: pointer;
+      border-radius: 4px;
+      transition: all 0.2s;
+  }
+  .load-more-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--primary-color);
   }
 </style>

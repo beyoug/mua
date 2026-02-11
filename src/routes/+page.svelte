@@ -6,7 +6,10 @@
 	import SettingsPanel from '$lib/components/settings/SettingsPanel.svelte';
 	import ClearConfirmDialog from '$lib/components/dialogs/ClearConfirmDialog.svelte';
 	import TaskDetailsModal from '$lib/components/dialogs/TaskDetailsModal.svelte';
-
+	import TorrentConfigDialog from '$lib/components/dialogs/TorrentConfigDialog.svelte';
+	import type { TorrentDialogResult } from '$lib/components/dialogs/TorrentConfigDialog.svelte';
+	import { onMount } from 'svelte';
+	import { parseTorrent, type TorrentInfo } from '$lib/api/cmd';
 	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 
 		activeTasks, 
@@ -34,7 +37,135 @@
 	const detailsTask = $derived($allTasks.find(t => t.id === detailsTaskId) || null);
 	const showDetailsModal = $derived(detailsTask !== null);
 
-	// ============ Derived States ============
+	// ============ 全局拖拽状态 ============
+	let isDragOver = $state(false);
+	let showTorrentConfig = $state(false);
+	let pendingTorrentInfo = $state<TorrentInfo | null>(null);
+	let pendingTorrentPath = $state('');
+	let pendingParseError = $state('');
+
+	// 拖拽看门狗：防止 drag-leave 丢失导致遮罩卡死
+	let lastDragTime = 0;
+	$effect(() => {
+		if (isDragOver) {
+			lastDragTime = Date.now();
+			const interval = setInterval(() => {
+				// 如果超过 300ms 没有收到 drag-over 事件，认为拖拽已结束
+				if (Date.now() - lastDragTime > 300) {
+					console.log('[DragDrop] Watchdog reset');
+					isDragOver = false;
+				}
+			}, 100);
+			return () => clearInterval(interval);
+		}
+	});
+
+	// 全局 Tauri drag-drop 事件监听（onMount + 动态导入，避免 SSR 问题）
+	onMount(() => {
+		const unlisteners: (() => void)[] = [];
+
+		(async () => {
+			try {
+				const { listen } = await import('@tauri-apps/api/event');
+
+				const u1 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-enter', (event) => {
+					console.log('[DragDrop] enter', event.payload);
+					isDragOver = true;
+					lastDragTime = Date.now();
+				});
+				unlisteners.push(u1);
+
+				const u2 = await listen<{ position: { x: number; y: number } }>('tauri://drag-over', (event) => {
+					// 持续触发，更新时间戳
+					lastDragTime = Date.now();
+				});
+				unlisteners.push(u2);
+
+				const u3 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-drop', (event) => {
+					console.log('[DragDrop] drop', event.payload);
+					isDragOver = false;
+					const paths = event.payload.paths;
+					if (paths && paths.length > 0) {
+						handleGlobalFileDrop(paths);
+					}
+				});
+				unlisteners.push(u3);
+
+				const u4 = await listen('tauri://drag-leave', () => {
+					console.log('[DragDrop] leave');
+					isDragOver = false;
+				});
+				unlisteners.push(u4);
+
+				console.log('[DragDrop] All listeners registered');
+			} catch (e) {
+				console.error('[DragDrop] Failed to register handlers:', e);
+			}
+		})();
+
+		return () => {
+			unlisteners.forEach(fn => fn());
+		};
+	});
+
+	// 打开种子配置弹窗：统一入口（拖拽 / AddTaskDialog 选择文件 共用）
+	function openTorrentConfig(path: string) {
+		pendingTorrentPath = path;
+		pendingTorrentInfo = null;
+		pendingParseError = '';
+		showTorrentConfig = true;
+		showAddDialog = false; // 关闭 AddTaskDialog
+
+		// 后台异步解析，不阻塞 UI
+		parseTorrent(path).then(info => {
+			if (info.files.length > 1000) {
+				console.warn('[Torrent] Large file count', info.files.length);
+			}
+			pendingTorrentInfo = info;
+		}).catch(e => {
+			console.error('Failed to parse torrent:', e);
+			pendingParseError = typeof e === 'string' ? e : '种子解析失败，但仍可提交任务';
+		});
+	}
+
+	// 全局拖拽处理：.torrent 文件直接打开配置弹窗
+	function handleGlobalFileDrop(paths: string[]) {
+		const torrentFile = paths.find(p => p.toLowerCase().endsWith('.torrent'));
+		if (torrentFile) {
+			openTorrentConfig(torrentFile);
+		}
+	}
+
+	function handleTorrentConfirm(result: TorrentDialogResult) {
+		console.log('[TorrentConfirm] received:', result);
+		const config: DownloadConfig = {
+			urls: [],
+			savePath: result.savePath,
+			filename: '',
+			userAgent: '',
+			referer: '',
+			headers: '',
+			proxy: '',
+			maxDownloadLimit: '',
+			torrentConfig: {
+				path: result.torrentPath,
+				selectFile: result.selectedFiles,
+			}
+		};
+		controller.handleAddTask(config)
+			.catch(e => console.error('[TorrentConfirm] addTask failed:', e));
+		showTorrentConfig = false;
+		pendingTorrentInfo = null;
+		pendingTorrentPath = '';
+	}
+
+	function handleTorrentCancel() {
+		showTorrentConfig = false;
+		pendingTorrentInfo = null;
+		pendingTorrentPath = '';
+		pendingParseError = '';
+	}
+
 
 	// 当前显示的任务列表
 	const filteredTasks = $derived.by(() => {
@@ -124,6 +255,11 @@
 	}
 </script>
 
+<svelte:window 
+	ondragover={(e) => e.preventDefault()}
+	ondrop={(e) => e.preventDefault()}
+/>
+
 <!-- 侧边栏 -->
 <Sidebar 
 	activeNav={controller.activeNav}
@@ -172,6 +308,7 @@
 	open={showAddDialog}
 	onClose={() => showAddDialog = false}
 	onSubmit={handleAddTask}
+	onTorrentSelect={(path) => openTorrentConfig(path)}
 />
 
 <!-- 设置面板 -->
@@ -214,6 +351,32 @@
 	/>
 {/if}
 
+<!-- 全局拖拽覆盖层 -->
+{#if isDragOver}
+	<div class="global-drag-overlay">
+		<div class="drag-hint">
+			<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+				<polyline points="7 10 12 15 17 10"/>
+				<line x1="12" y1="15" x2="12" y2="3"/>
+			</svg>
+			<span>释放以添加种子文件</span>
+		</div>
+	</div>
+{/if}
+
+<!-- Torrent 配置弹窗（全局级别） -->
+{#if showTorrentConfig}
+	<TorrentConfigDialog
+		open={showTorrentConfig}
+		torrentInfo={pendingTorrentInfo}
+		torrentPath={pendingTorrentPath}
+		parseError={pendingParseError}
+		onConfirm={handleTorrentConfirm}
+		onCancel={handleTorrentCancel}
+	/>
+{/if}
+
 <style>
 	/* 主内容区调整 */
 	.main-content {
@@ -239,5 +402,36 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+	}
+
+	/* 全局拖拽覆盖层 */
+	.global-drag-overlay {
+		position: fixed;
+		inset: 0;
+		z-index: 9999;
+		background: rgba(0, 0, 0, 0.6);
+		backdrop-filter: blur(4px);
+		-webkit-backdrop-filter: blur(4px);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		pointer-events: none;
+	}
+
+	.drag-hint {
+		display: flex;
+		flex-direction: column;
+		align-items: center;
+		gap: 16px;
+		color: var(--accent-primary);
+		font-size: 18px;
+		font-weight: 600;
+		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+		animation: drag-pulse 1.5s ease-in-out infinite;
+	}
+
+	@keyframes drag-pulse {
+		0%, 100% { transform: scale(1); opacity: 0.9; }
+		50% { transform: scale(1.05); opacity: 1; }
 	}
 </style>

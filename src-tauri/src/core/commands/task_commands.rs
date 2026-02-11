@@ -13,33 +13,6 @@ use crate::core::sync::FrontendTask;
 use chrono::Local;
 
 #[tauri::command]
-#[allow(clippy::too_many_arguments)]
-pub async fn add_download_task(
-    state: tauri::State<'_, TaskStore>,
-    urls: Vec<String>,
-    save_path: Option<String>,
-    filename: Option<String>,
-    user_agent: Option<String>,
-    referer: Option<String>,
-    headers: Option<String>,
-    proxy: Option<String>,
-    max_download_limit: Option<String>,
-) -> AppResult<String> {
-    let config = DownloadConfig {
-        urls,
-        save_path,
-        filename,
-        user_agent,
-        referer,
-        headers,
-        proxy,
-        max_download_limit,
-        torrent_config: None,
-    };
-    add_download_task_inner(&state, config).await
-}
-
-#[tauri::command]
 pub async fn add_download_tasks(
     state: tauri::State<'_, TaskStore>,
     configs: Vec<DownloadConfig>,
@@ -225,9 +198,6 @@ async fn add_torrent_task_inner(
         Err(e) => Err(e),
     }
 }
-
-
-
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {

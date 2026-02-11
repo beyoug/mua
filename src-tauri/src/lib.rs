@@ -41,7 +41,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            add_download_task,
             add_download_tasks,
             get_tasks,
             pause_task,

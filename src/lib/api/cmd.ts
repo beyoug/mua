@@ -16,25 +16,9 @@ export async function getTasks(): Promise<DownloadTask[]> {
 }
 
 /**
- * 添加下载任务
+ * 添加下载任务（统一入口，支持单个/批量）
  */
-export async function addDownloadTask(config: DownloadConfig): Promise<string> {
-    return invoke<string>('add_download_task', {
-        urls: config.urls,
-        savePath: config.savePath,
-        filename: config.filename,
-        userAgent: config.userAgent,
-        referer: config.referer,
-        headers: config.headers,
-        proxy: config.proxy,
-        maxDownloadLimit: config.maxDownloadLimit
-    });
-}
-
-/**
- * 批量添加下载任务
- */
-export async function addDownloadTasksCmd(configs: DownloadConfig[]): Promise<(string | null)[]> {
+export async function addDownloadTasks(configs: DownloadConfig[]): Promise<(string | null)[]> {
     return invoke<(string | null)[]>('add_download_tasks', { configs });
 }
 
@@ -146,6 +130,7 @@ export interface TorrentFile {
     index: number;
 }
 
+// 解析种子文件
 export async function parseTorrent(path: string): Promise<TorrentInfo> {
     return invoke<TorrentInfo>('parse_torrent', { path });
 }

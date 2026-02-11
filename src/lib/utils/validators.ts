@@ -31,6 +31,13 @@ export function isValidDownloadUrl(urlString: string): boolean {
 }
 
 /**
+ * 判断 URL 是否为 Magnet 链接
+ */
+export function isMagnetUrl(urlString: string): boolean {
+    return urlString.trim().toLowerCase().startsWith('magnet:');
+}
+
+/**
  * 验证单个 URL 并返回错误消息
  * @param urlText - URL 文本
  * @returns 验证结果（空字符串表示无错误）

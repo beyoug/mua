@@ -24,8 +24,7 @@ import {
 } from '$lib/utils/formatters';
 import {
     getTasks,
-    addDownloadTask as addDownloadTaskCmd,
-    addDownloadTasksCmd,
+    addDownloadTasks as addDownloadTasksCmd,
     pauseTask as pauseTaskCmd,
     resumeTask as resumeTaskCmd,
     cancelTaskCmd,
@@ -195,57 +194,11 @@ export const downloadStats: Readable<DownloadStats> = derived(
 
 // ============ 任务操作方法 ============
 
-
 /**
- * 添加下载任务
+ * 添加下载任务（统一入口，支持单个/批量）
  */
-export async function addDownloadTask(config: DownloadConfig): Promise<void> {
-    try {
-        const gid = await addDownloadTaskCmd(config);
-
-        // 乐观 UI 更新
-        updateTasks(tasks => {
-            // 防止重复添加（如果后端同步已推送到 store）
-            if (tasks.some(t => t.id === gid)) {
-                return tasks;
-            }
-
-            // 只创建一个代表性任务 (Aria2 GID 对应一个 Task，即使有多个 Mirrors)
-            const primaryUrl = config.urls[0] || '';
-            const newTask: DownloadTask = {
-                id: gid, // 使用返回的 GID！
-                filename: config.filename || extractFilenameFromUrl(primaryUrl),
-                url: primaryUrl,
-                progress: 0,
-                speed: { value: '0', unit: 'B/s' },
-                speed_u64: 0,
-                downloaded: '0 B',
-                downloaded_u64: 0,
-                total: '?',
-                total_u64: 0,
-                remaining: '',
-                state: 'waiting',
-                addedAt: formatAddedAt(),
-                savePath: config.savePath || '',
-                userAgent: config.userAgent,
-                referer: config.referer,
-                proxy: config.proxy,
-                maxDownloadLimit: config.maxDownloadLimit,
-                headers: config.headers ? config.headers.split(';').map(h => h.trim()).filter(h => h !== '') : []
-            };
-
-            return [...tasks, newTask];
-        });
-    } catch (e) {
-        console.error('添加任务失败:', e);
-        throw e;
-    }
-}
-
-/**
- * 批量添加下载任务
- */
-export async function addBatchDownloadTasks(configs: DownloadConfig[]): Promise<void> {
+export async function addDownloadTasks(configOrConfigs: DownloadConfig | DownloadConfig[]): Promise<void> {
+    const configs = Array.isArray(configOrConfigs) ? configOrConfigs : [configOrConfigs];
     try {
         const results = await addDownloadTasksCmd(configs);
 
@@ -256,7 +209,7 @@ export async function addBatchDownloadTasks(configs: DownloadConfig[]): Promise<
                 const gid = results[i];
                 if (!gid) continue;
 
-                // Prevent duplicates
+                // 防止重复添加
                 if (tasks.some(t => t.id === gid) || newTasks.some(t => t.id === gid)) continue;
 
                 const config = configs[i];
@@ -288,7 +241,7 @@ export async function addBatchDownloadTasks(configs: DownloadConfig[]): Promise<
             return [...tasks, ...newTasks];
         });
     } catch (e) {
-        console.error('Batch add failed:', e);
+        console.error('添加任务失败:', e);
         throw e;
     }
 }

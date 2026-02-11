@@ -3,11 +3,10 @@
  */
 
 // Utils
-export { cn } from './utils/cn';
 export { lockScroll, unlockScroll, createScrollLockEffect } from './utils/scroll-lock';
-export { formatSpeed, formatAddedAt, extractFilenameFromUrl } from './utils/formatters';
+export { formatSpeed, formatAddedAt, extractFilenameFromUrl, formatBytes } from './utils/formatters';
 export { getEmitRate, getEstimatedParticles, getSpeedMultiplier } from './utils/particles';
-export { isValidDownloadUrl, validateUrl, validateDownloadConfig } from './utils/validators';
+export { isValidDownloadUrl, isMagnetUrl, validateUrl, validateDownloadConfig } from './utils/validators';
 export { clickOutside } from './utils/click-outside';
 export {
     DownloadStateGroups,
@@ -30,8 +29,7 @@ export {
     completeTasks,
     allTasks,
     downloadStats,
-    addDownloadTask,
-    addBatchDownloadTasks,
+    addDownloadTasks,
     pauseTask,
     resumeTask,
     cancelTask,
