@@ -1,6 +1,7 @@
 use crate::core::types::TaskState;
 use chrono::Local;
 use serde::{Deserialize, Serialize};
+use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
@@ -117,7 +118,11 @@ impl TaskStore {
 
                     if let Ok(json) = serde_json::to_string_pretty(&list) {
                         if let Err(e) = crate::utils::atomic_write(&path, &json) {
-                            log::error!("Failed to save tasks: {}", e);
+                            crate::app_error!(
+                                "Core::Store",
+                                "tasks_save_failed",
+                                json!({ "path": path.to_string_lossy(), "error": e.to_string() })
+                            );
                         }
                     }
                 });

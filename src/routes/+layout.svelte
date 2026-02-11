@@ -6,6 +6,9 @@
     import { systemPrefersDark, particlesEnabled } from '$lib/stores/theme';
 	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
 	import { bootApp } from '$lib/services/boot';
+	import { createLogger } from '$lib/utils/logger';
+
+	const logger = createLogger('Layout');
 
 	let { children } = $props();
 
@@ -31,7 +34,7 @@
 		bootApp().then(cb => {
 			cleanup = cb;
 		}).catch(e => {
-			console.error('Core Boot Failure:', e);
+			logger.error('Core boot failure', { error: e });
 		});
 
 		return () => {
@@ -58,4 +61,3 @@
 		min-height: 100vh;
 	}
 </style>
-

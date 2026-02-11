@@ -3,6 +3,7 @@ use crate::core::error::{AppError, AppResult};
 use crate::core::store::TaskStore;
 use crate::utils;
 use futures::future::join_all;
+use serde_json::json;
 
 #[tauri::command]
 pub async fn remove_tasks(
@@ -39,7 +40,11 @@ pub async fn remove_tasks(
             let resolved_path = utils::resolve_path(&full_path);
             if std::path::Path::new(&resolved_path).exists() {
                 if let Err(e) = std::fs::remove_file(&resolved_path) {
-                    log::error!("删除文件失败 {}: {}", resolved_path, e);
+                    crate::app_error!(
+                        "Core::TaskRemove",
+                        "file_delete_failed",
+                        json!({ "path": resolved_path, "error": e.to_string() })
+                    );
                 }
             }
             let aria2_file_path = format!("{}.aria2", resolved_path);
@@ -91,11 +96,23 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
 
             if std::path::Path::new(&resolved_path).exists() {
                 match std::fs::remove_file(&resolved_path) {
-                    Ok(_) => log::info!("已删除文件: {}", resolved_path),
-                    Err(e) => log::error!("删除文件失败 {}: {}", resolved_path, e),
+                    Ok(_) => crate::app_info!(
+                        "Core::TaskRemove",
+                        "file_deleted",
+                        json!({ "path": resolved_path })
+                    ),
+                    Err(e) => crate::app_error!(
+                        "Core::TaskRemove",
+                        "file_delete_failed",
+                        json!({ "path": resolved_path, "error": e.to_string() })
+                    ),
                 }
             } else {
-                log::warn!("未找到要删除的文件: {}", resolved_path);
+                crate::app_warn!(
+                    "Core::TaskRemove",
+                    "file_not_found_on_delete",
+                    json!({ "path": resolved_path })
+                );
             }
 
             let aria2_file_path = format!("{}.aria2", resolved_path);

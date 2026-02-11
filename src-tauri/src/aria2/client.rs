@@ -14,7 +14,7 @@ static CLIENT: OnceLock<reqwest::Client> = OnceLock::new();
 
 pub fn set_aria2_port(port: u16) {
     ARIA2_PORT.store(port, Ordering::SeqCst);
-    log::info!("Aria2 client configured to use port: {}", port);
+    crate::app_info!("Aria2::Client", "port_configured", json!({ "port": port }));
 }
 
 pub async fn set_aria2_secret(secret: String) {
@@ -92,7 +92,7 @@ where
         "params": final_params
     });
 
-    log::debug!("Sending RPC request: {}", method);
+    crate::app_debug!("Aria2::Client", "rpc_request", json!({ "method": method }));
 
     let port = get_aria2_port();
     let url = format!("http://localhost:{}/jsonrpc", port);

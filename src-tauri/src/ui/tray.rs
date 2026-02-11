@@ -155,7 +155,7 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
                 }
                 "resume_all" => {
                     tauri::async_runtime::spawn(async {
-                        log::info!("Tray: Resume All clicked");
+                        crate::app_info!("UI::Tray", "resume_all_clicked");
                         let _ = crate::aria2::client::unpause_all().await;
                     });
                 }

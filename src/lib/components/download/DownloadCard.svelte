@@ -10,6 +10,9 @@
     import StatusIndicator from './StatusIndicator.svelte';
 	import type { DownloadTask } from '$lib/types/download';
 	import { formatSpeed, formatBytes, formatDuration } from '$lib/utils/formatters';
+	import { createLogger } from '$lib/utils/logger';
+
+	const logger = createLogger('DownloadCard');
 
 	interface Props {
 		/** 完整的任务对象（单一 prop 减少 diff 开销） */
@@ -66,7 +69,7 @@
 			await navigator.clipboard.writeText(url);
 			closeMenu();
 		} catch (e) {
-			console.error('Failed to copy', e);
+			logger.error('Failed to copy task url', { taskId: task.id, error: e });
 		}
 	}
 

@@ -6,6 +6,7 @@ use crate::utils;
 use base64::Engine as _;
 use chrono::Local;
 use futures::future::join_all;
+use serde_json::json;
 
 #[tauri::command]
 pub async fn add_download_tasks(
@@ -32,7 +33,11 @@ pub async fn add_download_tasks(
     }
 
     if !errors.is_empty() {
-        log::warn!("批量添加遇到 {} 个错误: {:?}", errors.len(), errors);
+        crate::app_warn!(
+            "Core::TaskAdd",
+            "batch_add_partial_failure",
+            json!({ "error_count": errors.len(), "errors": errors })
+        );
     }
 
     Ok(gids)
@@ -44,7 +49,11 @@ pub async fn parse_torrent(path: String) -> AppResult<crate::core::torrent::Torr
 }
 
 async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppResult<String> {
-    log::info!("Adding download task: {:?}", cfg.urls);
+    crate::app_info!(
+        "Core::TaskAdd",
+        "add_task_requested",
+        json!({ "url_count": cfg.urls.len(), "is_torrent": cfg.torrent_config.is_some() })
+    );
 
     if let Some(ref torrent_cfg) = cfg.torrent_config {
         return add_torrent_task_inner(

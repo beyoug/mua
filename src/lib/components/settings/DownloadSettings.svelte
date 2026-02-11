@@ -2,6 +2,9 @@
   import { FolderOpen } from '@lucide/svelte';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import { appSettings, updateAppSettings } from '$lib/stores/settings';
+  import { createLogger } from '$lib/utils/logger';
+
+  const logger = createLogger('DownloadSettings');
 
   async function selectFolder() {
     try {
@@ -14,7 +17,7 @@
         await updateAppSettings({ defaultSavePath: selected as string });
       }
     } catch (e) {
-      console.error(e);
+      logger.error('Failed to select default download folder', { error: e });
     }
   }
 </script>

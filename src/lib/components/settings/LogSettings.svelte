@@ -3,6 +3,9 @@
   import { listen } from '@tauri-apps/api/event';
   import { invoke } from '@tauri-apps/api/core';
   import { Eraser } from '@lucide/svelte';
+  import { createLogger } from '$lib/utils/logger';
+
+  const logger = createLogger('LogSettings');
 
   let enabled = $state(false);
   let logs: string[] = $state([]);
@@ -21,7 +24,7 @@
             scrollToBottom();
         });
     } catch (e) {
-        console.error('Failed to start log stream', e);
+        logger.error('Failed to start aria2 log stream', { error: e });
     }
   }
 
@@ -33,7 +36,7 @@
         }
         await invoke('stop_log_stream');
     } catch (e) {
-        console.error('Failed to stop log stream', e);
+        logger.error('Failed to stop aria2 log stream', { error: e });
     }
   }
 

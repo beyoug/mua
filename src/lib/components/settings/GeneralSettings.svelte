@@ -2,6 +2,9 @@
   import { appSettings, updateAppSettings } from '$lib/stores/settings';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
   import { onMount } from 'svelte';
+  import { createLogger } from '$lib/utils/logger';
+
+  const logger = createLogger('GeneralSettings');
 
   onMount(async () => {
     try {
@@ -10,7 +13,7 @@
         await updateAppSettings({ autoStart: enabled });
       }
     } catch (e) {
-      console.error('Failed to check autostart status', e);
+      logger.error('Failed to check autostart status', { error: e });
     }
   });
 
@@ -23,7 +26,7 @@
       }
       await updateAppSettings({ autoStart: $appSettings.autoStart });
     } catch (e) {
-      console.error('Failed to toggle autostart', e);
+      logger.error('Failed to toggle autostart', { enabled: $appSettings.autoStart, error: e });
       // Rollback UI
       $appSettings.autoStart = !$appSettings.autoStart;
     }

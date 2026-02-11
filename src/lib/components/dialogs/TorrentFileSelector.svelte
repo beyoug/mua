@@ -19,7 +19,6 @@
     if (torrentInfo) {
        // Guard loop
        if (torrentInfo.name === lastProcessedName) return;
-       // console.log('[FileSelector] Init for:', torrentInfo.name);
        lastProcessedName = torrentInfo.name;
 
       const all = new Set<number>(torrentInfo.files.map((f: TorrentFile) => f.index));
