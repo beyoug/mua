@@ -1,4 +1,4 @@
-import { writable } from 'svelte/store';
+import { get, writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
 
 export interface AppConfig {
@@ -53,6 +53,23 @@ const DEFAULT_CONFIG: AppConfig = {
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);
 
+export type AppSettingsPatch = Partial<AppConfig>;
+
+function hasConfigChange(current: AppConfig, next: AppConfig): boolean {
+    const keys = new Set<keyof AppConfig>([
+        ...Object.keys(current) as (keyof AppConfig)[],
+        ...Object.keys(next) as (keyof AppConfig)[]
+    ]);
+
+    for (const key of keys) {
+        if (!Object.is(current[key], next[key])) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
 export async function loadAppSettings() {
     try {
         const config = await invoke<AppConfig>('get_app_config');
@@ -70,4 +87,15 @@ export async function saveAppSettings(config: AppConfig) {
         console.error('Failed to save app settings', e);
         throw e;
     }
+}
+
+export async function updateAppSettings(patch: AppSettingsPatch): Promise<void> {
+    const current = get(appSettings);
+    const next = { ...current, ...patch };
+
+    if (!hasConfigChange(current, next)) {
+        return;
+    }
+
+    await saveAppSettings(next);
 }

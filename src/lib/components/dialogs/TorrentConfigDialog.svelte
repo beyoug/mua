@@ -9,7 +9,7 @@
     import { fade } from 'svelte/transition';
     import type { TorrentInfo } from '$lib/api/cmd';
     import { formatBytes } from '$lib';
-    import { appSettings, saveAppSettings } from '$lib/stores/settings';
+    import { appSettings, updateAppSettings } from '$lib/stores/settings';
     import BaseModal from '../common/BaseModal.svelte';
     import TorrentFileSelector from './TorrentFileSelector.svelte';
 
@@ -109,7 +109,7 @@
 
         // Tracker 保存不阻塞提交（fire-and-forget）
         if (trackers.trim()) {
-            saveAppSettings({ ...$appSettings, btTrackers: trackers })
+            updateAppSettings({ btTrackers: trackers })
                 .catch(e => console.error('Failed to save trackers:', e));
         }
 

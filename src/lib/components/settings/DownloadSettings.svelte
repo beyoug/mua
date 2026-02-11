@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FolderOpen } from '@lucide/svelte';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
-  import { appSettings, saveAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/stores/settings';
 
   async function selectFolder() {
     try {
@@ -11,8 +11,7 @@
         title: '选择默认下载目录'
       });
       if (selected) {
-        $appSettings.defaultSavePath = selected as string;
-        await saveAppSettings($appSettings);
+        await updateAppSettings({ defaultSavePath: selected as string });
       }
     } catch (e) {
       console.error(e);
@@ -45,7 +44,7 @@
           <input 
             type="number" 
             bind:value={$appSettings.maxConcurrentDownloads} 
-            onchange={() => saveAppSettings($appSettings)}
+            onchange={() => updateAppSettings({ maxConcurrentDownloads: $appSettings.maxConcurrentDownloads })}
             min="1" 
             max="16" 
           />
@@ -67,7 +66,7 @@
             type="text" 
             placeholder="0" 
             bind:value={$appSettings.globalMaxDownloadLimit}
-            onchange={() => saveAppSettings($appSettings)}
+            onchange={() => updateAppSettings({ globalMaxDownloadLimit: $appSettings.globalMaxDownloadLimit })}
           />
           <span class="unit">MB/s</span>
         </div>

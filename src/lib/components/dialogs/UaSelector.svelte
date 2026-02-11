@@ -6,7 +6,7 @@
     import { Trash2, ChevronRight } from '@lucide/svelte';
     import { fade } from 'svelte/transition';
     import { clickOutside } from '$lib';
-    import { appSettings, saveAppSettings } from '$lib/stores/settings';
+    import { appSettings, updateAppSettings } from '$lib/stores/settings';
 
     interface Props {
         /** 当前选中的 UA 值（空字符串=默认, 'custom'=自定义模式, 其他=具体 UA 字符串） */
@@ -69,7 +69,7 @@
     async function removeHistoryItem(uaValue: string) {
         const history = $appSettings.uaHistory || [];
         const newHistory = history.filter(v => v !== uaValue);
-        await saveAppSettings({ ...$appSettings, uaHistory: newHistory });
+        await updateAppSettings({ uaHistory: newHistory });
         if (selectedValue === uaValue) onValueChange('');
     }
 

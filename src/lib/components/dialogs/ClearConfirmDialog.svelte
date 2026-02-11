@@ -12,7 +12,7 @@
 		description?: string;
 		confirmText?: string;
 		onClose: () => void;
-		onConfirm: (deleteFile: boolean) => void;
+		onConfirm: (deleteFile: boolean) => void | Promise<void>;
 		showDeleteFileOption?: boolean;
 	}
 
@@ -27,16 +27,24 @@
 	}: Props = $props();
 
 	let deleteFile = $state(false);
+	let isSubmitting = $state(false);
 
-	function handleConfirm() {
-		onConfirm(deleteFile);
-		onClose();
+	async function handleConfirm() {
+		if (isSubmitting) return;
+		isSubmitting = true;
+		try {
+			await onConfirm(deleteFile);
+			onClose();
+		} finally {
+			isSubmitting = false;
+		}
 	}
 
 	// 监听 open 变化重置状态
 	$effect(() => {
 		if (open) {
 			deleteFile = false;
+			isSubmitting = false;
 		}
 	});
 </script>
@@ -67,12 +75,12 @@
         {/if}
     </div>
 
-    {#snippet footer()}
-        <button class="btn-secondary" onclick={onClose}>取消</button>
-        <button class="btn-danger" onclick={handleConfirm}>
-            {confirmText}
-        </button>
-    {/snippet}
+	{#snippet footer()}
+		<button class="btn-secondary" onclick={onClose} disabled={isSubmitting}>取消</button>
+		<button class="btn-danger" onclick={handleConfirm} disabled={isSubmitting}>
+			{confirmText}
+		</button>
+	{/snippet}
 </BaseModal>
 
 <style>
@@ -139,7 +147,7 @@
         font-weight: 400;
     }
 
-    .btn-secondary {
+	.btn-secondary {
         padding: 8px 18px;
         border-radius: 8px;
         font-size: 13px;
@@ -149,7 +157,14 @@
         border: 1px solid var(--border-color);
         background: transparent;
         color: var(--text-primary);
-    }
+	}
+
+	.btn-secondary:disabled,
+	.btn-danger:disabled {
+		opacity: 0.6;
+		cursor: not-allowed;
+		transform: none;
+	}
 
     .btn-secondary:hover {
         background: var(--surface-hover);

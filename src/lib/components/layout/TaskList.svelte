@@ -37,6 +37,11 @@
 		onShowDetails,
 		groupByDate = false
 	}: Props = $props();
+
+	const taskDateLabels = $derived.by(() => {
+		if (!groupByDate) return [] as string[];
+		return tasks.map(task => getTaskDate(task.addedAt));
+	});
 	// Helper to format date for grouping
 	// Helper to format date for grouping with natural language
 	function getTaskDate(dateStr: string): string {
@@ -75,8 +80,8 @@
 {#if tasks.length > 0}
 	<section class="downloads-list">
 		{#each tasks as download, i (download.id)}
-			{@const currentDate = groupByDate ? getTaskDate(download.addedAt) : ''}
-			{@const prevDate = groupByDate && i > 0 ? getTaskDate(tasks[i - 1].addedAt) : ''}
+			{@const currentDate = groupByDate ? (taskDateLabels[i] || '') : ''}
+			{@const prevDate = groupByDate && i > 0 ? (taskDateLabels[i - 1] || '') : ''}
 			
 			<div animate:flip={{ duration: 400 }}>
 				{#if groupByDate && currentDate && currentDate !== prevDate}

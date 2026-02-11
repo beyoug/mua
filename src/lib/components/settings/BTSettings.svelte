@@ -3,7 +3,7 @@
   BT/磁力链接相关设置与高级配置
 -->
 <script lang="ts">
-  import { appSettings, saveAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/stores/settings';
   import { Network, Share2, Database, HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
@@ -34,8 +34,7 @@
 
   async function handleSave() {
     try {
-      await saveAppSettings({
-        ...$appSettings,
+      await updateAppSettings({
         btTrackers,
         enableDht,
         enablePeerExchange,

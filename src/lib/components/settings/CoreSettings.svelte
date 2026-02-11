@@ -1,7 +1,7 @@
 <script lang="ts">
     import { FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
     import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/stores/aria2Config';
-    import { appSettings, saveAppSettings } from '$lib/stores/settings';
+    import { appSettings, updateAppSettings } from '$lib/stores/settings';
     import { onMount } from 'svelte';
     import { importCustomBinary, getAria2VersionInfo } from '$lib/api/cmd';
     import type { Aria2VersionInfo } from '$lib/types/download';
@@ -65,7 +65,11 @@
 
     async function saveSettings() {
         try {
-            await saveAppSettings($appSettings);
+            await updateAppSettings({
+                rpcPort: $appSettings.rpcPort,
+                rpcSecret: $appSettings.rpcSecret,
+                useCustomAria2: $appSettings.useCustomAria2,
+            });
             isDirty = false;
         } catch (e) {
             console.error(e);

@@ -114,7 +114,7 @@ export class TaskController {
     }
 
     // 执行清理（批量或单项）
-    performClear(deleteFile: boolean) {
+    async performClear(deleteFile: boolean) {
         if (this.itemToDelete) {
             // 单项删除
             removeTask(this.itemToDelete, deleteFile);
@@ -123,10 +123,10 @@ export class TaskController {
             // 批量删除
             if (this.activeNav === 'active') {
                 // 进行中页面：软删除（取消）
-                cancelTasks(this.selectedIds);
+                await cancelTasks(this.selectedIds);
             } else {
                 // 历史/已完成页面：硬删除
-                removeTasks(this.selectedIds, deleteFile);
+                await removeTasks(this.selectedIds, deleteFile);
             }
             this.exitSelectionMode();
         }
@@ -134,10 +134,10 @@ export class TaskController {
         this.showClearDialog = false;
     }
 
-    handleCancelTask(task: DownloadTask) {
+    async handleCancelTask(task: DownloadTask) {
         if (isActiveTask(task.state)) {
             // 活跃任务（下载/等待/暂停）：软删除（仅取消并保留在历史），无需确认
-            cancelTask(task.id);
+            await cancelTask(task.id);
         } else if (isCompletedTask(task.state)) {
             // 已完成任务：物理删除记录，需要确认
             this.itemToDelete = task.id;
@@ -172,9 +172,8 @@ export class TaskController {
     /**
      * 恢复/重新下载任务并自动跳转至进行中
      */
-    handleResumeTask(id: string) {
-        resumeTask(id);
+    async handleResumeTask(id: string) {
+        await resumeTask(id);
         this.handleNavChange('active');
     }
 }
-

@@ -38,7 +38,7 @@ pub struct PersistedTask {
 }
 
 /// Minimum interval between save operations (ms)
-const SAVE_DEBOUNCE_MS: u64 = 100;
+const SAVE_DEBOUNCE_MS: u64 = 1500;
 
 pub struct TaskStore {
     pub tasks: Mutex<HashMap<String, PersistedTask>>,
@@ -175,13 +175,9 @@ impl TaskStore {
         self.save();
     }
 
-    // Batch update all tasks (Performance Optimization)
+    // Batch update all tasks
     pub fn update_all(&self, updated_tasks: Vec<PersistedTask>) {
         if let Ok(mut tasks) = self.tasks.lock() {
-            // Update existing or insert new, but typically this comes from get_all() so it's updates.
-            // However, sync_tasks iterates mutable list, so we might just want to replace the values
-            // based on the list we passed back?
-            // Actually, we should probably iterate and update.
             for task in updated_tasks {
                 tasks.insert(task.gid.clone(), task);
             }
