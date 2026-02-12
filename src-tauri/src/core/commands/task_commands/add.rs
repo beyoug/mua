@@ -40,6 +40,15 @@ pub async fn add_download_tasks(
         );
     }
 
+    if gids.iter().all(|gid| gid.is_none()) {
+        return Err(AppError::aria2(
+            errors
+                .first()
+                .cloned()
+                .unwrap_or_else(|| "所有任务添加失败".to_string()),
+        ));
+    }
+
     Ok(gids)
 }
 
@@ -60,6 +69,7 @@ async fn add_download_task_inner(state: &TaskStore, cfg: DownloadConfig) -> AppR
             state,
             torrent_cfg.path.clone(),
             torrent_cfg.select_file.clone(),
+            torrent_cfg.trackers.clone(),
             &cfg,
         )
         .await;
@@ -147,6 +157,7 @@ async fn add_torrent_task_inner(
     state: &TaskStore,
     path: String,
     select_file: Option<String>,
+    trackers: Option<String>,
     base_cfg: &DownloadConfig,
 ) -> AppResult<String> {
     let content = std::fs::read(&path).map_err(|e| AppError::Fs(e.to_string()))?;
@@ -163,8 +174,25 @@ async fn add_torrent_task_inner(
     );
 
     if let Some(opts) = options_val.as_object_mut() {
-        if let Some(sf) = select_file {
+        if let Some(sf) = select_file.and_then(|v| {
+            let t = v.trim().to_string();
+            if t.is_empty() { None } else { Some(t) }
+        }) {
             opts.insert("select-file".to_string(), serde_json::Value::String(sf));
+        }
+
+        if let Some(bt_trackers) = trackers.and_then(|v| {
+            let normalized = utils::normalize_bt_trackers(&v);
+            if normalized.is_empty() {
+                None
+            } else {
+                Some(normalized)
+            }
+        }) {
+            opts.insert(
+                "bt-tracker".to_string(),
+                serde_json::Value::String(bt_trackers),
+            );
         }
     }
 
