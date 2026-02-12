@@ -7,29 +7,34 @@
 	import ClearConfirmDialog from '$lib/components/dialogs/ClearConfirmDialog.svelte';
 	import TaskDetailsModal from '$lib/components/dialogs/TaskDetailsModal.svelte';
 	import TorrentConfigDialog from '$lib/components/dialogs/TorrentConfigDialog.svelte';
-	import type { TorrentDialogResult } from '$lib/components/dialogs/TorrentConfigDialog.svelte';
 	import { onMount } from 'svelte';
-	import { parseTorrent, type TorrentInfo } from '$lib/api/cmd';
 	import type { DownloadConfig, DownloadTask } from '$lib/types/download';
 	import { 
 		activeTasks, 
 		completeTasks, 
 		allTasks, 
 		downloadStats,
-		pauseTask,
-		pauseAll,
-		resumeAll,
 		hasDownloadingTasks,
 		hasPausedTasks
 	} from '$lib';
 	import { isRemovableTask } from '$lib';
     import { TaskController } from '$lib/services/taskController.svelte';
-	import { createLogger } from '$lib/utils/logger';
-
-	const logger = createLogger('HomePage');
+    import { TorrentDialogController } from '$lib/services/torrentDialogController.svelte';
+	import { setupGlobalDragDrop, type DragMeta } from '$lib/services/globalDragDropController';
+	import {
+		getEmptyStateTextByNav,
+		getFilteredTasksByNav,
+		getPageTitleByNav
+	} from '$lib/services/taskPageViewModel';
 
     // 实例化控制器
     const controller = new TaskController();
+    const torrentController = new TorrentDialogController({
+        onAddTask: async (config) => {
+            await controller.handleAddTask(config);
+            showAddDialog = false;
+        }
+    });
 
 	// ============ 界面状态 ============
 	let showAddDialog = $state(false);
@@ -42,11 +47,10 @@
 
 	// ============ 全局拖拽状态 ============
 	let isDragOver = $state(false);
-	let showTorrentConfig = $state(false);
-	let pendingTorrentInfo = $state<TorrentInfo | null>(null);
-	let pendingTorrentPath = $state('');
-	let pendingParseError = $state('');
-	let torrentParseRequestId = 0;
+	let dragMeta = $state<DragMeta | null>(null);
+	let dropFeedback = $state('');
+	let contentPanelEl = $state<HTMLElement | null>(null);
+	let addDialogDropZoneEl = $state<HTMLElement | null>(null);
 
 	// 拖拽看门狗：防止 drag-leave 丢失导致遮罩卡死
 	let lastDragTime = 0;
@@ -63,169 +67,139 @@
 		}
 	});
 
+	$effect(() => {
+		if (!dropFeedback) {
+			return;
+		}
+
+		const timer = setTimeout(() => {
+			dropFeedback = '';
+		}, 2600);
+
+		return () => clearTimeout(timer);
+	});
+
+	const showMainDragHint = $derived(isDragOver && !showAddDialog);
+
+	function isPointInsideElement(
+		element: HTMLElement | null,
+		position?: { x: number; y: number }
+	): boolean {
+		if (!element || !position) {
+			return false;
+		}
+
+		const rect = element.getBoundingClientRect();
+		return (
+			position.x >= rect.left &&
+			position.x <= rect.right &&
+			position.y >= rect.top &&
+			position.y <= rect.bottom
+		);
+	}
+
+	function canAcceptDrop(position?: { x: number; y: number }): boolean {
+		if (showAddDialog) {
+			if (!position) {
+				return true;
+			}
+			return isPointInsideElement(addDialogDropZoneEl, position);
+		}
+
+		if (!position) {
+			return true;
+		}
+
+		return isPointInsideElement(contentPanelEl, position);
+	}
+
+	function resetDragVisualState() {
+		isDragOver = false;
+		dragMeta = null;
+	}
+
+	const mainDragTitle = $derived.by(() => {
+		if (!dragMeta) return '释放以导入 .torrent';
+		if (!dragMeta.hasSupportedFiles) return '当前拖拽不包含 .torrent 文件';
+		if (dragMeta.torrentFiles === 1) return '释放以打开种子配置';
+		return `检测到 ${dragMeta.torrentFiles} 个种子文件`;
+	});
+
+	const mainDragHint = $derived.by(() => {
+		if (!dragMeta) return '支持拖入种子文件，快速创建下载任务';
+		if (!dragMeta.hasSupportedFiles) return '请拖入 .torrent 文件';
+
+		const ignored = dragMeta.totalFiles - dragMeta.torrentFiles;
+		if (ignored > 0) {
+			return `共 ${dragMeta.totalFiles} 个文件，将仅处理 ${dragMeta.torrentFiles} 个 .torrent`;
+		}
+
+		return '释放后将进入种子配置';
+	});
+
 	// 全局 Tauri drag-drop 事件监听（onMount + 动态导入，避免 SSR 问题）
 	onMount(() => {
-		const unlisteners: (() => void)[] = [];
+		let unlistenAll: (() => void) | null = null;
 
-		(async () => {
-			try {
-				const { listen } = await import('@tauri-apps/api/event');
+		void setupGlobalDragDrop({
+			onDragStateChange: (next) => {
+				isDragOver = next;
+			},
+            onDragMetaChange: (meta) => {
+                dragMeta = meta;
+            },
+			onDragPulse: () => {
+				lastDragTime = Date.now();
+			},
+			onDropPaths: (paths, position) => {
+				if (!canAcceptDrop(position)) {
+					dropFeedback = '';
+					return;
+				}
 
-				const u1 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-enter', () => {
-					isDragOver = true;
-					lastDragTime = Date.now();
-				});
-				unlisteners.push(u1);
+				resetDragVisualState();
 
-				const u2 = await listen<{ position: { x: number; y: number } }>('tauri://drag-over', () => {
-					// 持续触发，更新时间戳
-					lastDragTime = Date.now();
-				});
-				unlisteners.push(u2);
-
-				const u3 = await listen<{ paths: string[]; position: { x: number; y: number } }>('tauri://drag-drop', (event) => {
-					isDragOver = false;
-					const paths = event.payload.paths;
-					if (paths && paths.length > 0) {
-						handleGlobalFileDrop(paths);
-					}
-				});
-				unlisteners.push(u3);
-
-				const u4 = await listen('tauri://drag-leave', () => {
-					isDragOver = false;
-				});
-				unlisteners.push(u4);
-			} catch (e) {
-				logger.error('Failed to register drag-drop handlers', { error: e });
+				const accepted = torrentController.openFromDrop(paths);
+				if (!accepted) {
+					dropFeedback = '仅支持 .torrent 文件，请重新拖入';
+				}
 			}
-		})();
+		}).then((cleanup) => {
+			unlistenAll = cleanup;
+		});
 
 		return () => {
-			unlisteners.forEach(fn => fn());
+			unlistenAll?.();
 		};
 	});
 
-	// 打开种子配置弹窗：统一入口（拖拽 / AddTaskDialog 选择文件 共用）
 	function openTorrentConfig(path: string) {
-		const requestId = ++torrentParseRequestId;
-		pendingTorrentPath = path;
-		pendingTorrentInfo = null;
-		pendingParseError = '';
-		showTorrentConfig = true;
-		showAddDialog = false; // 关闭 AddTaskDialog
-
-		// 后台异步解析，不阻塞 UI
-		parseTorrent(path).then(info => {
-			if (requestId !== torrentParseRequestId) return;
-			if (info.files.length > 1000) {
-				logger.warn('Large torrent file count', { fileCount: info.files.length, path });
-			}
-			pendingTorrentInfo = info;
-		}).catch(e => {
-			if (requestId !== torrentParseRequestId) return;
-			logger.error('Failed to parse torrent', { path, error: e });
-			pendingParseError = typeof e === 'string' ? e : '种子解析失败，但仍可提交任务';
-		});
+		resetDragVisualState();
+		showAddDialog = false;
+		torrentController.open(path);
 	}
 
-	// 全局拖拽处理：.torrent 文件直接打开配置弹窗
-	function handleGlobalFileDrop(paths: string[]) {
-		const torrentFile = paths.find(p => p.toLowerCase().endsWith('.torrent'));
-		if (torrentFile) {
-			openTorrentConfig(torrentFile);
-		}
+	function openAddDialog() {
+		resetDragVisualState();
+		showAddDialog = true;
 	}
 
-	async function handleTorrentConfirm(result: TorrentDialogResult) {
-		const normalizedSelectFile = result.selectedFiles?.trim() || undefined;
-		const normalizedTrackers = result.trackers.trim() || undefined;
-		const config: DownloadConfig = {
-			urls: [],
-			savePath: result.savePath,
-			filename: '',
-			userAgent: '',
-			referer: '',
-			headers: '',
-			proxy: '',
-			maxDownloadLimit: '',
-				torrentConfig: {
-					path: result.torrentPath,
-					selectFile: normalizedSelectFile,
-					trackers: normalizedTrackers,
-				}
-			};
-
-		try {
-			await controller.handleAddTask(config);
-			showTorrentConfig = false;
-			pendingTorrentInfo = null;
-			pendingTorrentPath = '';
-			pendingParseError = '';
-		} catch (e) {
-			logger.error('Failed to add task from torrent confirm', { path: result.torrentPath, error: e });
-			pendingParseError = '任务添加失败，请检查 Aria2 服务是否正常';
-		}
-	}
-
-	function handleTorrentCancel() {
-		torrentParseRequestId += 1;
-		showTorrentConfig = false;
-		pendingTorrentInfo = null;
-		pendingTorrentPath = '';
-		pendingParseError = '';
+	function closeAddDialog() {
+		resetDragVisualState();
+		showAddDialog = false;
 	}
 
 
 	// 当前显示的任务列表
 	const filteredTasks = $derived.by(() => {
-		switch (controller.activeNav) {
-			case 'active':
-				return $activeTasks;
-			case 'complete':
-				return $completeTasks;
-			case 'history':
-				return $allTasks;
-			default:
-				return $allTasks;
-		}
+		return getFilteredTasksByNav(controller.activeNav, $activeTasks, $completeTasks, $allTasks);
 	});
 
 	// 页面标题
-	const pageTitle = $derived.by(() => {
-		switch (controller.activeNav) {
-			case 'active': return '进行中';
-			case 'complete': return '已完成';
-			case 'history': return '历史记录';
-			default: return '历史记录';
-		}
-	});
+	const pageTitle = $derived(getPageTitleByNav(controller.activeNav));
 
 	// 空状态提示文案
-	const emptyStateText = $derived.by(() => {
-		switch (controller.activeNav) {
-			case 'active': 
-				return {
-					title: '暂无进行中的任务',
-					hint: '点击左侧「添加任务」按钮开始下载'
-				};
-			case 'complete': 
-				return {
-					title: '暂无已完成的任务',
-					hint: '完成的下载任务会显示在这里'
-				};
-			case 'history': 
-				return {
-					title: '暂无历史记录',
-					hint: '所有下载任务的历史会显示在这里'
-				};
-			default: 
-				return {
-					title: '暂无任务',
-					hint: '点击左侧「添加任务」按钮开始下载'
-				};
-		}
-	});
+	const emptyStateText = $derived(getEmptyStateTextByNav(controller.activeNav));
 
 	// 判断当前列表中是否有正在下载/暂停/可删除的任务
 	const hasDownloading = $derived(hasDownloadingTasks(filteredTasks));
@@ -275,13 +249,31 @@
 	activeNav={controller.activeNav}
 	onNavChange={(nav) => controller.handleNavChange(nav)}
 	onSettingsClick={() => showSettings = true}
-	onAddClick={() => showAddDialog = true}
+	onAddClick={openAddDialog}
 	stats={$downloadStats}
 />
 
 <!-- 主内容区 -->
 <main class="main-content">
-	<div class="content-panel">
+	{#if dropFeedback}
+		<div class="drop-feedback">{dropFeedback}</div>
+	{/if}
+
+	<div class="content-panel" class:drag-active={showMainDragHint} bind:this={contentPanelEl}>
+		{#if showMainDragHint}
+			<div class="panel-drag-overlay" aria-hidden="true">
+				<div class="panel-drag-card">
+					<svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
+						<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+						<polyline points="7 10 12 15 17 10"/>
+						<line x1="12" y1="15" x2="12" y2="3"/>
+					</svg>
+					<strong>{mainDragTitle}</strong>
+					<span>{mainDragHint}</span>
+				</div>
+			</div>
+		{/if}
+
 		<TaskListHeader
 			title={pageTitle}
 			taskCount={filteredTasks.length}
@@ -290,8 +282,8 @@
 			{hasRemovable}
 			isSelectionMode={controller.isSelectionMode}
 			selectedCount={controller.selectedIds.size}
-			onGlobalPause={pauseAll}
-			onGlobalResume={resumeAll}
+			onGlobalPause={() => void controller.handlePauseAll()}
+			onGlobalResume={() => void controller.handleResumeAll()}
 			onTrashClick={() => controller.handleTrashClick(filteredTasks)}
 			onExitSelection={() => controller.exitSelectionMode()}
 		/>
@@ -303,7 +295,7 @@
 			isSelectionMode={controller.isSelectionMode}
 			selectedIds={controller.selectedIds}
 			onSelect={(id) => controller.toggleSelection(id)}
-			onPause={pauseTask}
+			onPause={(id) => void controller.handlePauseTask(id)}
 			onResume={(id) => controller.handleResumeTask(id)}
 			onCancel={(task) => controller.handleCancelTask(task)}
 			onOpenFolder={(id) => controller.handleOpenFolder(id)}
@@ -316,9 +308,14 @@
 <!-- 添加任务对话框 -->
 <AddTaskDialog 
 	open={showAddDialog}
-	onClose={() => showAddDialog = false}
+	onClose={closeAddDialog}
 	onSubmit={handleAddTask}
 	onTorrentSelect={(path) => openTorrentConfig(path)}
+	dialogDragActive={showAddDialog && isDragOver && !torrentController.showConfig && Boolean(dragMeta)}
+	dialogDragMeta={showAddDialog ? dragMeta : null}
+	onUrlDropZoneChange={(el) => {
+		addDialogDropZoneEl = el;
+	}}
 />
 
 <!-- 设置面板 -->
@@ -361,29 +358,21 @@
 	/>
 {/if}
 
-<!-- 全局拖拽覆盖层 -->
-{#if isDragOver}
-	<div class="global-drag-overlay">
-		<div class="drag-hint">
-			<svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
-				<path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
-				<polyline points="7 10 12 15 17 10"/>
-				<line x1="12" y1="15" x2="12" y2="3"/>
-			</svg>
-			<span>释放以添加种子文件</span>
-		</div>
-	</div>
-{/if}
-
 <!-- Torrent 配置弹窗（全局级别） -->
-{#if showTorrentConfig}
+{#if torrentController.showConfig}
 	<TorrentConfigDialog
-		open={showTorrentConfig}
-		torrentInfo={pendingTorrentInfo}
-		torrentPath={pendingTorrentPath}
-		parseError={pendingParseError}
-		onConfirm={handleTorrentConfirm}
-		onCancel={handleTorrentCancel}
+		open={torrentController.showConfig}
+		torrentInfo={torrentController.pendingInfo}
+		torrentPath={torrentController.pendingPath}
+		parseError={torrentController.pendingParseError}
+		onConfirm={(result) => {
+			resetDragVisualState();
+			torrentController.confirm(result);
+		}}
+		onCancel={() => {
+			resetDragVisualState();
+			torrentController.cancel();
+		}}
 	/>
 {/if}
 
@@ -401,6 +390,23 @@
 		z-index: 1;
 	}
 
+	.drop-feedback {
+		position: absolute;
+		top: 18px;
+		right: 22px;
+		z-index: 12;
+		padding: 9px 14px;
+		border-radius: 10px;
+		background: var(--drop-feedback-bg);
+		border: 1px solid var(--drop-feedback-border);
+		color: var(--drop-feedback-text);
+		font-size: 12px;
+		font-weight: 600;
+		box-shadow: 0 8px 20px rgba(0, 0, 0, 0.16);
+		backdrop-filter: blur(10px);
+		-webkit-backdrop-filter: blur(10px);
+	}
+
 	/* 统一的玻璃面板容器 - 无模糊，让粒子透过 */
 	.content-panel {
 		flex: 1;
@@ -412,36 +418,61 @@
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
+		position: relative;
 	}
 
-	/* 全局拖拽覆盖层 */
-	.global-drag-overlay {
-		position: fixed;
-		inset: 0;
-		z-index: 9999;
-		background: rgba(0, 0, 0, 0.6);
-		backdrop-filter: blur(4px);
-		-webkit-backdrop-filter: blur(4px);
+	.content-panel.drag-active {
+		border-color: color-mix(in srgb, var(--accent-primary) 38%, var(--glass-border));
+	}
+
+	.panel-drag-overlay {
+		position: absolute;
+		inset: 8px;
+		z-index: 8;
+		border: 2px dashed var(--drag-zone-border);
+		border-radius: 14px;
+		background: var(--drag-zone-bg);
 		display: flex;
 		align-items: center;
 		justify-content: center;
 		pointer-events: none;
 	}
 
-	.drag-hint {
+	.panel-drag-card {
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 16px;
-		color: var(--accent-primary);
-		font-size: 18px;
-		font-weight: 600;
-		text-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-		animation: drag-pulse 1.5s ease-in-out infinite;
+		gap: 6px;
+		padding: 16px 20px;
+		border-radius: 12px;
+		background: var(--drag-card-bg);
+		border: 1px solid var(--drag-card-border);
+		box-shadow: var(--drag-card-shadow);
+		color: var(--drag-title-text);
+		text-align: center;
+		max-width: min(560px, 92%);
 	}
 
-	@keyframes drag-pulse {
-		0%, 100% { transform: scale(1); opacity: 0.9; }
-		50% { transform: scale(1.05); opacity: 1; }
+	.panel-drag-card svg {
+		color: var(--drag-icon-color);
+	}
+
+	.panel-drag-card strong {
+		font-size: 15px;
+		font-weight: 700;
+		line-height: 1.35;
+	}
+
+	.panel-drag-card span {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--drag-hint-text);
+	}
+
+	@media (max-width: 768px) {
+		.main-content {
+			padding: 8px 8px 8px 0;
+		}
+
 	}
 </style>

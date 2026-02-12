@@ -1,7 +1,15 @@
 use image::{GenericImage, Rgba, RgbaImage};
 use rusttype::{Font, Point, Scale};
+use serde::Deserialize;
 use std::sync::Mutex;
-use tauri::{AppHandle, Manager, Runtime};
+use tauri::{AppHandle, Listener, Manager, Runtime};
+
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct SpeedUpdatePayload {
+    dl_speed: u64,
+    ul_speed: u64,
+}
 
 pub struct TrayState {
     pub font: Option<Font<'static>>,
@@ -115,6 +123,26 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
         }
     }
 
+    let speed_listener_handle = handle.clone();
+    handle.listen("mua-speed-update", move |event| {
+        let payload = match serde_json::from_str::<SpeedUpdatePayload>(event.payload()) {
+            Ok(data) => data,
+            Err(e) => {
+                crate::app_warn!(
+                    "UI::Tray",
+                    "speed_update_payload_invalid",
+                    serde_json::json!({ "error": e.to_string(), "payload": event.payload() })
+                );
+                return;
+            }
+        };
+
+        let app = speed_listener_handle.clone();
+        tauri::async_runtime::spawn(async move {
+            let _ = update_tray_icon_with_speed_inner(app, payload.dl_speed, payload.ul_speed).await;
+        });
+    });
+
     // 3. 创建托盘图标
     #[cfg(desktop)]
     {
@@ -183,6 +211,14 @@ pub fn setup_tray<R: Runtime>(app: &tauri::App<R>) -> Result<(), Box<dyn std::er
 #[tauri::command]
 pub async fn update_tray_icon_with_speed(
     app: AppHandle,
+    dl_speed: u64,
+    ul_speed: u64,
+) -> Result<(), String> {
+    update_tray_icon_with_speed_inner(app, dl_speed, ul_speed).await
+}
+
+async fn update_tray_icon_with_speed_inner<R: Runtime>(
+    app: AppHandle<R>,
     dl_speed: u64,
     ul_speed: u64,
 ) -> Result<(), String> {

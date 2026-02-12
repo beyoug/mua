@@ -8,6 +8,10 @@
         savePath: string;
         validationError: string;
         isSelectingFile: boolean;
+        isDropZoneActive: boolean;
+        dropTotalFiles: number;
+        dropTorrentFiles: number;
+        onUrlDropZoneChange?: (el: HTMLElement | null) => void;
         onUrlsChange: (value: string) => void;
         onFilenameChange: (value: string) => void;
         onUrlInput: () => void;
@@ -16,12 +20,16 @@
         onSelectTorrentFile: () => void;
     }
 
-    const {
+    let {
         urls,
         filename,
         savePath,
         validationError,
         isSelectingFile,
+        isDropZoneActive,
+        dropTotalFiles,
+        dropTorrentFiles,
+        onUrlDropZoneChange,
         onUrlsChange,
         onFilenameChange,
         onUrlInput,
@@ -29,6 +37,31 @@
         onSelectFolder,
         onSelectTorrentFile
     }: Props = $props();
+
+    let urlDropTargetEl = $state<HTMLElement | null>(null);
+
+    const hasSupportedDrop = $derived(dropTorrentFiles > 0);
+
+    const dropTitle = $derived.by(() => {
+        if (!hasSupportedDrop) return '当前拖拽不包含 .torrent 文件';
+        if (dropTorrentFiles === 1) return '释放后将打开种子配置';
+        return `检测到 ${dropTorrentFiles} 个种子文件`;
+    });
+
+    const dropHint = $derived.by(() => {
+        if (!hasSupportedDrop) return '请拖入 .torrent 文件';
+
+        const ignored = dropTotalFiles - dropTorrentFiles;
+        if (ignored > 0) {
+            return `共 ${dropTotalFiles} 个文件，将仅处理 ${dropTorrentFiles} 个 .torrent`;
+        }
+
+        return '会使用第一个种子文件进入配置界面';
+    });
+
+    $effect(() => {
+        onUrlDropZoneChange?.(urlDropTargetEl);
+    });
 </script>
 
 <div class="dialog-body" in:fade={{ duration: 150 }}>
@@ -58,17 +91,27 @@
             </span>
         {/if}
 
-        <textarea
-            id="urls"
-            placeholder="输入 HTTP/HTTPS/Magnet 链接，每行一个"
-            value={urls}
-            oninput={(event) => {
-                onUrlsChange((event.currentTarget as HTMLTextAreaElement).value);
-                onUrlInput();
-            }}
-            onblur={onUrlBlur}
-            class:error={!!validationError}
-        ></textarea>
+        <div class="url-drop-target" bind:this={urlDropTargetEl}>
+            {#if isDropZoneActive}
+                <div class="url-drop-zone" class:invalid={!hasSupportedDrop}>
+                    <FileUp size={20} />
+                    <strong>{dropTitle}</strong>
+                    <span>{dropHint}</span>
+                </div>
+            {:else}
+                <textarea
+                    id="urls"
+                    placeholder="输入 HTTP/HTTPS/Magnet 链接，每行一个"
+                    value={urls}
+                    oninput={(event) => {
+                        onUrlsChange((event.currentTarget as HTMLTextAreaElement).value);
+                        onUrlInput();
+                    }}
+                    onblur={onUrlBlur}
+                    class:error={!!validationError}
+                ></textarea>
+            {/if}
+        </div>
     </div>
 
     <div class="form-group">
@@ -137,6 +180,8 @@
     textarea,
     input,
     .path-selector {
+        width: 100%;
+        box-sizing: border-box;
         padding: 12px 14px;
         background: var(--input-bg, rgba(255, 255, 255, 0.05));
         border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
@@ -162,6 +207,43 @@
 
     textarea.error {
         border-color: var(--danger-color);
+    }
+
+    .url-drop-target {
+        width: 100%;
+    }
+
+    .url-drop-zone {
+        width: 100%;
+        box-sizing: border-box;
+        min-height: 100px;
+        border-radius: 10px;
+        border: 1px dashed var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        color: var(--text-primary);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 6px;
+        padding: 12px;
+        text-align: center;
+    }
+
+    .url-drop-zone strong {
+        font-size: 13px;
+        font-weight: 700;
+        line-height: 1.3;
+    }
+
+    .url-drop-zone span {
+        font-size: 11px;
+        color: var(--text-secondary);
+    }
+
+    .url-drop-zone.invalid {
+        border-color: var(--danger-color);
+        background: color-mix(in srgb, var(--danger-color) 10%, transparent);
     }
 
     .path-selector {

@@ -6,6 +6,7 @@
 	import { Link, ArrowLeft, ChevronRight } from '@lucide/svelte';
 	import { fade } from 'svelte/transition';
 	import type { DownloadConfig } from '$lib/types/download';
+	import type { DragMeta } from '$lib/services/globalDragDropController';
 	import BaseModal from '../common/BaseModal.svelte';
 	import UaSelector from './UaSelector.svelte';
     import AdvancedSettingsPanel from './AdvancedSettingsPanel.svelte';
@@ -18,9 +19,20 @@
 		onClose: () => void;
 		onSubmit?: (config: DownloadConfig | DownloadConfig[]) => void | Promise<void>;
 		onTorrentSelect?: (path: string) => void;
+		dialogDragActive?: boolean;
+		dialogDragMeta?: DragMeta | null;
+		onUrlDropZoneChange?: (el: HTMLElement | null) => void;
 	}
 
-	let { open, onClose, onSubmit, onTorrentSelect }: Props = $props();
+	let {
+		open,
+		onClose,
+		onSubmit,
+		onTorrentSelect,
+		dialogDragActive = false,
+		dialogDragMeta = null,
+		onUrlDropZoneChange
+	}: Props = $props();
 	let uaSelectorRef = $state<UaSelector | undefined>(undefined);
 	const controller = useAddTaskDialog({
 		onClose: () => onClose(),
@@ -63,15 +75,19 @@
     <div class="modal-content-stack">
         {#if !controller.showAdvanced}
             <div class="view-main" in:fade={{ duration: 150 }}>
-                <BasicForm
-                    urls={controller.urls}
-                    filename={controller.filename}
-                    savePath={controller.savePath}
-                    validationError={controller.validationError}
-                    isSelectingFile={controller.isSelectingFile}
-                    onUrlsChange={controller.setUrls}
-                    onFilenameChange={controller.setFilename}
-                    onUrlInput={controller.handleUrlInput}
+				<BasicForm
+					urls={controller.urls}
+					filename={controller.filename}
+					savePath={controller.savePath}
+					validationError={controller.validationError}
+					isSelectingFile={controller.isSelectingFile}
+					isDropZoneActive={dialogDragActive}
+					dropTotalFiles={dialogDragMeta?.totalFiles ?? 0}
+					dropTorrentFiles={dialogDragMeta?.torrentFiles ?? 0}
+					onUrlDropZoneChange={onUrlDropZoneChange}
+					onUrlsChange={controller.setUrls}
+					onFilenameChange={controller.setFilename}
+					onUrlInput={controller.handleUrlInput}
                     onUrlBlur={controller.handleUrlBlur}
                     onSelectFolder={controller.selectFolder}
                     onSelectTorrentFile={controller.selectTorrentFile}

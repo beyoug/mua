@@ -5,7 +5,9 @@ use crate::core::types::TaskState;
 use serde_json::json;
 use std::collections::HashMap;
 use std::sync::atomic::Ordering;
-use tauri::AppHandle;
+use tauri::{AppHandle, Emitter};
+
+pub struct SyncShutdownState(pub std::sync::atomic::AtomicBool);
 
 // 连接日志的状态跟踪
 // true = 已连接, false = 已断开
@@ -313,15 +315,21 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
         state.update_all(store_tasks);
     }
 
-    // 更新任务栏图标
-    let _ =
-        crate::ui::tray::update_tray_icon_with_speed(app_handle.clone(), total_dl, total_ul).await;
+    if let Err(e) = app_handle.emit(
+        "mua-speed-update",
+        json!({ "dlSpeed": total_dl, "ulSpeed": total_ul }),
+    ) {
+        crate::app_warn!(
+            "Core::Sync",
+            "speed_update_emit_failed",
+            json!({ "error": e.to_string() })
+        );
+    }
 
     Ok(result)
 }
 
 pub fn start_background_sync(app_handle: AppHandle) {
-    use tauri::Emitter;
     use tauri::Manager;
 
     tauri::async_runtime::spawn(async move {
@@ -329,6 +337,13 @@ pub fn start_background_sync(app_handle: AppHandle) {
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
         loop {
+            if let Some(state) = app_handle.try_state::<SyncShutdownState>() {
+                if state.0.load(Ordering::SeqCst) {
+                    crate::app_info!("Core::Sync", "shutdown_signal_received");
+                    break;
+                }
+            }
+
             let state = app_handle.state::<crate::core::store::TaskStore>();
             let mut has_active_tasks = false;
 
