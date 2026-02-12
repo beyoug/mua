@@ -167,8 +167,9 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 args.push(format!("--max-overall-upload-limit={}", global_max_upload_limit));
             }
 
-            if !bt_trackers.is_empty() {
-                args.push(format!("--bt-tracker={}", bt_trackers));
+            let normalized_bt_trackers = crate::utils::normalize_bt_trackers(&bt_trackers);
+            if !normalized_bt_trackers.is_empty() {
+                args.push(format!("--bt-tracker={}", normalized_bt_trackers));
             }
 
             if let Some(ref secret) = existing_secret {

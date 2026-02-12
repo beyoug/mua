@@ -54,6 +54,23 @@ pub fn is_valid_url(url: &str) -> bool {
         || lower.starts_with("magnet:")
 }
 
+pub fn normalize_bt_trackers(trackers: &str) -> String {
+    let mut normalized: Vec<String> = Vec::new();
+
+    for tracker in trackers
+        .split(|c| c == '\n' || c == '\r' || c == ',' || c == ';')
+        .map(|s| s.trim())
+        .filter(|s| !s.is_empty())
+    {
+        let value = tracker.to_string();
+        if !normalized.contains(&value) {
+            normalized.push(value);
+        }
+    }
+
+    normalized.join(",")
+}
+
 pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
     if let Some(out) = filename {
         if !out.is_empty() {
