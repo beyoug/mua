@@ -107,11 +107,13 @@
         }
     }
 
-    function handleConfirm() {
-        // Tracker 保存不阻塞提交（fire-and-forget）
+    async function handleConfirm() {
         if (trackers.trim()) {
-            updateAppSettings({ btTrackers: trackers })
-                .catch(e => logger.error('Failed to save trackers', { error: e }));
+            try {
+                await updateAppSettings({ btTrackers: trackers });
+            } catch (e) {
+                logger.error('Failed to save trackers', { error: e });
+            }
         }
 
         onConfirm({
