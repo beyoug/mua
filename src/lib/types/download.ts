@@ -61,6 +61,7 @@ export interface DownloadConfig {
 	torrentConfig?: {
 		path: string;
 		selectFile?: string;
+		trackers?: string;
 	};
 }
 

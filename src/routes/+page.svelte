@@ -138,6 +138,8 @@
 	}
 
 	async function handleTorrentConfirm(result: TorrentDialogResult) {
+		const normalizedSelectFile = result.selectedFiles?.trim() || undefined;
+		const normalizedTrackers = result.trackers.trim() || undefined;
 		const config: DownloadConfig = {
 			urls: [],
 			savePath: result.savePath,
@@ -149,7 +151,8 @@
 			maxDownloadLimit: '',
 				torrentConfig: {
 					path: result.torrentPath,
-					selectFile: result.selectedFiles,
+					selectFile: normalizedSelectFile,
+					trackers: normalizedTrackers,
 				}
 			};
 
