@@ -122,4 +122,5 @@ pub struct DownloadConfig {
 pub struct TorrentDownloadConfig {
     pub path: String,
     pub select_file: Option<String>,
+    pub trackers: Option<String>,
 }

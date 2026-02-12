@@ -57,9 +57,10 @@ pub async fn save_app_config(
 
     // BT 设置
     if !config.bt_trackers.is_empty() {
+        let normalized_trackers = crate::utils::normalize_bt_trackers(&config.bt_trackers);
         options.insert(
             "bt-tracker".to_string(),
-            serde_json::Value::String(config.bt_trackers.clone()),
+            serde_json::Value::String(normalized_trackers),
         );
     }
 
@@ -119,7 +120,13 @@ pub async fn save_app_config(
         serde_json::Value::String(config.listen_port.clone()),
     );
 
-    let _ = crate::aria2::client::change_global_option(serde_json::Value::Object(options)).await;
+    if let Err(e) = crate::aria2::client::change_global_option(serde_json::Value::Object(options)).await {
+        crate::app_warn!(
+            "Core::Config",
+            "runtime_apply_failed",
+            serde_json::json!({ "error": e.to_string() })
+        );
+    }
 
     Ok(())
 }
