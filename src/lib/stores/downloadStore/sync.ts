@@ -2,7 +2,13 @@ import { listen } from '@tauri-apps/api/event';
 import type { UnlistenFn } from '@tauri-apps/api/event';
 import type { DownloadTask } from '$lib/types/download';
 import { getTasks as getTasksCmd } from '$lib/api/cmd';
-import { clearPendingLock, hasPendingLock, setTasks, snapshotTasks } from './state';
+import {
+    clearPendingLock,
+    hasPendingLock,
+    listDeletingTaskIds,
+    setTasks,
+    snapshotTasks
+} from './state';
 import { createLogger } from '$lib/utils/logger';
 
 const logger = createLogger('DownloadStoreSync');
@@ -56,8 +62,11 @@ function tasksChanged(prev: DownloadTask[], next: DownloadTask[]): boolean {
 function handleTasksUpdate(backendTasks: DownloadTask[]) {
     const currentTasks = snapshotTasks();
     const currentTaskMap = new Map(currentTasks.map((task) => [task.id, task]));
+    const deletingTaskIds = new Set(listDeletingTaskIds());
 
-    const nextTasks = backendTasks.map((task) => {
+    const nextTasks = backendTasks
+        .filter((task) => !deletingTaskIds.has(task.id))
+        .map((task) => {
         if (hasPendingLock(task.id)) {
             const existing = currentTaskMap.get(task.id);
             if (existing) {

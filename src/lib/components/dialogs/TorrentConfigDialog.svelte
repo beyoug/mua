@@ -64,7 +64,9 @@
                 title: '选择保存位置'
             });
             if (selected) savePath = selected as string;
-        } catch (_) {}
+        } catch (e) {
+            logger.error('Failed to open save path picker', { error: e });
+        }
     }
 
     async function fetchTrackers() {
