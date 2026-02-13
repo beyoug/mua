@@ -85,7 +85,27 @@
       handleSave();
   }
 
+  function isPortTaken(port: string, currentType: 'dht' | 'bt' | 'rpc') {
+      const p = port.trim();
+      const rpc = $appSettings.rpcPort.toString();
+      
+      if (currentType !== 'rpc' && p === rpc) return true;
+      if (currentType !== 'dht' && p === dhtListenPort) return true;
+      if (currentType !== 'bt' && p === listenPort) return true;
+      
+      return false;
+  }
+
   function handleBlur() {
+      // 最终校验：如果手动输入导致冲突，自动回滚或修正
+      if (isPortTaken(dhtListenPort, 'dht')) {
+          logger.warn('DHT port conflict detected, reverting...');
+          dhtListenPort = initialDhtPort;
+      }
+      if (isPortTaken(listenPort, 'bt')) {
+          logger.warn('BT port conflict detected, reverting...');
+          listenPort = initialListenPort;
+      }
       handleSave();
   }
 
@@ -95,11 +115,25 @@
 
   function adjustPort(type: 'dht' | 'bt', delta: number) {
       if (type === 'dht') {
-          const current = parseInt(dhtListenPort) || 6881;
-          dhtListenPort = (current + delta).toString();
+          let current = parseInt(dhtListenPort) || 6881;
+          let nextPort = (current + delta).toString();
+          
+          // 自动跳过冲突端口
+          while (isPortTaken(nextPort, 'dht')) {
+              current += delta;
+              nextPort = (current + delta).toString();
+          }
+          dhtListenPort = nextPort;
       } else {
-          const current = parseInt(listenPort) || 6881;
-          listenPort = (current + delta).toString();
+          let current = parseInt(listenPort) || 6881;
+          let nextPort = (current + delta).toString();
+          
+          // 自动跳过冲突端口
+          while (isPortTaken(nextPort, 'bt')) {
+              current += delta;
+              nextPort = (current + delta).toString();
+          }
+          listenPort = nextPort;
       }
       handleSave();
   }
