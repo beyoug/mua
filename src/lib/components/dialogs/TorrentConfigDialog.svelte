@@ -143,7 +143,12 @@
     <div class="config-body">
         {#if parseError}
             <div class="parse-warning">
-                <span>⚠️ 解析失败，但仍可提交任务（由 aria2 处理）</span>
+                <div class="warning-title">
+                    <span>⚠️ 种子信息预解析失败</span>
+                </div>
+                <p class="warning-desc">
+                    {parseError}。您仍可点击下方按钮直接提交，由 Aria2 尝试完整解析。
+                </p>
             </div>
         {/if}
 
@@ -306,12 +311,26 @@
     }
 
     .parse-warning {
-        padding: 10px 14px;
+        padding: 12px 14px;
         background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
         border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 30%, transparent);
         border-radius: 10px;
         color: var(--warning-color, #f59e0b);
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+    }
+ 
+    .warning-title {
+        font-weight: 600;
+        font-size: 13px;
+    }
+ 
+    .warning-desc {
         font-size: 12px;
+        line-height: 1.5;
+        margin: 0;
+        opacity: 0.9;
     }
 
     .info-item {
