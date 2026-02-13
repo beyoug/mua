@@ -43,14 +43,20 @@
   --semantic-success: #10b981;
   --semantic-success-bg: rgba(16, 185, 129, 0.15);
   --semantic-success-border: rgba(16, 185, 129, 0.3);
-  --semantic-info: #3b82f6;
-  --semantic-info-bg: rgba(59, 130, 246, 0.15);
-  --semantic-info-border: rgba(59, 130, 246, 0.3);
-
   /* 兼容旧变量 */
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
+
+  /* 选区颜色 */
+  --selection-bg: var(--accent-subtle);
+  --selection-text: var(--accent-primary);
+
+  /* 标准投影 - 深色模式 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
 }
 
 /* ===== 浅色模式 ===== */
@@ -92,12 +98,54 @@ html.light {
   --semantic-success: #059669;
   --semantic-success-bg: rgba(5, 150, 105, 0.08);
   --semantic-success-border: rgba(5, 150, 105, 0.2);
-  --semantic-info: #2563eb;
-  --semantic-info-bg: rgba(37, 99, 235, 0.08);
-  --semantic-info-border: rgba(37, 99, 235, 0.2);
-
   /* 兼容旧变量 */
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
+
+  /* 选区颜色 */
+  --selection-bg: var(--accent-primary);
+  --selection-text: #ffffff;
+
+  /* 标准投影 - 浅色模式 */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+  --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+}
+
+/* ===== 全局交互注入 ===== */
+
+/* 选区 */
+::selection {
+  background-color: var(--selection-bg);
+  color: var(--selection-text);
+}
+
+/* 全局滚动条样式 */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-strong);
+  border-radius: 10px;
+  border: 3px solid transparent;
+  background-clip: content-box;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--text-tertiary);
+  background-clip: content-box;
+}
+
+/* 针对 Firefox 的精细化调整 */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--border-strong) transparent;
 }
