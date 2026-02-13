@@ -38,7 +38,7 @@ html.theme-default {
   --glass-blur: blur(24px);
   --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 
-  --dialog-bg: rgba(15, 23, 42, 0.75);
+  --dialog-bg: rgba(15, 23, 42, 0.95);
   --overlay-bg: rgba(15, 23, 42, 0.9);
 
   --drag-overlay-bg: rgba(15, 23, 42, 0.68);
@@ -96,7 +96,7 @@ html.light.theme-default {
   --border-strong: rgba(56, 189, 248, 0.3);
   --surface-hover: rgba(255, 255, 255, 0.4);
 
-  --dialog-bg: rgba(255, 255, 255, 0.8);
+  --dialog-bg: rgba(255, 255, 255, 0.95);
   --overlay-bg: rgba(255, 255, 255, 0.85);
   --input-bg: rgba(255, 255, 255, 0.7);
 

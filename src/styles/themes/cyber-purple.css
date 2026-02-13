@@ -31,12 +31,33 @@ html.theme-cyber-purple {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15), transparent);
 
+  /* 玻璃态变量 */
+  --glass-bg: rgba(15, 23, 42, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* 边框与交互 */
+  --border-color: rgba(139, 92, 246, 0.14);
+  --border-light: rgba(139, 92, 246, 0.08);
+  --border-subtle: rgba(139, 92, 246, 0.08);
+  --border-normal: rgba(139, 92, 246, 0.14);
+  --border-strong: rgba(139, 92, 246, 0.25);
+
+  --surface-hover: rgba(139, 92, 246, 0.06);
+  --overlay-bg: rgba(13, 10, 26, 0.9);
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.4);
+
   --drag-overlay-bg: rgba(15, 8, 26, 0.72);
   --drag-zone-bg: rgba(78, 36, 140, 0.24);
   --drag-zone-border: rgba(192, 132, 252, 0.42);
   --drag-card-bg: rgba(27, 16, 45, 0.84);
   --drag-card-border: rgba(192, 132, 252, 0.32);
   --drag-icon-color: #c084fc;
+
+  --dialog-bg: rgba(13, 10, 26, 0.95);
+
   --drag-title-text: rgba(243, 232, 255, 0.96);
   --drag-hint-text: rgba(221, 196, 250, 0.8);
   --drag-badge-bg: rgba(192, 132, 252, 0.18);
@@ -70,12 +91,36 @@ html.light.theme-cyber-purple {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.08), transparent);
 
+  /* 浅色玻璃态 */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
+
+  /* 边框颜色 */
+  --border-color: rgba(126, 34, 206, 0.18);
+  --border-light: rgba(126, 34, 206, 0.1);
+  --border-subtle: rgba(126, 34, 206, 0.08);
+  --border-normal: rgba(126, 34, 206, 0.18);
+  --border-strong: rgba(126, 34, 206, 0.3);
+  --surface-hover: rgba(255, 255, 255, 0.4);
+
+  --dialog-bg: rgba(255, 255, 255, 0.95);
+  --overlay-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: rgba(255, 255, 255, 0.7);
+
+  /* 遮罩 */
+  --dialog-overlay-bg: rgba(15, 23, 42, 0.15);
+
   --drag-overlay-bg: rgba(249, 243, 255, 0.72);
   --drag-zone-bg: rgba(255, 255, 255, 0.64);
   --drag-zone-border: rgba(126, 34, 206, 0.28);
   --drag-card-bg: rgba(255, 255, 255, 0.9);
   --drag-card-border: rgba(126, 34, 206, 0.2);
   --drag-icon-color: #7e22ce;
+
+  --dialog-bg: rgba(255, 255, 255, 0.95);
+
   --drag-title-text: rgba(76, 29, 149, 0.94);
   --drag-hint-text: rgba(109, 40, 217, 0.72);
   --drag-badge-bg: rgba(126, 34, 206, 0.1);

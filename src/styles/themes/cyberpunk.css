@@ -20,11 +20,16 @@ html.theme-cyberpunk {
 /* ===== 深色模式 ===== */
 html.theme-cyberpunk {
   /* 霓虹撞色：青 -> 紫红 */
-  --accent-primary: #22d3ee;      /* Cyan-400 */
-  --accent-secondary: #d946ef;    /* Fuchsia-500 */
-  --accent-hover: #06b6d4;        /* Cyan-500 */
-  --accent-active: #c026d3;       /* Fuchsia-600 */
-  --accent-glow: rgba(34, 211, 238, 0.75); /* 增强辉光强度 */
+  --accent-primary: #22d3ee;
+  /* Cyan-400 */
+  --accent-secondary: #d946ef;
+  /* Fuchsia-500 */
+  --accent-hover: #06b6d4;
+  /* Cyan-500 */
+  --accent-active: #c026d3;
+  /* Fuchsia-600 */
+  --accent-glow: rgba(34, 211, 238, 0.75);
+  /* 增强辉光强度 */
   --accent-subtle: rgba(217, 70, 239, 0.2);
   --accent-text: #22d3ee;
   --accent-btn-text: #ffffff;
@@ -32,7 +37,25 @@ html.theme-cyberpunk {
   --progress-stripe-c: rgba(255, 255, 255, 0.15);
   --accent-active-bg: var(--accent-subtle);
   /* 移除原有的简单渐变，改用 Grid 背景 */
-  --bg-gradient: none; 
+  --bg-gradient: none;
+
+  /* 玻璃态变量 */
+  --glass-bg: rgba(15, 23, 42, 0.35);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+
+  /* 边框与交互 */
+  --border-color: rgba(34, 211, 238, 0.14);
+  --border-light: rgba(34, 211, 238, 0.08);
+  --border-subtle: rgba(34, 211, 238, 0.08);
+  --border-normal: rgba(34, 211, 238, 0.14);
+  --border-strong: rgba(34, 211, 238, 0.25);
+
+  --surface-hover: rgba(34, 211, 238, 0.06);
+  --overlay-bg: rgba(11, 13, 20, 0.9);
+  --input-bg: rgba(0, 0, 0, 0.2);
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.4);
 
   --drag-overlay-bg: rgba(4, 7, 15, 0.74);
   --drag-zone-bg: rgba(12, 18, 29, 0.38);
@@ -40,6 +63,9 @@ html.theme-cyberpunk {
   --drag-card-bg: rgba(8, 14, 26, 0.84);
   --drag-card-border: rgba(217, 70, 239, 0.34);
   --drag-icon-color: #22d3ee;
+
+  --dialog-bg: rgba(11, 13, 20, 0.95);
+
   --drag-title-text: rgba(224, 255, 255, 0.96);
   --drag-hint-text: rgba(182, 243, 250, 0.78);
   --drag-badge-bg: rgba(217, 70, 239, 0.2);
@@ -52,7 +78,8 @@ html.theme-cyberpunk {
 
 /* ===== 深色模式背景 (Retro Grid + Glows) ===== */
 html.theme-cyberpunk body {
-  background-color: #0b0d14; /* Deep Abyss */
+  background-color: #0b0d14;
+  /* Deep Abyss */
   background-image:
     /* 局部霓虹光晕 */
     radial-gradient(circle at 20% 20%, rgba(34, 211, 238, 0.12), transparent 50%),
@@ -60,10 +87,11 @@ html.theme-cyberpunk body {
     /* 网格线 (水平 + 垂直) */
     linear-gradient(rgba(34, 211, 238, 0.08) 1px, transparent 1px),
     linear-gradient(90deg, rgba(34, 211, 238, 0.08) 1px, transparent 1px);
-  background-size: 
-    100% 100%, 
-    100% 100%, 
-    40px 40px, /* 网格尺寸 */
+  background-size:
+    100% 100%,
+    100% 100%,
+    40px 40px,
+    /* 网格尺寸 */
     40px 40px;
   background-attachment: fixed;
 }
@@ -74,23 +102,25 @@ html.theme-cyberpunk body::after {
   position: fixed;
   inset: 0;
   /* 模拟老式 CRT 屏幕扫描线 */
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.15) 3px,
-    rgba(0, 0, 0, 0.15) 3px
-  );
-  z-index: 9999; /* 覆盖在最顶层 */
-  pointer-events: none; /* 允许点击穿透 */
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.15) 3px,
+      rgba(0, 0, 0, 0.15) 3px);
+  z-index: 9999;
+  /* 覆盖在最顶层 */
+  pointer-events: none;
+  /* 允许点击穿透 */
   opacity: 0.4;
   mix-blend-mode: overlay;
 }
 
 /* ===== 浅色模式 (High-Tech Lab) ===== */
 html.light.theme-cyberpunk {
-  --accent-primary: #0891b2;      /* Cyan-600 */
-  --accent-secondary: #c026d3;    /* Fuchsia-600 */
+  --accent-primary: #0891b2;
+  /* Cyan-600 */
+  --accent-secondary: #c026d3;
+  /* Fuchsia-600 */
   --accent-hover: #0e7490;
   --accent-active: #a21caf;
   --accent-glow: rgba(8, 145, 178, 0.4);
@@ -102,12 +132,36 @@ html.light.theme-cyberpunk {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: none;
 
+  /* 浅色玻璃态 */
+  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-blur: blur(24px);
+  --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
+
+  /* 边框颜色 */
+  --border-color: rgba(8, 145, 178, 0.18);
+  --border-light: rgba(8, 145, 178, 0.1);
+  --border-subtle: rgba(8, 145, 178, 0.08);
+  --border-normal: rgba(8, 145, 178, 0.18);
+  --border-strong: rgba(8, 145, 178, 0.3);
+  --surface-hover: rgba(255, 255, 255, 0.4);
+
+  --dialog-bg: rgba(255, 255, 255, 0.95);
+  --overlay-bg: rgba(255, 255, 255, 0.85);
+  --input-bg: rgba(255, 255, 255, 0.7);
+
+  /* 遮罩 */
+  --dialog-overlay-bg: rgba(15, 23, 42, 0.15);
+
   --drag-overlay-bg: rgba(245, 250, 252, 0.72);
   --drag-zone-bg: rgba(255, 255, 255, 0.64);
   --drag-zone-border: rgba(8, 145, 178, 0.34);
   --drag-card-bg: rgba(255, 255, 255, 0.9);
   --drag-card-border: rgba(192, 38, 211, 0.22);
   --drag-icon-color: #0e7490;
+
+  --dialog-bg: rgba(255, 255, 255, 0.95);
+
   --drag-title-text: rgba(8, 57, 70, 0.94);
   --drag-hint-text: rgba(14, 116, 144, 0.72);
   --drag-badge-bg: rgba(8, 145, 178, 0.12);
@@ -128,30 +182,37 @@ html.light.theme-cyberpunk body {
     /* 浅色网格 */
     linear-gradient(rgba(8, 145, 178, 0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(8, 145, 178, 0.05) 1px, transparent 1px);
-  background-size: 
-    100% 100%, 
-    100% 100%, 
+  background-size:
+    100% 100%,
+    100% 100%,
     30px 30px,
     30px 30px;
   background-attachment: fixed;
 }
+
 /* 浅色模式下减弱扫描线 */
 html.light.theme-cyberpunk body::after {
   opacity: 0.15;
-  background: repeating-linear-gradient(
-    0deg,
-    transparent,
-    transparent 2px,
-    rgba(0, 0, 0, 0.05) 3px,
-    rgba(0, 0, 0, 0.05) 3px
-  );
+  background: repeating-linear-gradient(0deg,
+      transparent,
+      transparent 2px,
+      rgba(0, 0, 0, 0.05) 3px,
+      rgba(0, 0, 0, 0.05) 3px);
 }
 
 /* ===== 动态呼吸光效 (Neon Pulse) ===== */
 @keyframes neon-pulse {
-  0% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle); }
-  50% { box-shadow: 0 0 15px var(--accent-glow), 0 0 25px var(--accent-subtle); }
-  100% { box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle); }
+  0% {
+    box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle);
+  }
+
+  50% {
+    box-shadow: 0 0 15px var(--accent-glow), 0 0 25px var(--accent-subtle);
+  }
+
+  100% {
+    box-shadow: 0 0 5px var(--accent-glow), 0 0 10px var(--accent-subtle);
+  }
 }
 
 /* 应用于核心按钮 (Buttons) */
