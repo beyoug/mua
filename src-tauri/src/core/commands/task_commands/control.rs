@@ -132,18 +132,38 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
         };
 
         let (options, _) = utils::build_aria2_options(
-            save_path_opt,
-            filename_opt,
-            ua_opt,
-            referer_opt,
-            headers_str,
-            proxy_opt,
-            limit_opt,
+            save_path_opt.clone(),
+            filename_opt.clone(),
+            ua_opt.clone(),
+            referer_opt.clone(),
+            headers_str.clone(),
+            proxy_opt.clone(),
+            limit_opt.clone(),
         );
 
         let _ = aria2_client::purge(gid.clone()).await;
 
-        match aria2_client::add_uri(vec![task.url.clone()], Some(options)).await {
+        // 区分重下逻辑：URL (HTTP/Magnet) vs Local Torrent File
+        let result = if task.url.starts_with("file://") {
+            let path = task.url.trim_start_matches("file://").to_string();
+            // 构建基础 Config 传递通用设置
+            let base_cfg = crate::core::types::DownloadConfig {
+                urls: vec![],
+                save_path: save_path_opt,
+                filename: filename_opt,
+                user_agent: ua_opt,
+                referer: referer_opt,
+                headers: if task.headers.is_empty() { None } else { Some(task.headers.join("; ")) },
+                proxy: proxy_opt,
+                max_download_limit: limit_opt,
+                torrent_config: None, // 内部调用不嵌套
+            };
+            super::add::add_torrent_task_inner(state, path, None, None, &base_cfg).await
+        } else {
+            aria2_client::add_uri(vec![task.url.clone()], Some(options)).await
+        };
+
+        match result {
             Ok(new_gid) => {
                 crate::app_info!(
                     "Core::TaskControl",

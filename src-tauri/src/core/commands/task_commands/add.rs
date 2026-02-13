@@ -153,7 +153,7 @@ fn create_persisted_task(
     }
 }
 
-async fn add_torrent_task_inner(
+pub(crate) async fn add_torrent_task_inner(
     state: &TaskStore,
     path: String,
     select_file: Option<String>,
