@@ -23,8 +23,13 @@ struct Metainfo {
 }
 
 #[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 struct Info {
     name: String,
+    #[serde(rename = "piece length")]
+    piece_length: Option<u64>,
+    #[serde(with = "serde_bytes")]
+    pieces: Option<Vec<u8>>,
     #[serde(default)]
     length: Option<u64>,
     #[serde(default)]

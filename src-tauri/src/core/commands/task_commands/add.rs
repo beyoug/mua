@@ -160,6 +160,17 @@ async fn add_torrent_task_inner(
     trackers: Option<String>,
     base_cfg: &DownloadConfig,
 ) -> AppResult<String> {
+    // 尝试解析种子以获取显示名称
+    let display_name = crate::core::torrent::parse_torrent_file(&path)
+        .map(|info| info.name)
+        .unwrap_or_else(|_| {
+            std::path::Path::new(&path)
+                .file_name()
+                .unwrap_or_default()
+                .to_string_lossy()
+                .to_string()
+        });
+ 
     let content = std::fs::read(&path).map_err(|e| AppError::Fs(e.to_string()))?;
     let torrent_b64 = base64::engine::general_purpose::STANDARD.encode(&content);
 
@@ -200,11 +211,7 @@ async fn add_torrent_task_inner(
         Ok(gid) => {
             let task = create_persisted_task(
                 gid.clone(),
-                std::path::Path::new(&path)
-                    .file_name()
-                    .unwrap_or_default()
-                    .to_string_lossy()
-                    .to_string(),
+                display_name,
                 format!("file://{}", path),
                 final_save_path,
                 base_cfg,
