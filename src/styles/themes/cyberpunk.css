@@ -33,21 +33,6 @@ html.theme-cyberpunk {
   --accent-active-bg: var(--accent-subtle);
   /* 移除原有的简单渐变，改用 Grid 背景 */
   --bg-gradient: none; 
-
-  --drag-overlay-bg: rgba(4, 7, 15, 0.74);
-  --drag-zone-bg: rgba(12, 18, 29, 0.38);
-  --drag-zone-border: rgba(34, 211, 238, 0.46);
-  --drag-card-bg: rgba(8, 14, 26, 0.84);
-  --drag-card-border: rgba(217, 70, 239, 0.34);
-  --drag-icon-color: #22d3ee;
-  --drag-title-text: rgba(224, 255, 255, 0.96);
-  --drag-hint-text: rgba(182, 243, 250, 0.78);
-  --drag-badge-bg: rgba(217, 70, 239, 0.2);
-  --drag-badge-border: rgba(217, 70, 239, 0.38);
-  --drag-badge-text: rgba(252, 234, 255, 0.96);
-  --drop-feedback-bg: rgba(15, 22, 36, 0.88);
-  --drop-feedback-border: rgba(34, 211, 238, 0.42);
-  --drop-feedback-text: rgba(217, 249, 253, 0.94);
 }
 
 /* ===== 深色模式背景 (Retro Grid + Glows) ===== */
@@ -101,21 +86,6 @@ html.light.theme-cyberpunk {
   --progress-stripe-c: rgba(255, 255, 255, 0.15);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: none;
-
-  --drag-overlay-bg: rgba(245, 250, 252, 0.72);
-  --drag-zone-bg: rgba(255, 255, 255, 0.64);
-  --drag-zone-border: rgba(8, 145, 178, 0.34);
-  --drag-card-bg: rgba(255, 255, 255, 0.9);
-  --drag-card-border: rgba(192, 38, 211, 0.22);
-  --drag-icon-color: #0e7490;
-  --drag-title-text: rgba(8, 57, 70, 0.94);
-  --drag-hint-text: rgba(14, 116, 144, 0.72);
-  --drag-badge-bg: rgba(8, 145, 178, 0.12);
-  --drag-badge-border: rgba(8, 145, 178, 0.24);
-  --drag-badge-text: rgba(14, 116, 144, 0.95);
-  --drop-feedback-bg: rgba(255, 255, 255, 0.93);
-  --drop-feedback-border: rgba(8, 145, 178, 0.26);
-  --drop-feedback-text: rgba(8, 57, 70, 0.92);
 }
 
 /* ===== 浅色模式背景 (Tech Grid) ===== */

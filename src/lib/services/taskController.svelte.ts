@@ -4,9 +4,6 @@ import {
     cancelTask,
     cancelTasks,
     addDownloadTasks,
-    pauseTask,
-    pauseAll,
-    resumeAll,
     resumeTask,
     isActiveTask,
     isCompletedTask,
@@ -15,7 +12,6 @@ import {
 } from '$lib';
 import * as cmd from '$lib/api/cmd';
 import { createLogger } from '$lib/utils/logger';
-import { getErrorMessage } from '$lib/utils/errors';
 
 const logger = createLogger('TaskController');
 
@@ -83,7 +79,7 @@ export class TaskController {
         // 3. 执行逻辑分流
         // 进行中页面：默认直接移动到历史记录（软删除），不需要弹窗
         if (this.activeNav === 'active') {
-            void this.performClear(false);
+            this.performClear(false);
             return;
         }
 
@@ -95,7 +91,7 @@ export class TaskController {
 
         if (!hasCompletedTask) {
             // 全是非完成任务 -> 直接删除（含文件）
-            void this.performClear(true);
+            this.performClear(true);
             return;
         }
 
@@ -122,55 +118,41 @@ export class TaskController {
 
     // 执行清理（批量或单项）
     async performClear(deleteFile: boolean) {
-        try {
-            if (this.itemToDelete) {
-                // 单项删除
-                await removeTask(this.itemToDelete, deleteFile);
-                this.itemToDelete = null;
+        if (this.itemToDelete) {
+            // 单项删除
+            removeTask(this.itemToDelete, deleteFile);
+            this.itemToDelete = null;
+        } else {
+            // 批量删除
+            if (this.activeNav === 'active') {
+                // 进行中页面：软删除（取消）
+                await cancelTasks(this.selectedIds);
             } else {
-                // 批量删除
-                if (this.activeNav === 'active') {
-                    // 进行中页面：软删除（取消）
-                    await cancelTasks(this.selectedIds);
-                } else {
-                    // 历史/已完成页面：硬删除
-                    await removeTasks(this.selectedIds, deleteFile);
-                }
-                this.exitSelectionMode();
+                // 历史/已完成页面：硬删除
+                await removeTasks(this.selectedIds, deleteFile);
             }
-
-            this.showClearDialog = false;
-        } catch (e) {
-            logger.error('Failed to clear tasks', {
-                nav: this.activeNav,
-                taskId: this.itemToDelete,
-                selectedCount: this.selectedIds.size,
-                deleteFile,
-                error: e
-            });
+            this.exitSelectionMode();
         }
+
+        this.showClearDialog = false;
     }
 
     async handleCancelTask(task: DownloadTask) {
-        try {
-            if (isActiveTask(task.state)) {
-                // 活跃任务（下载/等待/暂停）：软删除（仅取消并保留在历史），无需确认
-                await cancelTask(task.id);
-            } else if (isCompletedTask(task.state)) {
-                // 已完成任务：物理删除记录，需要确认
-                this.itemToDelete = task.id;
-                this.clearDialogProps = {
-                    title: '删除任务',
-                    description: '确定要删除这条任务记录吗？',
-                    confirmText: '删除'
-                };
-                this.showClearDialog = true;
-            } else {
-                // 失败/取消/缺失 等未完成状态：直接物理删除且清理文件，无需确认
-                await removeTask(task.id, true);
-            }
-        } catch (e) {
-            logger.error('Failed to cancel or delete task', { taskId: task.id, state: task.state, error: e });
+        if (isActiveTask(task.state)) {
+            // 活跃任务（下载/等待/暂停）：软删除（仅取消并保留在历史），无需确认
+            await cancelTask(task.id);
+        } else if (isCompletedTask(task.state)) {
+            // 已完成任务：物理删除记录，需要确认
+            this.itemToDelete = task.id;
+            this.clearDialogProps = {
+                title: '删除任务',
+                description: '确定要删除这条任务记录吗？',
+                confirmText: '删除'
+            };
+            this.showClearDialog = true;
+        } else {
+            // 失败/取消/缺失 等未完成状态：直接物理删除且清理文件，无需确认
+            removeTask(task.id, true);
         }
     }
 
@@ -186,49 +168,15 @@ export class TaskController {
      * 添加下载任务并自动跳转至进行中
      */
     async handleAddTask(config: DownloadConfig | DownloadConfig[]) {
-        try {
-            await addDownloadTasks(config);
-            this.handleNavChange('active');
-        } catch (e) {
-            logger.error('Failed to add task', { error: e });
-            throw new Error(getErrorMessage(e, '添加任务失败'));
-        }
-    }
-
-    async handlePauseTask(id: string) {
-        try {
-            await pauseTask(id);
-        } catch (e) {
-            logger.error('Failed to pause task', { taskId: id, error: e });
-        }
-    }
-
-    async handlePauseAll() {
-        try {
-            await pauseAll();
-        } catch (e) {
-            logger.error('Failed to pause all tasks', { error: e });
-        }
-    }
-
-    async handleResumeAll() {
-        try {
-            await resumeAll();
-        } catch (e) {
-            logger.error('Failed to resume all tasks', { error: e });
-        }
+        await addDownloadTasks(config);
+        this.handleNavChange('active');
     }
 
     /**
      * 恢复/重新下载任务并自动跳转至进行中
      */
     async handleResumeTask(id: string) {
-        try {
-            await resumeTask(id);
-            this.handleNavChange('active');
-        } catch (e) {
-            logger.error('Failed to resume task', { taskId: id, error: e });
-            throw new Error(getErrorMessage(e, '恢复任务失败'));
-        }
+        await resumeTask(id);
+        this.handleNavChange('active');
     }
 }

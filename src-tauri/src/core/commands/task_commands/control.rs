@@ -4,14 +4,8 @@ use crate::core::store::{PersistedTask, TaskStore};
 use crate::core::types::TaskState;
 use crate::utils;
 use chrono::Local;
+use futures::future::join_all;
 use serde_json::json;
-
-use super::BatchCommandResult;
-
-fn is_not_found_error_text(message: &str) -> bool {
-    let lower = message.to_lowercase();
-    lower.contains("not found") || lower.contains("error 1")
-}
 
 #[tauri::command]
 pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
@@ -73,39 +67,17 @@ pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<S
 pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
-) -> AppResult<BatchCommandResult> {
-    let mut succeeded_gids: Vec<String> = Vec::new();
-    let mut failed_gids: Vec<String> = Vec::new();
+) -> AppResult<String> {
+    state.update_batch_state(&gids, TaskState::Removed);
+    state.save();
 
-    for gid in &gids {
-        match aria2_client::remove(gid.clone()).await {
-            Ok(_) => succeeded_gids.push(gid.clone()),
-            Err(e) => {
-                if is_not_found_error_text(&e.to_string()) {
-                    succeeded_gids.push(gid.clone());
-                } else {
-                    failed_gids.push(gid.clone());
-                    crate::app_warn!(
-                        "Core::TaskControl",
-                        "batch_cancel_rpc_failed",
-                        json!({ "gid": gid, "error": e.to_string() })
-                    );
-                }
-            }
-        }
-    }
+    let futures: Vec<_> = gids
+        .iter()
+        .map(|gid| aria2_client::remove(gid.clone()))
+        .collect();
+    let _ = join_all(futures).await;
 
-    if !succeeded_gids.is_empty() {
-        state.update_batch_state(&succeeded_gids, TaskState::Removed);
-        state.save();
-    }
-
-    Ok(BatchCommandResult {
-        requested: gids.len(),
-        partial: !failed_gids.is_empty(),
-        succeeded_gids,
-        failed_gids,
-    })
+    Ok("OK".to_string())
 }
 
 async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> {

@@ -6,13 +6,6 @@
 import { invoke } from '@tauri-apps/api/core';
 import type { DownloadConfig, DownloadTask, Aria2VersionInfo } from '$lib/types/download';
 
-export interface BatchCommandResult {
-    requested: number;
-    succeededGids: string[];
-    failedGids: string[];
-    partial: boolean;
-}
-
 // === 命令封装器 ===
 
 /**
@@ -74,15 +67,15 @@ export async function resumeAllTasks(): Promise<void> {
 /**
  * 批量移除任务
  */
-export async function removeTasksCmd(gids: string[], deleteFile: boolean): Promise<BatchCommandResult> {
-    return invoke<BatchCommandResult>('remove_tasks', { gids, deleteFile });
+export async function removeTasksCmd(gids: string[], deleteFile: boolean): Promise<void> {
+    await invoke('remove_tasks', { gids, deleteFile });
 }
 
 /**
  * 批量取消任务
  */
-export async function cancelTasksCmd(gids: string[]): Promise<BatchCommandResult> {
-    return invoke<BatchCommandResult>('cancel_tasks', { gids });
+export async function cancelTasksCmd(gids: string[]): Promise<void> {
+    await invoke('cancel_tasks', { gids });
 }
 
 /**
