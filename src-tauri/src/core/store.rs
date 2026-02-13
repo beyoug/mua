@@ -36,6 +36,11 @@ pub struct PersistedTask {
     pub headers: Vec<String>,
     #[serde(default)]
     pub max_download_limit: String,
+    // Torrent specific fields
+    #[serde(default)]
+    pub select_file: Option<String>,
+    #[serde(default)]
+    pub trackers: Option<String>,
 }
 
 /// Minimum interval between save operations (ms)

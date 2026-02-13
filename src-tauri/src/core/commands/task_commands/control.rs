@@ -158,7 +158,13 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
                 max_download_limit: limit_opt,
                 torrent_config: None, // 内部调用不嵌套
             };
-            super::add::add_torrent_task_inner(state, path, None, None, &base_cfg).await
+            super::add::add_torrent_task_inner(
+                state,
+                path,
+                task.select_file.clone(),
+                task.trackers.clone(),
+                &base_cfg
+            ).await
         } else {
             aria2_client::add_uri(vec![task.url.clone()], Some(options)).await
         };

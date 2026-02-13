@@ -150,6 +150,9 @@ fn create_persisted_task(
             .map(|s| s.trim().to_string())
             .collect(),
         max_download_limit: cfg.max_download_limit.clone().unwrap_or_default(),
+        // Torrent 扩展参数持久化
+        select_file: cfg.torrent_config.as_ref().and_then(|t| t.select_file.clone()),
+        trackers: cfg.torrent_config.as_ref().and_then(|t| t.trackers.clone()),
     }
 }
 
