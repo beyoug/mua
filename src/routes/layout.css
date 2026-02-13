@@ -35,9 +35,9 @@
     -webkit-user-select: none;
   }
 
-  /* 浅色模式：纯白背景 */
+  /* 浅色模式：默认白色背景（会被主题覆盖） */
   html.light body {
-    background: #ffffff;
+    background-color: #ffffff;
   }
 
   .no-scroll {
