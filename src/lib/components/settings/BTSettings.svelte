@@ -7,6 +7,7 @@
   import { Network, Share2, Database, HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
+  import { relaunch } from '@tauri-apps/plugin-process';
   import { createLogger } from '$lib/utils/logger';
 
   const logger = createLogger('BTSettings');
@@ -24,6 +25,14 @@
   let isFetchingTrackers = $state(false);
   let publicTrackers: string[] = $state([]);
   let showTrackerPreview = $state(false);
+
+  // 跟踪原始端口以检测变更
+  const initialDhtPort = $appSettings.dhtListenPort;
+  const initialListenPort = $appSettings.listenPort;
+
+  let isPortChanged = $derived(
+    dhtListenPort !== initialDhtPort || listenPort !== initialListenPort
+  );
 
   // 监听 store 变化，防止未保存状态被覆盖
   $effect(() => {
@@ -153,14 +162,21 @@
                     <span class="tooltip-text">允许与连接的节点交换信息。监听端口用于接收连接 (TCP)。</span>
                 </div>
             </div>
-             <div class="port-input-inline">
+             <div class="port-input-inline" class:disabled={!enablePeerExchange}>
                 <span class="port-label">端口</span>
-                <input type="text" bind:value={listenPort} onblur={handleBlur} placeholder="6881" title="BT 监听端口">
+                <input 
+                    type="text" 
+                    bind:value={listenPort} 
+                    onblur={handleBlur} 
+                    placeholder="6881" 
+                    title="BT 监听端口"
+                    disabled={!enablePeerExchange}
+                >
                 <div class="port-controls">
-                    <button class="port-btn" onclick={() => adjustPort('bt', 1)} title="增加">
+                    <button class="port-btn" onclick={() => adjustPort('bt', 1)} title="增加" disabled={!enablePeerExchange}>
                         <ChevronUp size={10} />
                     </button>
-                    <button class="port-btn" onclick={() => adjustPort('bt', -1)} title="减少">
+                    <button class="port-btn" onclick={() => adjustPort('bt', -1)} title="减少" disabled={!enablePeerExchange}>
                         <ChevronDown size={10} />
                     </button>
                 </div>
@@ -306,6 +322,19 @@
   </div>
 
     <!-- 提示 -->
+    {#if isPortChanged}
+        <div class="info-box warning" transition:fade={{ duration: 150 }}>
+            <RefreshCw size={14} />
+            <div class="warning-text">
+                <span class="main-msg">端口配置已更改，需重启应用生效。</span>
+                <span class="sub-msg">修改端口涉及网络套接字重新绑定，运行中无法立即切换。</span>
+            </div>
+            <button class="relaunch-btn" onclick={() => relaunch()}>
+                立即重启
+            </button>
+        </div>
+    {/if}
+
     <div class="info-box">
         <HelpCircle size={14} />
         <span>提示：修改 BT 配置将会尝试实时应用到当前 Aria2 实例。</span>
@@ -501,6 +530,53 @@
       font-size: 12px;
       margin-top: 16px;
       line-height: 1.4;
+  }
+
+  .info-box.warning {
+      background: rgba(245, 158, 11, 0.1);
+      border-color: rgba(245, 158, 11, 0.3);
+      color: #f59e0b;
+      margin-top: 24px;
+      justify-content: space-between;
+      gap: 12px;
+  }
+
+  .warning-text {
+      display: flex;
+      flex-direction: column;
+      flex: 1;
+  }
+
+  .warning-text .main-msg {
+      font-weight: 600;
+  }
+
+  .warning-text .sub-msg {
+      font-size: 10px;
+      opacity: 0.8;
+  }
+
+  .relaunch-btn {
+      background: #f59e0b;
+      color: #000;
+      border: none;
+      padding: 6px 14px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+  }
+
+  .relaunch-btn:hover {
+      background: #d97706;
+      transform: translateY(-1px);
+      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+  }
+
+  .relaunch-btn:active {
+      transform: translateY(0);
   }
 
   /* Tooltip Styles */
