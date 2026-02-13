@@ -113,20 +113,25 @@
                     <span class="tooltip-text">允许从 DHT 网络获取节点，有助于无 Tracker 下载。</span>
                 </div>
             </div>
-            {#if enableDht}
-                <div class="port-input-inline" transition:fade={{ duration: 150 }}>
-                    <span class="port-label">端口</span>
-                    <input type="text" bind:value={dhtListenPort} onblur={handleBlur} placeholder="6881" title="DHT 监听端口">
-                    <div class="port-controls">
-                        <button class="port-btn" onclick={() => adjustPort('dht', 1)} title="增加">
-                            <ChevronUp size={10} />
-                        </button>
-                        <button class="port-btn" onclick={() => adjustPort('dht', -1)} title="减少">
-                            <ChevronDown size={10} />
-                        </button>
-                    </div>
+            <div class="port-input-inline" class:disabled={!enableDht}>
+                <span class="port-label">端口</span>
+                <input 
+                    type="text" 
+                    bind:value={dhtListenPort} 
+                    onblur={handleBlur} 
+                    placeholder="6881" 
+                    title="DHT 监听端口"
+                    disabled={!enableDht}
+                >
+                <div class="port-controls">
+                    <button class="port-btn" onclick={() => adjustPort('dht', 1)} title="增加" disabled={!enableDht}>
+                        <ChevronUp size={10} />
+                    </button>
+                    <button class="port-btn" onclick={() => adjustPort('dht', -1)} title="减少" disabled={!enableDht}>
+                        <ChevronDown size={10} />
+                    </button>
                 </div>
-            {/if}
+            </div>
           </div>
         </div>
         <div class="setting-control">
@@ -387,6 +392,12 @@
       background: var(--input-bg);
       border-color: var(--accent-primary);
       box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+
+  .port-input-inline.disabled {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(1);
   }
 
   .port-label {
