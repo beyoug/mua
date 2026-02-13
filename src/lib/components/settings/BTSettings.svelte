@@ -4,7 +4,7 @@
 -->
 <script lang="ts">
   import { appSettings, updateAppSettings } from '$lib/stores/settings';
-  import { Network, Share2, Database, HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
+  import { HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
   import { invoke } from '@tauri-apps/api/core';
   import { relaunch } from '@tauri-apps/plugin-process';
@@ -37,10 +37,6 @@
   $effect(() => {
     // 简单单向同步初始化
     if (!btTrackers && $appSettings.btTrackers) btTrackers = $appSettings.btTrackers;
-    
-    // 自动迁移旧默认值
-    if (dhtListenPort === '6881-6999') dhtListenPort = '6881';
-    if (listenPort === '6881-6999') listenPort = '6881';
   });
 
   async function handleSave() {
@@ -109,9 +105,6 @@
       handleSave();
   }
 
-  function handleToggle() {
-      handleSave();
-  }
 
   function adjustPort(type: 'dht' | 'bt', delta: number) {
       if (type === 'dht') {
@@ -186,7 +179,7 @@
         </div>
         <div class="setting-control">
             <label class="switch">
-            <input type="checkbox" bind:checked={enableDht} onchange={handleToggle}>
+            <input type="checkbox" bind:checked={enableDht} onchange={handleSave}>
             <span class="slider"></span>
             </label>
         </div>
@@ -234,7 +227,7 @@
         </div>
         <div class="setting-control">
             <label class="switch">
-            <input type="checkbox" bind:checked={enablePeerExchange} onchange={handleToggle}>
+            <input type="checkbox" bind:checked={enablePeerExchange} onchange={handleSave}>
             <span class="slider"></span>
             </label>
         </div>
@@ -258,7 +251,7 @@
             </div>
             <div class="setting-control">
                 <label class="switch">
-                <input type="checkbox" bind:checked={enableSeeding} onchange={handleToggle}>
+                <input type="checkbox" bind:checked={enableSeeding} onchange={handleSave}>
                 <span class="slider"></span>
                 </label>
             </div>
