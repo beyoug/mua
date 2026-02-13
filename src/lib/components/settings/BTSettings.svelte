@@ -30,9 +30,8 @@
   const initialDhtPort = $appSettings.dhtListenPort;
   const initialListenPort = $appSettings.listenPort;
 
-  let isPortChanged = $derived(
-    dhtListenPort !== initialDhtPort || listenPort !== initialListenPort
-  );
+  let isDhtPortChanged = $derived(dhtListenPort !== initialDhtPort);
+  let isListenPortChanged = $derived(listenPort !== initialListenPort);
 
   // 监听 store 变化，防止未保存状态被覆盖
   $effect(() => {
@@ -142,6 +141,14 @@
                 </div>
             </div>
           </div>
+
+          {#if isDhtPortChanged}
+            <div class="inline-restart-hint" transition:fade={{ duration: 150 }}>
+                <RefreshCw size={12} />
+                <span>端口已改，需重启生效</span>
+                <button class="text-relaunch-btn" onclick={() => relaunch()}>立即重启</button>
+            </div>
+          {/if}
         </div>
         <div class="setting-control">
             <label class="switch">
@@ -182,6 +189,14 @@
                 </div>
             </div>
           </div>
+
+          {#if isListenPortChanged}
+            <div class="inline-restart-hint" transition:fade={{ duration: 150 }}>
+                <RefreshCw size={12} />
+                <span>端口已改，需重启生效</span>
+                <button class="text-relaunch-btn" onclick={() => relaunch()}>立即重启</button>
+            </div>
+          {/if}
         </div>
         <div class="setting-control">
             <label class="switch">
@@ -322,19 +337,6 @@
   </div>
 
     <!-- 提示 -->
-    {#if isPortChanged}
-        <div class="info-box warning" transition:fade={{ duration: 150 }}>
-            <RefreshCw size={14} />
-            <div class="warning-text">
-                <span class="main-msg">端口配置已更改，需重启应用生效。</span>
-                <span class="sub-msg">修改端口涉及网络套接字重新绑定，运行中无法立即切换。</span>
-            </div>
-            <button class="relaunch-btn" onclick={() => relaunch()}>
-                立即重启
-            </button>
-        </div>
-    {/if}
-
     <div class="info-box">
         <HelpCircle size={14} />
         <span>提示：修改 BT 配置将会尝试实时应用到当前 Aria2 实例。</span>
@@ -532,51 +534,36 @@
       line-height: 1.4;
   }
 
-  .info-box.warning {
-      background: rgba(245, 158, 11, 0.1);
-      border-color: rgba(245, 158, 11, 0.3);
-      color: #f59e0b;
-      margin-top: 24px;
-      justify-content: space-between;
-      gap: 12px;
-  }
-
-  .warning-text {
+  .inline-restart-hint {
       display: flex;
-      flex-direction: column;
-      flex: 1;
+      align-items: center;
+      gap: 6px;
+      margin-top: 8px;
+      padding: 6px 10px;
+      background: rgba(245, 158, 11, 0.1);
+      border: 1px solid rgba(245, 158, 11, 0.2);
+      border-radius: 6px;
+      color: #f59e0b;
+      font-size: 11px;
+      width: fit-content;
   }
 
-  .warning-text .main-msg {
-      font-weight: 600;
-  }
-
-  .warning-text .sub-msg {
-      font-size: 10px;
-      opacity: 0.8;
-  }
-
-  .relaunch-btn {
+  .text-relaunch-btn {
       background: #f59e0b;
       color: #000;
       border: none;
-      padding: 6px 14px;
-      border-radius: 6px;
-      font-size: 11px;
+      padding: 2px 8px;
+      border-radius: 4px;
+      font-size: 10px;
       font-weight: 600;
       cursor: pointer;
+      margin-left: 4px;
       transition: all 0.2s;
-      white-space: nowrap;
   }
 
-  .relaunch-btn:hover {
+  .text-relaunch-btn:hover {
       background: #d97706;
-      transform: translateY(-1px);
-      box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
-  }
-
-  .relaunch-btn:active {
-      transform: translateY(0);
+      transform: scale(1.02);
   }
 
   /* Tooltip Styles */
