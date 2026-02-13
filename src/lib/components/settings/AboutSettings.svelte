@@ -1,11 +1,21 @@
 <script lang="ts">
   import { Github, Globe, Heart } from '@lucide/svelte';
   import { open } from '@tauri-apps/plugin-shell';
+  import { getVersion } from '@tauri-apps/api/app';
+  import { onMount } from 'svelte';
   import { createLogger } from '$lib/utils/logger';
 
   const logger = createLogger('AboutSettings');
 
-  const version = "0.1.0";
+  let version = $state("0.0.0");
+ 
+  onMount(async () => {
+    try {
+      version = await getVersion();
+    } catch (e) {
+      logger.error('Failed to get version', { error: e });
+    }
+  });
 
   async function openUrl(url: string) {
     try {

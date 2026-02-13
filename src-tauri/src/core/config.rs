@@ -202,12 +202,12 @@ pub fn load_config(app: &AppHandle) -> AppConfig {
     config
 }
 
-pub fn save_config(app: &AppHandle, config: &AppConfig) -> Result<(), String> {
+pub fn save_config(app: &AppHandle, config: &AppConfig) -> crate::core::error::AppResult<()> {
     if let Some(path) = get_config_path(app) {
-        let json = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
-        crate::utils::atomic_write(&path, &json).map_err(|e| e.to_string())?;
+        let json = serde_json::to_string_pretty(config)?;
+        crate::utils::atomic_write(&path, &json)?;
         Ok(())
     } else {
-        Err("Could not resolve config path".to_string())
+        Err(crate::core::error::AppError::config("无法解析配置文件路径".to_string()))
     }
 }
