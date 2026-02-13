@@ -140,9 +140,7 @@ pub async fn add_uri(urls: Vec<String>, options: Option<Value>) -> AppResult<Str
 }
 
 pub async fn add_torrent(torrent: String, options: Option<Value>) -> AppResult<String> {
-    // aria2.addTorrent params: [torrent, uris, options]
-    // Keep an explicit empty `uris` slot so `options` is passed as the 3rd argument.
-    let mut params = vec![json!(torrent), json!([])];
+    let mut params = vec![json!(torrent)];
     if let Some(opts) = options {
         params.push(json!(opts));
     }

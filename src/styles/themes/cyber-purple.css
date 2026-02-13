@@ -30,21 +30,6 @@ html.theme-cyber-purple {
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15), transparent);
-
-  --drag-overlay-bg: rgba(15, 8, 26, 0.72);
-  --drag-zone-bg: rgba(78, 36, 140, 0.24);
-  --drag-zone-border: rgba(192, 132, 252, 0.42);
-  --drag-card-bg: rgba(27, 16, 45, 0.84);
-  --drag-card-border: rgba(192, 132, 252, 0.32);
-  --drag-icon-color: #c084fc;
-  --drag-title-text: rgba(243, 232, 255, 0.96);
-  --drag-hint-text: rgba(221, 196, 250, 0.8);
-  --drag-badge-bg: rgba(192, 132, 252, 0.18);
-  --drag-badge-border: rgba(192, 132, 252, 0.34);
-  --drag-badge-text: rgba(249, 244, 255, 0.95);
-  --drop-feedback-bg: rgba(34, 19, 57, 0.86);
-  --drop-feedback-border: rgba(192, 132, 252, 0.34);
-  --drop-feedback-text: rgba(242, 230, 255, 0.94);
 }
 
 /* ===== 深色模式背景 - 双椭圆梦幻紫 ===== */
@@ -69,21 +54,6 @@ html.light.theme-cyber-purple {
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.08), transparent);
-
-  --drag-overlay-bg: rgba(249, 243, 255, 0.72);
-  --drag-zone-bg: rgba(255, 255, 255, 0.64);
-  --drag-zone-border: rgba(126, 34, 206, 0.28);
-  --drag-card-bg: rgba(255, 255, 255, 0.9);
-  --drag-card-border: rgba(126, 34, 206, 0.2);
-  --drag-icon-color: #7e22ce;
-  --drag-title-text: rgba(76, 29, 149, 0.94);
-  --drag-hint-text: rgba(109, 40, 217, 0.72);
-  --drag-badge-bg: rgba(126, 34, 206, 0.1);
-  --drag-badge-border: rgba(126, 34, 206, 0.24);
-  --drag-badge-text: rgba(91, 33, 182, 0.95);
-  --drop-feedback-bg: rgba(255, 255, 255, 0.92);
-  --drop-feedback-border: rgba(126, 34, 206, 0.22);
-  --drop-feedback-text: rgba(88, 28, 135, 0.92);
 }
 
 /* ===== 浅色模式背景 - 柔和紫调 ===== */

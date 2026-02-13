@@ -51,27 +51,6 @@
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
-
-  --drag-overlay-bg: rgba(5, 10, 20, 0.58);
-  --drag-overlay-blur: blur(8px);
-  --drag-zone-bg: rgba(255, 255, 255, 0.02);
-  --drag-zone-border: rgba(255, 255, 255, 0.28);
-  --drag-card-bg: rgba(6, 13, 25, 0.6);
-  --drag-card-border: rgba(255, 255, 255, 0.2);
-  --drag-card-shadow: 0 22px 40px rgba(0, 0, 0, 0.35);
-  --drag-title-text: rgba(255, 255, 255, 0.96);
-  --drag-hint-text: rgba(255, 255, 255, 0.72);
-  --drag-icon-color: var(--accent-primary);
-  --drag-badge-bg: rgba(255, 255, 255, 0.08);
-  --drag-badge-border: rgba(255, 255, 255, 0.2);
-  --drag-badge-text: rgba(255, 255, 255, 0.86);
-  --drag-badge-invalid-bg: rgba(239, 68, 68, 0.16);
-  --drag-badge-invalid-border: rgba(239, 68, 68, 0.34);
-  --drag-badge-invalid-text: rgba(255, 228, 228, 0.95);
-
-  --drop-feedback-bg: rgba(12, 22, 38, 0.76);
-  --drop-feedback-border: rgba(255, 255, 255, 0.2);
-  --drop-feedback-text: rgba(255, 255, 255, 0.92);
 }
 
 /* ===== 浅色模式 ===== */
@@ -121,25 +100,4 @@ html.light {
   --danger-color: var(--semantic-danger);
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
-
-  --drag-overlay-bg: rgba(239, 246, 255, 0.66);
-  --drag-overlay-blur: blur(8px);
-  --drag-zone-bg: rgba(255, 255, 255, 0.56);
-  --drag-zone-border: rgba(15, 23, 42, 0.22);
-  --drag-card-bg: rgba(255, 255, 255, 0.82);
-  --drag-card-border: rgba(15, 23, 42, 0.12);
-  --drag-card-shadow: 0 20px 34px rgba(15, 23, 42, 0.16);
-  --drag-title-text: rgba(15, 23, 42, 0.94);
-  --drag-hint-text: rgba(15, 23, 42, 0.68);
-  --drag-icon-color: var(--accent-primary);
-  --drag-badge-bg: rgba(15, 23, 42, 0.08);
-  --drag-badge-border: rgba(15, 23, 42, 0.14);
-  --drag-badge-text: rgba(15, 23, 42, 0.84);
-  --drag-badge-invalid-bg: rgba(220, 38, 38, 0.12);
-  --drag-badge-invalid-border: rgba(220, 38, 38, 0.24);
-  --drag-badge-invalid-text: rgba(127, 29, 29, 0.9);
-
-  --drop-feedback-bg: rgba(255, 255, 255, 0.9);
-  --drop-feedback-border: rgba(15, 23, 42, 0.12);
-  --drop-feedback-text: rgba(15, 23, 42, 0.88);
 }

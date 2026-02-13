@@ -1,80 +1,41 @@
 use crate::aria2::client as aria2_client;
 use crate::core::error::{AppError, AppResult};
 use crate::core::store::TaskStore;
-use crate::core::types::TaskState;
 use crate::utils;
+use futures::future::join_all;
 use serde_json::json;
-use std::collections::{HashMap, HashSet};
-
-use super::BatchCommandResult;
-
-fn is_not_found_error(error: &AppError) -> bool {
-    let message = error.to_string().to_lowercase();
-    message.contains("not found") || message.contains("error 1")
-}
 
 #[tauri::command]
 pub async fn remove_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
     delete_file: bool,
-) -> AppResult<BatchCommandResult> {
-    let tasks_info: HashMap<String, _> = gids
-        .iter()
-        .filter_map(|gid| state.get_task(gid).map(|task| (gid.clone(), task)))
-        .collect();
+) -> AppResult<String> {
+    let tasks_info: Vec<_> = gids.iter().filter_map(|gid| state.get_task(gid)).collect();
 
     let active_gids: Vec<String> = tasks_info
-        .values()
-        .filter(|task| task.state == TaskState::Active || task.state == TaskState::Waiting)
+        .iter()
+        .filter(|task| task.state.is_active())
         .map(|task| task.gid.clone())
         .collect();
 
-    let mut failed_gids = HashSet::new();
-
-    for gid in &active_gids {
-        if let Err(e) = aria2_client::remove(gid.clone()).await {
-            if !is_not_found_error(&e) {
-                failed_gids.insert(gid.clone());
-                crate::app_warn!(
-                    "Core::TaskRemove",
-                    "batch_remove_rpc_failed",
-                    json!({ "gid": gid, "error": e.to_string() })
-                );
-            }
-        }
-    }
-
-    for gid in &gids {
-        if let Err(e) = aria2_client::purge(gid.clone()).await {
-            if !is_not_found_error(&e) {
-                failed_gids.insert(gid.clone());
-                crate::app_warn!(
-                    "Core::TaskRemove",
-                    "batch_purge_rpc_failed",
-                    json!({ "gid": gid, "error": e.to_string() })
-                );
-            }
-        }
-    }
-
-    let succeeded_gids: Vec<String> = gids
+    let active_futures: Vec<_> = active_gids
         .iter()
-        .filter(|gid| !failed_gids.contains(*gid))
-        .cloned()
+        .map(|gid| aria2_client::remove(gid.clone()))
         .collect();
+    let _ = join_all(active_futures).await;
 
-    if !succeeded_gids.is_empty() {
-        state.remove_tasks_batch(&succeeded_gids);
-        state.save();
-    }
+    let purge_futures: Vec<_> = gids
+        .iter()
+        .map(|gid| aria2_client::purge(gid.clone()))
+        .collect();
+    let _ = join_all(purge_futures).await;
+
+    state.remove_tasks_batch(&gids);
+    state.save();
 
     if delete_file {
-        for gid in &succeeded_gids {
-            let Some(task) = tasks_info.get(gid) else {
-                continue;
-            };
-
+        for task in &tasks_info {
             let full_path = utils::get_full_path(&task.save_path, &task.filename);
             let resolved_path = utils::resolve_path(&full_path);
             if std::path::Path::new(&resolved_path).exists() {
@@ -91,18 +52,7 @@ pub async fn remove_tasks(
         }
     }
 
-    let failed_gids: Vec<String> = gids
-        .iter()
-        .filter(|gid| failed_gids.contains(*gid))
-        .cloned()
-        .collect();
-
-    Ok(BatchCommandResult {
-        requested: gids.len(),
-        partial: !failed_gids.is_empty(),
-        succeeded_gids,
-        failed_gids,
-    })
+    Ok("OK".to_string())
 }
 
 #[tauri::command]

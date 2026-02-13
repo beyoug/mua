@@ -12,7 +12,6 @@ import {
     type AdvancedSettingsState
 } from './utils';
 import { createLogger } from '$lib/utils/logger';
-import { getErrorMessage } from '$lib/utils/errors';
 
 const logger = createLogger('AddTaskDialog');
 
@@ -127,7 +126,7 @@ export function useAddTaskDialog(params: Params) {
             onClose();
         } catch (e) {
             logger.error('Failed to add task', { error: e });
-            validationError = getErrorMessage(e, '添加任务失败，请检查 Aria2 服务是否正常');
+            validationError = typeof e === 'string' ? e : '添加任务失败，请检查 Aria2 服务是否正常';
         } finally {
             isSubmitting = false;
         }

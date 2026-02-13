@@ -35,9 +35,6 @@ pub fn run() {
         .manage(crate::aria2::sidecar::LogStreamEnabled(
             std::sync::atomic::AtomicBool::new(false),
         ))
-        .manage(crate::core::sync::SyncShutdownState(
-            std::sync::atomic::AtomicBool::new(false),
-        ))
         .manage(crate::core::store::TaskStore::new()) // Initialize TaskStore
         .setup(|app| {
             crate::core::boot::run(app)?;
@@ -96,10 +93,6 @@ pub fn run() {
             tauri::RunEvent::Exit => {
                 // Signal shutdown to sidecar loop
                 if let Some(state) = app.try_state::<crate::aria2::sidecar::ShutdownState>() {
-                    state.0.store(true, std::sync::atomic::Ordering::SeqCst);
-                }
-
-                if let Some(state) = app.try_state::<crate::core::sync::SyncShutdownState>() {
                     state.0.store(true, std::sync::atomic::Ordering::SeqCst);
                 }
 
