@@ -300,12 +300,14 @@ pub async fn update_tray_icon_with_speed(
     // 文本区域起始X坐标
     let text_area_start_x = icon_size + padding;
 
-    // 2. 调整基线 (Baseline)
-    // 字体变大后(22px)，上一次调整(15/37)导致文字太靠上
-    // 理论计算: 22px 行高，CapHeight约15px，居中基线应在 18-19px 左右
-    // 本次下移至 18 / 40
-    let baseline_1 = 18;
-    let baseline_2 = 40;
+    // 文本基线计算 (Baseline)
+    // 之前 22px 行高，CapHeight 约 15px
+    // 我们将顶部文字 (上传) 和底部文字 (下载) 分别定位
+    let line_height = height / 2; // 22px
+    let text_vertical_offset = 4; // 稍微向下偏移以对齐视觉中心
+    
+    let ul_baseline = line_height - text_vertical_offset; // 18
+    let dl_baseline = height - text_vertical_offset;      // 40
 
     // 右对齐绘制函数
     let draw_text_right_aligned = |img: &mut RgbaImage, text: &str, y: u32| {
@@ -346,8 +348,8 @@ pub async fn update_tray_icon_with_speed(
         }
     };
 
-    draw_text_right_aligned(&mut image, &ul_text, baseline_1);
-    draw_text_right_aligned(&mut image, &dl_text, baseline_2);
+    draw_text_right_aligned(&mut image, &ul_text, ul_baseline);
+    draw_text_right_aligned(&mut image, &dl_text, dl_baseline);
 
     let tauri_img = tauri::image::Image::new_owned(image.into_vec(), total_width, height);
 

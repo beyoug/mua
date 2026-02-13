@@ -6,6 +6,8 @@ use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::process::CommandChild;
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
+ 
+const INFINITE_SEED_TIME: &str = "999999999";
 
 fn find_available_port(start: u16) -> Result<u16, String> {
     let mut port = start;
@@ -93,19 +95,20 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         state.global_max_upload_limit.clone(),
                     )
                 } else {
+                    let default = crate::core::config::AppConfig::default();
                     (
-                        6800,
-                        30,
-                        None,
-                        3,
-                        String::new(),
-                        true,
-                        true,
-                        true,
-                        1.0,
-                        "6881".to_string(),
-                        "6881".to_string(),
-                        String::new(),
+                        default.rpc_port,
+                        default.save_session_interval,
+                        default.rpc_secret.clone(),
+                        default.max_concurrent_downloads,
+                        default.bt_trackers.clone(),
+                        default.enable_dht,
+                        default.enable_peer_exchange,
+                        default.enable_seeding,
+                        default.seed_ratio,
+                        default.dht_listen_port.clone(),
+                        default.listen_port.clone(),
+                        default.global_max_upload_limit.clone(),
                     )
                 }
             };
@@ -154,7 +157,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 format!(
                     "--seed-time={}",
                     if enable_seeding {
-                        "999999999".to_string() // 显式设置为很大的值，确保覆盖
+                        INFINITE_SEED_TIME.to_string()
                     } else {
                         "0".to_string()
                     }

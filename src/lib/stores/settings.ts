@@ -38,7 +38,7 @@ const DEFAULT_CONFIG: AppConfig = {
     autoStart: false,
     maxConcurrentDownloads: 3,
     uaHistory: [],
-    defaultSavePath: '',
+    defaultSavePath: '...', // 将在 loadAppSettings 时从后端动态获取
     globalMaxDownloadLimit: '',
     globalMaxUploadLimit: '',
     theme: 'default',
@@ -76,11 +76,11 @@ function hasConfigChange(current: AppConfig, next: AppConfig): boolean {
 export async function loadAppSettings() {
     try {
         const config = await invoke<AppConfig>('get_app_config');
-        
+
         // 自动迁移逻辑：将旧的端口范围格式转换为单端口
         if (config.dhtListenPort === '6881-6999') config.dhtListenPort = '6881';
         if (config.listenPort === '6881-6999') config.listenPort = '6881';
-        
+
         appSettings.set({ ...DEFAULT_CONFIG, ...config });
     } catch (e) {
         logger.error('Failed to load app settings', { error: e });
