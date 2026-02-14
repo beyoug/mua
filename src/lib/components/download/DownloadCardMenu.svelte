@@ -104,14 +104,11 @@
 		right: 0;
 		width: 140px; /* 稍微窄一点 */
 		background: var(--glass-menu-bg); /* 65% 透明度 */
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
+		backdrop-filter: var(--glass-popover-blur) var(--glass-popover-saturate);
+		-webkit-backdrop-filter: var(--glass-popover-blur) var(--glass-popover-saturate);
 		border: 1px solid var(--border-strong);
 		border-radius: 12px;
-		box-shadow: 
-			0 4px 6px -1px rgba(0, 0, 0, 0.1),
-			0 10px 15px -3px rgba(0, 0, 0, 0.1),
-			0 0 0 1px rgba(255, 255, 255, 0.05); /* 更加立体的阴影 */
+		box-shadow: var(--elevation-tooltip);
 		padding: 4px;
 		display: flex;
 		flex-direction: column;
@@ -142,7 +139,7 @@
 	}
 
 	.menu-item:hover {
-		background: var(--surface-active);
+		background: var(--control-bg-hover);
 		color: var(--accent-primary);
 	}
 
@@ -156,7 +153,7 @@
 	}
 
 	.menu-item.danger:hover {
-		background: rgba(239, 68, 68, 0.1);
+		background: var(--danger-soft-bg);
 	}
 
 	.menu-divider {

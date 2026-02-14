@@ -144,7 +144,7 @@
 	}
 
 	.sidebar.blurred {
-		filter: blur(4px);
+		filter: var(--content-blur);
 	}
 
 	.logo-section {
@@ -234,28 +234,54 @@
 		gap: 10px;
 		padding: 9px 12px;
 		background: transparent;
-		border: none;
+		border: 1px solid transparent;
 		border-radius: 10px;
-		border-left: 2px solid transparent;
+		border-left-width: 2px;
 		color: var(--text-secondary);
 		font-size: 13px;
 		font-weight: 400;
 		cursor: pointer;
-		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.2s ease;
 		text-align: left;
+		position: relative;
+		overflow: hidden;
+	}
+
+	.nav-item::after {
+		content: "";
+		position: absolute;
+		right: 8px;
+		top: 50%;
+		width: 6px;
+		height: 6px;
+		border-radius: 999px;
+		background: var(--accent-primary);
+		opacity: 0;
+		transform: translateY(-50%) scale(0.7);
+		transition: opacity 0.2s ease, transform 0.22s ease;
 	}
 
 	.nav-item:hover {
-		background: var(--surface-hover);
+		background: var(--nav-hover-bg);
 		color: var(--text-primary);
-		border-left-color: var(--border-strong);
+		border-color: var(--nav-hover-border);
+		border-left-color: var(--nav-hover-border);
+		transform: translateX(1px);
 	}
 
 	.nav-item.active {
-		background: var(--surface-active);
-		color: var(--accent-primary); /* 使用主题色，深浅模式自适应 */
+		background: var(--nav-active-bg);
+		color: var(--nav-active-text);
 		font-weight: 500;
-		border-left-color: var(--accent-primary); /* 活跃状态使用主题色左边框 */
+		border-color: var(--nav-active-border);
+		border-left-color: var(--accent-primary);
+		box-shadow: var(--shadow-sm);
+		transform: translateX(2px);
+	}
+
+	.nav-item.active::after {
+		opacity: 1;
+		transform: translateY(-50%) scale(1);
 	}
 
 	.divider {

@@ -100,10 +100,10 @@
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
     gap: 12px;
-    background: var(--input-bg);
+    background: var(--settings-list-bg);
     padding: 16px;
     border-radius: 12px;
-    border: 1px solid var(--border-normal);
+    border: 1px solid var(--settings-list-border);
   }
 
   .theme-card {
@@ -120,7 +120,7 @@
   }
 
   .theme-card:hover {
-    background: var(--surface-hover);
+    background: var(--settings-list-row-bg-hover);
   }
 
   .theme-preview {
@@ -141,7 +141,7 @@
   }
 
   .theme-card.active .theme-preview {
-    border: 2px solid var(--text-primary);
+    border: 2px solid var(--settings-chip-selected-border);
   }
 
   .theme-label {
@@ -165,25 +165,25 @@
     justify-content: center;
     gap: 10px;
     padding: 16px;
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 12px;
-    color: var(--text-secondary);
+    color: var(--settings-list-row-text-muted);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
   .mode-card:hover {
-    background: var(--surface-active);
-    border-color: var(--border-strong);
-    color: var(--text-primary);
+    background: var(--settings-control-bg-hover);
+    border-color: var(--settings-control-border-hover);
+    color: var(--settings-list-row-text);
     transform: translateY(-2px);
   }
 
   .mode-card.active {
-    background: var(--accent-active-bg);
-    border-color: var(--accent-primary);
-    color: var(--accent-primary);
+    background: var(--settings-chip-selected-bg);
+    border-color: var(--settings-chip-selected-border);
+    color: var(--settings-chip-selected-text);
   }
 
   .mode-icon-wrapper {
@@ -192,7 +192,8 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--settings-control-bg-hover);
+    border: 1px solid var(--settings-control-border);
     border-radius: 8px;
   }
 

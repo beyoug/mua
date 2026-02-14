@@ -80,35 +80,29 @@
         </header>
 
         <div class="content-body">
-          {#if activeTab === 'appearance'}
-            <div in:fade={{ duration: 150 }}>
-              <AppearanceSettings />
+          {#key activeTab}
+            <div class="tab-pane" in:fade={{ duration: 120 }} out:fade={{ duration: 90 }}>
+              <div in:scale={{ duration: 180, start: 0.985 }}>
+                {#if activeTab === 'appearance'}
+                  <AppearanceSettings />
+                {:else if activeTab === 'general'}
+                  <GeneralSettings />
+                {:else if activeTab === 'download'}
+                  <DownloadSettings />
+                {:else if activeTab === 'bt'}
+                  <BTSettings />
+                {:else if activeTab === 'core'}
+                  <CoreSettings />
+                {:else if activeTab === 'logs'}
+                  <div class="tab-pane-fill">
+                    <LogSettings />
+                  </div>
+                {:else if activeTab === 'about'}
+                  <AboutSettings />
+                {/if}
+              </div>
             </div>
-          {:else if activeTab === 'general'}
-            <div in:fade={{ duration: 150 }}>
-              <GeneralSettings />
-            </div>
-          {:else if activeTab === 'download'}
-            <div in:fade={{ duration: 150 }}>
-              <DownloadSettings />
-            </div>
-          {:else if activeTab === 'bt'}
-            <div in:fade={{ duration: 150 }}>
-              <BTSettings />
-            </div>
-          {:else if activeTab === 'core'}
-            <div in:fade={{ duration: 150 }}>
-              <CoreSettings />
-            </div>
-          {:else if activeTab === 'logs'}
-            <div in:fade={{ duration: 150 }} style="height: 100%;">
-              <LogSettings />
-            </div>
-          {:else if activeTab === 'about'}
-            <div in:fade={{ duration: 150 }}>
-              <AboutSettings />
-            </div>
-          {/if}
+          {/key}
         </div>
       </main>
 
@@ -138,8 +132,8 @@
   .panel-overlay {
     position: fixed;
     inset: 0;
-    background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.2));
-    backdrop-filter: blur(4px);
+    background: var(--dialog-overlay-bg);
+    backdrop-filter: var(--overlay-backdrop-soft-blur);
     z-index: 2000;
   }
 
@@ -162,7 +156,7 @@
   /* 侧边栏样式 */
   .panel-sidebar {
     width: 100px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--bg-secondary);
     border-left: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
@@ -193,6 +187,7 @@
     padding: 8px 12px;
     border: none;
     background: transparent;
+    border: 1px solid transparent;
     color: var(--text-secondary);
     border-radius: 8px;
     font-size: 13px;
@@ -200,17 +195,42 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: left;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .nav-item::after {
+    content: "";
+    position: absolute;
+    right: 8px;
+    top: 50%;
+    width: 5px;
+    height: 5px;
+    border-radius: 999px;
+    background: var(--accent-primary);
+    opacity: 0;
+    transform: translateY(-50%) scale(0.7);
+    transition: opacity 0.2s ease, transform 0.22s ease;
   }
 
   .nav-item:hover {
-    background: var(--surface-hover);
+    background: var(--nav-hover-bg);
+    border-color: var(--nav-hover-border);
     color: var(--text-primary);
+    transform: translateX(1px);
   }
 
   .nav-item.active {
-    background: var(--accent-active-bg);
-    color: var(--accent-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: var(--nav-active-bg);
+    color: var(--nav-active-text);
+    border-color: var(--nav-active-border);
+    box-shadow: var(--shadow-sm);
+    transform: translateX(2px);
+  }
+
+  .nav-item.active::after {
+    opacity: 1;
+    transform: translateY(-50%) scale(1);
   }
 
   /* 内容区样式 */
@@ -259,22 +279,60 @@
     flex: 1;
     padding: 8px 24px 24px;
     overflow-y: auto;
-    /* 优化滚动行为 */
     scrollbar-gutter: stable;
+    position: relative;
+  }
+
+  .tab-pane {
+    animation: panel-enter-glow 220ms ease-out;
+  }
+
+  .tab-pane-fill {
+    height: 100%;
+  }
+
+  @keyframes panel-enter-glow {
+    0% {
+      opacity: 0.88;
+      filter: saturate(0.96);
+    }
+    100% {
+      opacity: 1;
+      filter: saturate(1);
+    }
   }
 
   :global(.settings-section) {
-    margin-bottom: 32px;
+    margin-bottom: 20px;
+    background: var(--settings-section-bg);
+    border: 1px solid var(--settings-section-border);
+    border-radius: 14px;
+    padding: 14px;
+    box-shadow: var(--settings-section-shadow);
   }
 
   :global(.section-title) {
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--settings-section-title);
     text-transform: uppercase;
     letter-spacing: 0.05em;
     margin-bottom: 12px;
-    padding-left: 4px;
+    padding-left: 10px;
+    position: relative;
+    line-height: 1.2;
+  }
+
+  :global(.section-title::before) {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--settings-section-title-bg);
   }
 
   /* ── 共享设置布局 ── */
@@ -285,9 +343,9 @@
   }
 
   :global(.setting-list) {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
-    border-radius: 12px;
+    background: var(--settings-list-bg);
+    border: 1px solid var(--settings-list-border);
+    border-radius: 10px;
     overflow: hidden;
   }
 
@@ -296,7 +354,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--settings-list-border);
     transition: background 0.2s;
   }
 
@@ -305,7 +363,7 @@
   }
 
   :global(.setting-item:hover:not(.disabled)) {
-    background: var(--surface-hover);
+    background: var(--settings-list-row-bg-hover);
   }
 
   :global(.setting-item.vertical) {
@@ -323,12 +381,12 @@
   :global(.setting-name) {
     font-size: 13px;
     font-weight: 500;
-    color: var(--text-primary);
+    color: var(--settings-list-row-text);
   }
 
   :global(.setting-desc) {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--settings-list-row-text-muted);
   }
 
   /* ── 统一 Switch 开关 ── */
@@ -353,7 +411,7 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(120, 120, 128, 0.36);
+    background-color: var(--settings-switch-track-off);
     transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 20px;
   }
@@ -365,14 +423,14 @@
     width: 14px;
     left: 2px;
     bottom: 2px;
-    background-color: var(--toggle-knob-c, white);
+    background-color: var(--settings-switch-thumb);
     transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 50%;
-    box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+    box-shadow: var(--settings-switch-thumb-shadow);
   }
 
   :global(input:checked + .slider) {
-    background-color: var(--accent-primary);
+    background-color: var(--settings-switch-track-on);
   }
 
   :global(input:checked + .slider:before) {

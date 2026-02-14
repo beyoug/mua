@@ -77,11 +77,11 @@
 	}
 
 	.status-indicator.paused {
-		color: var(--warning-color, #f59e0b);
+		color: var(--warning-soft-text);
 	}
 
 	.status-indicator.complete {
-		color: var(--semantic-success, #10b981);
+		color: var(--success-soft-text);
 	}
 
 	.status-indicator.waiting {
@@ -93,11 +93,11 @@
 	}
 
 	.status-indicator.error {
-		color: var(--semantic-danger, #ef4444);
+		color: var(--danger-soft-text);
 	}
 
 	.status-indicator.missing {
-		color: #d97706;
+		color: var(--warning-soft-text);
 		opacity: 0.85;
 	}
 
@@ -137,7 +137,7 @@
 		color: var(--semantic-danger);
 		font-size: 11px;
 		opacity: 0.9;
-		font-family: var(--font-base, var(--font-mono));
+		font-family: var(--font-mono);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;

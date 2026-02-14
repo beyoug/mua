@@ -7,7 +7,6 @@
 @import "../styles/theme-base.css";
 @import "../styles/glass.css";
 @import "../styles/themes/cyberpunk.css";
-@import "../styles/themes/cyber-purple.css";
 @import "../styles/themes/default.css";
 
 /* noinspection CssInvalidAtRule */
@@ -49,7 +48,7 @@
 
   /* 全局内容模糊工具类 */
   .content-blurred {
-    filter: blur(4px);
+    filter: var(--content-blur);
     transition: filter 0.3s ease;
   }
 }

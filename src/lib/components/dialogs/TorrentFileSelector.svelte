@@ -108,7 +108,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
       >
         <div class="checkbox">
           {#if isSelected(file.index)}
-            <Check size={12} color="#fff" />
+            <Check size={12} color="var(--accent-btn-text)" />
           {/if}
         </div>
         <div class="file-info">
@@ -166,7 +166,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   .btn-text {
     background: none;
     border: none;
-    color: var(--primary-color);
+    color: var(--accent-primary);
     font-size: 12px;
     cursor: pointer;
     padding: 4px 8px;
@@ -212,8 +212,8 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   }
 
   .file-item.selected .checkbox {
-    border-color: var(--primary-color);
-    background: var(--primary-color); /* Solid background for better visibility */
+    border-color: var(--accent-primary);
+    background: var(--accent-primary);
   }
 
   .file-info {
@@ -252,6 +252,6 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   .load-more-btn:hover {
       background: var(--bg-secondary);
       color: var(--text-primary);
-      border-color: var(--primary-color);
+      border-color: var(--accent-primary);
   }
 </style>

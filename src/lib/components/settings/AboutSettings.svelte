@@ -121,7 +121,8 @@
     color: var(--text-muted);
     font-family: 'JetBrains Mono', monospace;
     margin-top: 12px;
-    background: var(--surface-hover);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     padding: 2px 8px;
     border-radius: 10px;
   }
@@ -140,8 +141,8 @@
     align-items: center;
     gap: 8px;
     padding: 16px;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 12px;
     color: var(--text-secondary);
     cursor: pointer;
@@ -149,9 +150,9 @@
   }
 
   .action-tile:hover {
-    background: var(--surface-active);
+    background: var(--settings-control-bg-hover);
     color: var(--text-primary);
-    border-color: var(--border-strong);
+    border-color: var(--settings-control-border-hover);
     transform: translateY(-2px);
   }
 
@@ -161,8 +162,8 @@
   }
 
   .credits-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: var(--settings-list-bg);
+    border: 1px solid var(--settings-list-border);
     border-radius: 12px;
     width: 100%;
   }
@@ -171,7 +172,7 @@
     display: flex;
     justify-content: space-between;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: 1px solid var(--settings-list-border);
   }
 
   .credit-item:last-child {
@@ -200,6 +201,6 @@
   }
 
   .heart-icon {
-    color: #ef4444;
+    color: var(--danger-soft-text);
   }
 </style>

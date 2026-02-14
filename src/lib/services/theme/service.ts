@@ -1,17 +1,10 @@
-/**
- * theme.ts - 主题管理 Store
- * 支持：
- * - 三套主题色（深空、电光蓝、赛博紫）
- * - 三种颜色模式（深色、浅色、自动）
- * - 持久化到 localStorage
- */
 import { derived, get, readable } from 'svelte/store';
 import { browser } from '$app/environment';
 import { appSettings, updateAppSettings } from '$lib/services/settings';
 import type { AppConfig } from '$lib/services/settings';
 
 // ============ 主题色 ============
-export type ThemeId = 'cyberpunk' | 'cyber-purple' | 'default';
+export type ThemeId = 'cyberpunk' | 'default';
 
 export interface Theme {
 	id: ThemeId;
@@ -35,15 +28,13 @@ export const themes: Record<ThemeId, Theme> = {
 		primary: '#22d3ee',
 		secondary: '#d946ef',
 		glow: 'rgba(34, 211, 238, 0.6)'
-	},
-	'cyber-purple': {
-		id: 'cyber-purple',
-		name: '赛博紫',
-		primary: '#c084fc',
-		secondary: '#a855f7',
-		glow: 'rgba(139, 92, 246, 0.4)'
 	}
 };
+
+function normalizeThemeId(value: unknown): ThemeId {
+	if (value === 'cyberpunk' || value === 'default') return value;
+	return 'default';
+}
 
 // ============ 颜色模式 ============
 export type ColorMode = 'dark' | 'light' | 'auto';
@@ -74,8 +65,8 @@ async function updateConfigKey<K extends keyof AppConfig>(
 // ============ Theme Store (Derived from AppSettings) ============
 
 export const currentTheme = {
-	subscribe: derived(appSettings, $s => $s.theme as ThemeId).subscribe,
-	set: (val: ThemeId) => updateConfigKey('theme', val)
+	subscribe: derived(appSettings, ($s) => normalizeThemeId($s.theme)).subscribe,
+	set: (val: ThemeId) => updateConfigKey('theme', normalizeThemeId(val))
 };
 
 export const colorMode = {

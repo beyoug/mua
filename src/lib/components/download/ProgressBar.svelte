@@ -52,7 +52,7 @@
 	.progress-track {
 		flex: 1;
 		height: 4px;
-		background: var(--progress-track-bg, var(--border-subtle));
+		background: var(--progress-track-bg);
 		border-radius: 2px;
 		overflow: hidden;
 	}
@@ -85,8 +85,8 @@
 			transparent,
 			transparent 8px,
 			transparent 8px,
-			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 8px,
-			var(--progress-stripe-c, rgba(255, 255, 255, 0.12)) 16px
+			var(--progress-stripe-c) 8px,
+			var(--progress-stripe-c) 16px
 		);
 	}
 
@@ -101,7 +101,7 @@
 		bottom: -4px;
 		width: 20px;
 		background: linear-gradient(90deg, transparent, var(--accent-glow));
-		filter: blur(4px);
+		filter: var(--fx-progress-glow-blur);
 	}
 
 	@keyframes stripe-move {

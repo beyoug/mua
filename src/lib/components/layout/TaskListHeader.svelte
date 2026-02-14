@@ -149,8 +149,8 @@
 	}
 
 	.icon-btn.danger:hover {
-		background: rgba(220, 38, 38, 0.1);
-		color: #ef4444;
-		border-color: #fca5a5;
+		background: var(--danger-soft-bg);
+		color: var(--danger-soft-text);
+		border-color: var(--danger-soft-border);
 	}
 </style>

@@ -196,11 +196,11 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         left: 0;
         right: 0;
         margin-top: 4px;
-        background: var(--glass-menu-bg, var(--dialog-bg));
-        backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+        background: var(--glass-menu-bg);
+        backdrop-filter: var(--glass-popover-blur) var(--glass-popover-saturate);
+        border: 1px solid var(--border-color);
         border-radius: 12px;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--elevation-tooltip);
         z-index: 1000;
         overflow: hidden;
     }
@@ -245,7 +245,7 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
     }
     .ua-delete-btn:hover {
         color: var(--danger-color);
-        background: rgba(239, 68, 68, 0.1);
+        background: var(--danger-soft-bg);
     }
 
     .ua-custom-input {

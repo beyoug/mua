@@ -85,8 +85,8 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 6px;
     color: var(--text-secondary);
     font-size: 12px;
@@ -95,7 +95,8 @@
   }
 
   .path-btn:hover {
-    background: var(--surface-active);
+    background: var(--settings-control-bg-hover);
+    border-color: var(--settings-control-border-hover);
     color: var(--text-primary);
   }
 
@@ -107,8 +108,8 @@
 
   .inner-input input {
     width: 60px;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 6px;
     padding: 4px 8px;
     color: var(--text-primary);
@@ -123,8 +124,8 @@
   }
 
   .unit {
-    background: var(--surface-active);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg-hover);
+    border: 1px solid var(--settings-control-border);
     border-left: none;
     padding: 4px 8px;
     font-size: 11px;

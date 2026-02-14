@@ -215,8 +215,8 @@
 	.download-card:hover {
 		transform: translateY(-1px);
 		box-shadow: 
-			0 4px 12px rgba(0, 0, 0, 0.1),
-			0 12px 32px rgba(0, 0, 0, 0.15),
+			var(--elevation-card),
+			var(--shadow-lg),
 			0 0 8px var(--accent-glow);
 		z-index: 10;
 	}
@@ -263,13 +263,13 @@
 	}
 
 	.icon-wrapper.error {
-		background: rgba(239, 68, 68, 0.15);
-		color: #f87171;
+		background: var(--danger-soft-bg);
+		color: var(--danger-soft-text);
 	}
 
 	.icon-wrapper.cancelled {
-		background: var(--semantic-danger-bg, rgba(239, 68, 68, 0.1));
-		color: var(--danger-color);
+		background: var(--danger-soft-bg);
+		color: var(--danger-soft-text);
 	}
 
 	.filename {
@@ -327,9 +327,9 @@
 	}
 
 	.action-btn.cancel:hover {
-		background: rgba(239, 68, 68, 0.15);
-		color: #f87171;
-		border-color: rgba(239, 68, 68, 0.3);
+		background: var(--danger-soft-bg);
+		color: var(--danger-soft-text);
+		border-color: var(--danger-soft-border);
 	}
 
 	.card-footer {
@@ -378,8 +378,8 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 6px;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		background: rgba(0, 0, 0, 0.2);
+		border: 1px solid var(--border-normal);
+		background: var(--bg-secondary);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -389,8 +389,8 @@
 	}
 
 	.checkbox:hover {
-		border-color: rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.05);
+		border-color: var(--border-strong);
+        background: var(--surface-hover);
 	}
 
 	.checkbox.checked {

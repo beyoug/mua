@@ -454,9 +454,9 @@
 		position: fixed;
 		inset: 0;
 		z-index: 9999;
-		background: rgba(0, 0, 0, 0.6);
-		backdrop-filter: blur(4px);
-		-webkit-backdrop-filter: blur(4px);
+		background: var(--dialog-overlay-bg);
+		backdrop-filter: var(--overlay-backdrop-soft-blur);
+		-webkit-backdrop-filter: var(--overlay-backdrop-soft-blur);
 		display: flex;
 		align-items: center;
 		justify-content: center;

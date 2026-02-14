@@ -58,7 +58,7 @@
     {#snippet header()}
         <div class="confirm-header">
             <div class="icon-wrapper">
-                <Trash2 size={20} color="#ef4444" />
+                <Trash2 size={20} color="var(--danger-soft-text)" />
             </div>
             <h3 class="modal-title">{title}</h3>
         </div>
@@ -94,7 +94,7 @@
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: rgba(239, 68, 68, 0.1);
+        background: var(--danger-icon-soft-bg);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -131,16 +131,16 @@
         color: var(--text-primary);
         cursor: pointer;
         padding: 10px 14px;
-        background: var(--surface-hover, rgba(255, 255, 255, 0.03));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
         transition: all 0.2s;
         width: fit-content;
     }
 
     .checkbox-label:hover {
-        background: var(--surface-active, rgba(255, 255, 255, 0.06));
-        border-color: var(--border-normal);
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-hover);
     }
 
     .checkbox-text {
@@ -167,7 +167,7 @@
 	}
 
     .btn-secondary:hover {
-        background: var(--surface-hover);
+        background: var(--control-bg-hover);
     }
 
     .btn-danger {
@@ -178,14 +178,14 @@
         cursor: pointer;
         transition: all 0.2s;
         border: none;
-        background: #ef4444;
-        color: white;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
+        background: var(--danger-action-bg);
+        color: var(--accent-btn-text);
+        box-shadow: var(--danger-action-shadow);
     }
 
     .btn-danger:hover {
-        background: #dc2626;
+        background: var(--danger-action-bg-hover);
         transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
+        box-shadow: var(--danger-action-shadow-hover);
     }
 </style>

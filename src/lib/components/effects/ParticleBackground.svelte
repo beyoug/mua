@@ -30,9 +30,8 @@ let lastTime = 0;
 let emitAccumulator = 0;
 let currentSpeedMbps = 0;
 
-// 缓存主题颜色，避免每帧读取 DOM
-let cachedColors = { primary: '#ffffff', glow: 'rgba(255,255,255,0.2)' };
-let colorCacheTime = 0;
+let cachedColors = { primary: '', glow: '' };
+let colorCacheTime = Number.NEGATIVE_INFINITY;
 const COLOR_CACHE_DURATION = 500; // 每 500ms 更新一次颜色缓存
 
 // 粒子池 - 避免频繁创建对象
@@ -63,20 +62,10 @@ function updateColorCache() {
   colorCacheTime = now;
   
   const style = getComputedStyle(document.documentElement);
-  const isMinimalTheme = document.documentElement.classList.contains('theme-minimal');
-  const isLightMode = document.documentElement.classList.contains('light');
-  
-  if (isMinimalTheme) {
-    // 极简模式：使用柔和的中性灰色
-    cachedColors = isLightMode 
-      ? { primary: 'rgba(120, 120, 130, 1)', glow: 'rgba(120, 120, 130, 0.25)' }
-      : { primary: 'rgba(160, 160, 170, 1)', glow: 'rgba(160, 160, 170, 0.2)' };
-  } else {
-    cachedColors = {
-      primary: style.getPropertyValue('--accent-primary').trim() || '#3B82F6',
-      glow: style.getPropertyValue('--accent-glow').trim() || 'rgba(59, 130, 246, 0.4)'
-    };
-  }
+  cachedColors = {
+    primary: style.getPropertyValue('--particle-primary').trim(),
+    glow: style.getPropertyValue('--particle-glow').trim()
+  };
 }
 
 // 从池中获取粒子
@@ -288,7 +277,7 @@ onDestroy(() => {
 .glow {
   position: absolute;
   border-radius: 50%;
-  filter: blur(120px);
+  filter: var(--fx-particle-glow-blur);
   opacity: 0.1;
   transition: opacity 0.8s ease;
 }

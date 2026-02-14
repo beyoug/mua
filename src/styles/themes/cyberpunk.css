@@ -39,6 +39,28 @@ html.theme-cyberpunk {
   /* 移除原有的简单渐变，改用 Grid 背景 */
   --bg-gradient: none;
 
+  --input-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --border-color: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --border-light: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  --border-subtle: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --border-normal: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --border-strong: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+
+  --nav-hover-bg: rgba(34, 211, 238, 0.16);
+  --nav-hover-border: rgba(34, 211, 238, 0.36);
+  --nav-active-bg: rgba(34, 211, 238, 0.26);
+  --nav-active-border: rgba(34, 211, 238, 0.56);
+  --nav-active-text: var(--accent-text);
+
+  --settings-section-bg: rgba(8, 20, 36, 0.78);
+  --settings-section-border: rgba(34, 211, 238, 0.40);
+  --settings-section-title: var(--accent-text);
+  --settings-section-title-bg: rgba(34, 211, 238, 0.32);
+  --settings-item-hover-bg: rgba(34, 211, 238, 0.18);
+  --settings-list-bg: rgba(6, 16, 30, 0.86);
+  --settings-list-border: rgba(34, 211, 238, 0.42);
+  --settings-section-shadow: 0 0 0 1px rgba(34, 211, 238, 0.28), 0 0 18px rgba(34, 211, 238, 0.09), var(--shadow-md);
+
   /* Glass Overrides - Dark (High Contrast) */
   --glass-bg: rgba(10, 15, 30, 0.75);
   --glass-border: rgba(34, 211, 238, 0.3);
@@ -105,6 +127,28 @@ html.light.theme-cyberpunk {
   --progress-stripe-c: rgba(255, 255, 255, 0.15);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: none;
+
+  --input-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --border-color: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --border-light: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --border-subtle: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --border-normal: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --border-strong: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+
+  --nav-hover-bg: rgba(8, 145, 178, 0.14);
+  --nav-hover-border: rgba(8, 145, 178, 0.30);
+  --nav-active-bg: rgba(8, 145, 178, 0.22);
+  --nav-active-border: rgba(8, 145, 178, 0.44);
+  --nav-active-text: var(--accent-text);
+
+  --settings-section-bg: rgba(240, 251, 255, 0.90);
+  --settings-section-border: rgba(8, 145, 178, 0.32);
+  --settings-section-title: var(--accent-text);
+  --settings-section-title-bg: rgba(8, 145, 178, 0.24);
+  --settings-item-hover-bg: rgba(8, 145, 178, 0.14);
+  --settings-list-bg: rgba(255, 255, 255, 0.94);
+  --settings-list-border: rgba(8, 145, 178, 0.34);
+  --settings-section-shadow: 0 0 0 1px rgba(8, 145, 178, 0.22), var(--shadow-sm);
 
   /* Glass Overrides - Light (Lab Clean) */
   --glass-bg: rgba(255, 255, 255, 0.8);

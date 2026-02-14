@@ -251,8 +251,8 @@
   /* 组件特有样式 */
   .inner-input-field {
     width: 70px;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 6px;
     padding: 6px 8px;
     color: var(--text-primary);
@@ -268,8 +268,8 @@
 
   .small-save-btn {
     padding: 6px 12px;
-    background: var(--accent-primary);
-    color: white;
+    background: var(--settings-action-bg);
+    color: var(--settings-action-text);
     border: none;
     border-radius: 6px;
     font-size: 11px;
@@ -293,8 +293,8 @@
 
   .secret-box input {
     width: 100%;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 8px;
     padding: 8px 36px 8px 12px;
     color: var(--text-primary);
@@ -324,8 +324,8 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
     border-radius: 8px;
     color: var(--text-secondary);
     cursor: pointer;
@@ -334,13 +334,14 @@
 
   .mini-btn:hover {
     color: var(--text-primary);
-    background: var(--surface-active);
+    background: var(--settings-control-bg-hover);
+    border-color: var(--settings-control-border-hover);
   }
 
   /* Import Card */
   .import-card {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: var(--settings-list-bg);
+    border: 1px solid var(--settings-list-border);
     border-radius: 12px;
     padding: 16px;
   }
@@ -375,7 +376,7 @@
     align-items: center;
     justify-content: space-between;
     padding-top: 12px;
-    border-top: 1px solid var(--border-subtle);
+    border-top: 1px solid var(--settings-list-border);
   }
 
   .badge {
@@ -385,9 +386,9 @@
     font-weight: 600;
   }
 
-  .badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
-  .badge.gray { background: var(--surface-active); color: var(--text-muted); }
-  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+  .badge.success { background: var(--success-soft-bg); color: var(--success-soft-text); }
+  .badge.gray { background: var(--settings-chip-neutral-bg); color: var(--settings-chip-neutral-text); border: 1px solid var(--settings-chip-neutral-border); }
+  .badge.warning { background: var(--warning-soft-bg); color: var(--warning-soft-text); }
 
   .secondary-btn {
     display: flex;
@@ -395,7 +396,7 @@
     gap: 6px;
     padding: 6px 12px;
     background: transparent;
-    border: 1px solid var(--border-strong);
+    border: 1px solid var(--settings-control-border);
     border-radius: 6px;
     color: var(--text-primary);
     font-size: 11px;
@@ -405,13 +406,14 @@
   }
 
   .secondary-btn:hover {
-    background: var(--surface-active);
+    background: var(--settings-control-bg-hover);
+    border-color: var(--settings-control-border-hover);
   }
   
   /* Kernel Card */
   .kernel-card {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: var(--settings-list-bg);
+    border: 1px solid var(--settings-list-border);
     border-radius: 12px;
     padding: 16px;
     display: flex;
@@ -465,7 +467,7 @@
       justify-content: space-between;
       align-items: center;
       padding-top: 12px;
-      border-top: 1px solid var(--border-subtle);
+      border-top: 1px solid var(--settings-list-border);
   }
   
   .toggle-row {
@@ -486,7 +488,8 @@
       font-size: 10px;
       color: var(--text-tertiary);
       padding: 8px 12px;
-      background: var(--surface-ground);
+      background: var(--settings-control-bg);
+      border: 1px solid var(--settings-control-border);
       border-radius: 6px;
   }
   

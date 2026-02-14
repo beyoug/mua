@@ -30,6 +30,10 @@
   --surface-active: rgba(255, 255, 255, 0.1);
   --bg-hover: var(--surface-hover);
 
+  --bg-primary: var(--bg-base);
+  --bg-secondary: var(--surface-hover);
+  --bg-tertiary: var(--surface-active);
+
   /* 输入框背景 - 深色模式下稍微深一点，增加层次感 */
   --input-bg: rgba(0, 0, 0, 0.2);
 
@@ -48,15 +52,111 @@
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
 
+  --danger-soft-bg: var(--semantic-danger-bg);
+  --danger-soft-border: var(--semantic-danger-border);
+  --danger-soft-text: var(--semantic-danger);
+
+  --warning-soft-bg: var(--semantic-warning-bg);
+  --warning-soft-border: var(--semantic-warning-border);
+  --warning-soft-text: var(--semantic-warning);
+
+  --success-soft-bg: var(--semantic-success-bg);
+  --success-soft-border: var(--semantic-success-border);
+  --success-soft-text: var(--semantic-success);
+
+  --info-soft-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --info-soft-border: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --info-soft-text: var(--accent-text);
+
+  --nav-hover-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --nav-hover-border: color-mix(in srgb, var(--accent-primary) 24%, transparent);
+  --nav-active-bg: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+  --nav-active-border: color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  --nav-active-text: var(--accent-text);
+
+  --settings-section-bg: color-mix(in srgb, var(--accent-primary) 4%, transparent);
+  --settings-section-border: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --settings-section-title: var(--accent-text);
+  --settings-section-title-bg: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  --settings-item-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --settings-list-bg: var(--input-bg);
+  --settings-list-border: var(--border-normal);
+  --settings-section-shadow: var(--shadow-sm);
+
+  --settings-text: var(--text-primary);
+  --settings-text-muted: var(--text-muted);
+  --settings-icon: var(--text-secondary);
+  --settings-hover-overlay: var(--settings-item-hover-bg);
+  --settings-focus-ring: color-mix(in srgb, var(--accent-primary) 28%, transparent);
+  --settings-disabled-opacity: 0.55;
+
+  --settings-control-bg: var(--input-bg);
+  --settings-control-border: var(--border-normal);
+  --settings-control-text: var(--text-primary);
+  --settings-control-placeholder: var(--text-tertiary);
+  --settings-control-bg-hover: var(--settings-hover-overlay);
+  --settings-control-border-hover: var(--nav-hover-border);
+
+  --settings-action-bg: var(--accent-primary);
+  --settings-action-text: var(--accent-btn-text);
+  --settings-action-border: var(--accent-primary);
+  --settings-action-bg-hover: var(--accent-hover);
+  --settings-action-bg-pressed: var(--accent-active);
+
+  --settings-chip-selected-bg: var(--nav-active-bg);
+  --settings-chip-selected-text: var(--nav-active-text);
+  --settings-chip-selected-border: var(--nav-active-border);
+  --settings-chip-neutral-bg: var(--settings-control-bg);
+  --settings-chip-neutral-text: var(--settings-text-muted);
+  --settings-chip-neutral-border: var(--settings-control-border);
+
+  --settings-switch-track-off: color-mix(in srgb, var(--text-tertiary) 55%, transparent);
+  --settings-switch-track-on: var(--accent-primary);
+  --settings-switch-thumb: var(--toggle-knob-c);
+  --settings-switch-thumb-shadow: 0 1px 3px color-mix(in srgb, #000 28%, transparent);
+
+  --settings-list-row-text: var(--settings-text);
+  --settings-list-row-text-muted: var(--settings-text-muted);
+  --settings-list-row-bg-hover: var(--settings-hover-overlay);
+  --settings-list-row-bg-selected: var(--settings-chip-selected-bg);
+
+  --control-bg: var(--input-bg);
+  --control-border: var(--border-color);
+  --control-text: var(--text-primary);
+  --control-bg-hover: var(--surface-hover);
+  --control-border-hover: var(--border-strong);
+  --control-focus-ring: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+
+  --danger-action-bg: var(--semantic-danger);
+  --danger-action-bg-hover: color-mix(in srgb, var(--semantic-danger) 85%, black);
+  --danger-action-shadow: 0 4px 12px color-mix(in srgb, var(--semantic-danger) 35%, transparent);
+  --danger-action-shadow-hover: 0 6px 16px color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+  --danger-icon-soft-bg: var(--danger-soft-bg);
+
   /* 选区颜色 */
   --selection-bg: var(--accent-subtle);
   --selection-text: var(--accent-primary);
+  --accent-dim: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  --progress-track-bg: var(--border-subtle);
 
   /* 标准投影 - 深色模式 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.4);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.5), 0 2px 4px -1px rgba(0, 0, 0, 0.4);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.6), 0 4px 6px -2px rgba(0, 0, 0, 0.5);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.7);
+
+  --elevation-card: var(--shadow-md);
+  --elevation-modal: var(--shadow-xl);
+  --elevation-tooltip: var(--shadow-lg);
+  --elevation-soft: var(--shadow-lg);
+
+  --terminal-bg: #12151f;
+  --terminal-text: rgba(255, 255, 255, 0.84);
+  --terminal-muted: rgba(255, 255, 255, 0.45);
+  --terminal-inset-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.28);
+
+  --particle-primary: var(--accent-primary);
+  --particle-glow: var(--accent-glow);
 }
 
 /* ===== 浅色模式 ===== */
@@ -85,6 +185,10 @@ html.light {
   --surface-active: rgba(15, 23, 42, 0.1);
   --bg-hover: var(--surface-hover);
 
+  --bg-primary: var(--bg-base);
+  --bg-secondary: var(--surface-hover);
+  --bg-tertiary: var(--surface-active);
+
   /* 输入框背景 - 浅色模式下为半透明白 */
   --input-bg: rgba(255, 255, 255, 0.6);
 
@@ -103,15 +207,111 @@ html.light {
   --warning-color: var(--semantic-warning);
   --success-color: var(--semantic-success);
 
+  --danger-soft-bg: var(--semantic-danger-bg);
+  --danger-soft-border: var(--semantic-danger-border);
+  --danger-soft-text: var(--semantic-danger);
+
+  --warning-soft-bg: var(--semantic-warning-bg);
+  --warning-soft-border: var(--semantic-warning-border);
+  --warning-soft-text: var(--semantic-warning);
+
+  --success-soft-bg: var(--semantic-success-bg);
+  --success-soft-border: var(--semantic-success-border);
+  --success-soft-text: var(--semantic-success);
+
+  --info-soft-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --info-soft-border: color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  --info-soft-text: var(--accent-text);
+
+  --nav-hover-bg: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  --nav-hover-border: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  --nav-active-bg: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  --nav-active-border: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  --nav-active-text: var(--accent-text);
+
+  --settings-section-bg: color-mix(in srgb, var(--accent-primary) 3%, transparent);
+  --settings-section-border: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  --settings-section-title: var(--accent-text);
+  --settings-section-title-bg: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  --settings-item-hover-bg: color-mix(in srgb, var(--accent-primary) 6%, transparent);
+  --settings-list-bg: var(--input-bg);
+  --settings-list-border: var(--border-normal);
+  --settings-section-shadow: var(--shadow-sm);
+
+  --settings-text: var(--text-primary);
+  --settings-text-muted: var(--text-muted);
+  --settings-icon: var(--text-secondary);
+  --settings-hover-overlay: var(--settings-item-hover-bg);
+  --settings-focus-ring: color-mix(in srgb, var(--accent-primary) 26%, transparent);
+  --settings-disabled-opacity: 0.55;
+
+  --settings-control-bg: var(--input-bg);
+  --settings-control-border: var(--border-normal);
+  --settings-control-text: var(--text-primary);
+  --settings-control-placeholder: var(--text-tertiary);
+  --settings-control-bg-hover: var(--settings-hover-overlay);
+  --settings-control-border-hover: var(--nav-hover-border);
+
+  --settings-action-bg: var(--accent-primary);
+  --settings-action-text: var(--accent-btn-text);
+  --settings-action-border: var(--accent-primary);
+  --settings-action-bg-hover: var(--accent-hover);
+  --settings-action-bg-pressed: var(--accent-active);
+
+  --settings-chip-selected-bg: var(--nav-active-bg);
+  --settings-chip-selected-text: var(--nav-active-text);
+  --settings-chip-selected-border: var(--nav-active-border);
+  --settings-chip-neutral-bg: var(--settings-control-bg);
+  --settings-chip-neutral-text: var(--settings-text-muted);
+  --settings-chip-neutral-border: var(--settings-control-border);
+
+  --settings-switch-track-off: color-mix(in srgb, var(--text-tertiary) 52%, transparent);
+  --settings-switch-track-on: var(--accent-primary);
+  --settings-switch-thumb: var(--toggle-knob-c);
+  --settings-switch-thumb-shadow: 0 1px 3px color-mix(in srgb, #000 16%, transparent);
+
+  --settings-list-row-text: var(--settings-text);
+  --settings-list-row-text-muted: var(--settings-text-muted);
+  --settings-list-row-bg-hover: var(--settings-hover-overlay);
+  --settings-list-row-bg-selected: var(--settings-chip-selected-bg);
+
+  --control-bg: var(--input-bg);
+  --control-border: var(--border-color);
+  --control-text: var(--text-primary);
+  --control-bg-hover: var(--surface-hover);
+  --control-border-hover: var(--border-strong);
+  --control-focus-ring: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+
+  --danger-action-bg: var(--semantic-danger);
+  --danger-action-bg-hover: color-mix(in srgb, var(--semantic-danger) 82%, black);
+  --danger-action-shadow: 0 4px 12px color-mix(in srgb, var(--semantic-danger) 28%, transparent);
+  --danger-action-shadow-hover: 0 6px 16px color-mix(in srgb, var(--semantic-danger) 38%, transparent);
+  --danger-icon-soft-bg: var(--danger-soft-bg);
+
   /* 选区颜色 */
   --selection-bg: var(--accent-primary);
   --selection-text: #ffffff;
+  --accent-dim: color-mix(in srgb, var(--accent-primary) 25%, transparent);
+  --progress-track-bg: color-mix(in srgb, var(--accent-primary) 15%, transparent);
 
   /* 标准投影 - 浅色模式 */
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
   --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+
+  --elevation-card: var(--shadow-md);
+  --elevation-modal: var(--shadow-xl);
+  --elevation-tooltip: var(--shadow-lg);
+  --elevation-soft: var(--shadow-lg);
+
+  --terminal-bg: #f5f8ff;
+  --terminal-text: rgba(15, 23, 42, 0.86);
+  --terminal-muted: rgba(15, 23, 42, 0.48);
+  --terminal-inset-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.1);
+
+  --particle-primary: var(--accent-primary);
+  --particle-glow: var(--accent-glow);
 }
 
 /* ===== 全局交互注入 ===== */
