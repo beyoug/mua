@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { appSettings, updateAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/services/settings';
   import { enable, disable, isEnabled } from '@tauri-apps/plugin-autostart';
   import { onMount } from 'svelte';
   import { createLogger } from '$lib/utils/logger';

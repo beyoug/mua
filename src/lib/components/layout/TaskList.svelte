@@ -38,13 +38,24 @@
 		groupByDate = false
 	}: Props = $props();
 
+	const dateLabelCache = new Map<string, string>();
+	function getCachedTaskDate(dateStr: string): string {
+		if (!dateStr) return '';
+		const cached = dateLabelCache.get(dateStr);
+		if (cached !== undefined) return cached;
+		const computed = computeTaskDate(dateStr);
+		if (dateLabelCache.size > 5000) dateLabelCache.clear();
+		dateLabelCache.set(dateStr, computed);
+		return computed;
+	}
+
 	const taskDateLabels = $derived.by(() => {
 		if (!groupByDate) return [] as string[];
-		return tasks.map(task => getTaskDate(task.addedAt));
+		return tasks.map(task => getCachedTaskDate(task.addedAt));
 	});
 	// Helper to format date for grouping
 	// Helper to format date for grouping with natural language
-	function getTaskDate(dateStr: string): string {
+	function computeTaskDate(dateStr: string): string {
 		if (!dateStr) return '';
 		try {
 			const date = new Date(dateStr);
@@ -79,31 +90,59 @@
 <div class="scroll-container">
 {#if tasks.length > 0}
 	<section class="downloads-list">
-		{#each tasks as download, i (download.id)}
-			{@const currentDate = groupByDate ? (taskDateLabels[i] || '') : ''}
-			{@const prevDate = groupByDate && i > 0 ? (taskDateLabels[i - 1] || '') : ''}
-			
-			<div animate:flip={{ duration: 400 }}>
-				{#if groupByDate && currentDate && currentDate !== prevDate}
-					<div class="date-divider">
-						<span>{currentDate}</span>
-						<div class="line"></div>
-					</div>
-				{/if}
+		{#if tasks.length <= 80}
+			{#each tasks as download, i (download.id)}
+				{@const currentDate = groupByDate ? (taskDateLabels[i] || '') : ''}
+				{@const prevDate = groupByDate && i > 0 ? (taskDateLabels[i - 1] || '') : ''}
+				
+				<div animate:flip={{ duration: 400 }}>
+					{#if groupByDate && currentDate && currentDate !== prevDate}
+						<div class="date-divider">
+							<span>{currentDate}</span>
+							<div class="line"></div>
+						</div>
+					{/if}
 
-				<DownloadCard
-					task={download}
-					selectionMode={isSelectionMode}
-					selected={selectedIds.has(download.id)}
-					onSelect={() => onSelect?.(download.id)}
-					onPause={() => onPause?.(download.id)}
-					onResume={() => onResume?.(download.id)}
-					onCancel={() => onCancel?.(download)}
-					onOpenFolder={() => onOpenFolder?.(download.id)}
-					onShowDetails={() => onShowDetails?.(download)}
-				/>
-			</div>
-		{/each}
+					<DownloadCard
+						task={download}
+						selectionMode={isSelectionMode}
+						selected={selectedIds.has(download.id)}
+						onSelect={() => onSelect?.(download.id)}
+						onPause={() => onPause?.(download.id)}
+						onResume={() => onResume?.(download.id)}
+						onCancel={() => onCancel?.(download)}
+						onOpenFolder={() => onOpenFolder?.(download.id)}
+						onShowDetails={() => onShowDetails?.(download)}
+					/>
+				</div>
+			{/each}
+		{:else}
+			{#each tasks as download, i (download.id)}
+				{@const currentDate = groupByDate ? (taskDateLabels[i] || '') : ''}
+				{@const prevDate = groupByDate && i > 0 ? (taskDateLabels[i - 1] || '') : ''}
+				
+				<div>
+					{#if groupByDate && currentDate && currentDate !== prevDate}
+						<div class="date-divider">
+							<span>{currentDate}</span>
+							<div class="line"></div>
+						</div>
+					{/if}
+
+					<DownloadCard
+						task={download}
+						selectionMode={isSelectionMode}
+						selected={selectedIds.has(download.id)}
+						onSelect={() => onSelect?.(download.id)}
+						onPause={() => onPause?.(download.id)}
+						onResume={() => onResume?.(download.id)}
+						onCancel={() => onCancel?.(download)}
+						onOpenFolder={() => onOpenFolder?.(download.id)}
+						onShowDetails={() => onShowDetails?.(download)}
+					/>
+				</div>
+			{/each}
+		{/if}
 	</section>
 {:else}
 	<div class="empty-state">

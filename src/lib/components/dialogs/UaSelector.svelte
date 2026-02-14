@@ -6,7 +6,7 @@
     import { Trash2, ChevronRight } from "@lucide/svelte";
     import { fade } from "svelte/transition";
     import { clickOutside } from "$lib";
-    import { appSettings, updateAppSettings } from "$lib/stores/settings";
+import { appSettings, updateAppSettings } from "$lib/services/settings";
 
     interface Props {
         /** 当前选中的 UA 值（空字符串=默认, 'custom'=自定义模式, 其他=具体 UA 字符串） */

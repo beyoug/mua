@@ -1,35 +1,10 @@
 import { get, writable } from 'svelte/store';
-import { invoke } from '@tauri-apps/api/core';
 import { downloadDir } from '@tauri-apps/api/path';
 import { createLogger } from '$lib/utils/logger';
+import { getAppConfig, saveAppConfig } from '$lib/api/settings';
+import type { AppConfig, AppSettingsPatch } from './types';
 
-const logger = createLogger('SettingsStore');
-
-export interface AppConfig {
-    rpcPort: number;
-    closeToTray: boolean;
-    autoResume: boolean;
-    rpcSecret?: string;
-    aria2SaveSessionInterval?: number;
-    useCustomAria2: boolean;
-    autoStart: boolean;
-    maxConcurrentDownloads: number;
-    uaHistory: string[];
-    defaultSavePath: string;
-    globalMaxDownloadLimit: string;
-    globalMaxUploadLimit: string;
-    theme: string;
-    colorMode: string;
-    particlesEnabled: boolean;
-    startMinimized: boolean;
-    btTrackers: string;
-    enableDht: boolean;
-    enablePeerExchange: boolean;
-    enableSeeding: boolean;
-    seedRatio: number;
-    dhtListenPort: string;
-    listenPort: string;
-}
+const logger = createLogger('SettingsService');
 
 const DEFAULT_CONFIG: AppConfig = {
     rpcPort: 6800,
@@ -57,8 +32,6 @@ const DEFAULT_CONFIG: AppConfig = {
 
 export const appSettings = writable<AppConfig>(DEFAULT_CONFIG);
 
-export type AppSettingsPatch = Partial<AppConfig>;
-
 function hasConfigChange(current: AppConfig, next: AppConfig): boolean {
     const keys = new Set<keyof AppConfig>([
         ...Object.keys(current) as (keyof AppConfig)[],
@@ -76,7 +49,7 @@ function hasConfigChange(current: AppConfig, next: AppConfig): boolean {
 
 export async function loadAppSettings() {
     try {
-        const config = await invoke<AppConfig>('get_app_config');
+        const config = await getAppConfig<AppConfig>();
 
         // 自动迁移逻辑：将旧的端口范围格式转换为单端口
         if (config.dhtListenPort === '6881-6999') config.dhtListenPort = '6881';
@@ -104,7 +77,7 @@ export async function loadAppSettings() {
 
 export async function saveAppSettings(config: AppConfig) {
     try {
-        await invoke('save_app_config', { config });
+        await saveAppConfig(config);
         appSettings.set(config);
     } catch (e) {
         logger.error('Failed to save app settings', { error: e });

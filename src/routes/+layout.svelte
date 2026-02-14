@@ -2,8 +2,8 @@
 	import './layout.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { onMount } from 'svelte';
-	import { appSettings } from '$lib/stores/settings';
-    import { systemPrefersDark, particlesEnabled } from '$lib/stores/theme';
+	import { appSettings } from '$lib/services/settings';
+    import { systemPrefersDark, particlesEnabled } from '$lib/services/theme';
 	import ParticleBackground from '$lib/components/effects/ParticleBackground.svelte';
 	import { bootApp } from '$lib/services/boot';
 	import { createLogger } from '$lib/utils/logger';

@@ -1,7 +1,7 @@
 <script lang="ts">
   import { Check, Sun, Moon, Monitor } from '@lucide/svelte';
   import { scale } from 'svelte/transition';
-  import { currentTheme, themes, colorMode, colorModes, particlesEnabled, type ThemeId, type ColorMode } from '$lib/stores/theme';
+  import { currentTheme, themes, colorMode, colorModes, particlesEnabled, type ThemeId, type ColorMode } from '$lib/services/theme';
 
   function selectTheme(themeId: ThemeId) {
     currentTheme.set(themeId);

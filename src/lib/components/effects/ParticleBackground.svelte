@@ -5,7 +5,7 @@
 -->
 <script lang="ts">
 import { onMount, onDestroy } from 'svelte';
-import { downloadStats } from '$lib/stores/downloadStore';
+import { downloadStats } from '$lib/services/download';
 import { getEmitRate, getSpeedMultiplier } from '$lib/utils/particles';
 
 interface Particle {

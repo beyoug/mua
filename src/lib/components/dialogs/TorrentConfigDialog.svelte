@@ -5,11 +5,11 @@
 <script lang="ts">
     import { Magnet, FolderOpen, Download, Network, RefreshCw, Plus, Import, Loader2 } from '@lucide/svelte';
     import { open as openDialog } from '@tauri-apps/plugin-dialog';
-    import { invoke } from '@tauri-apps/api/core';
     import { fade } from 'svelte/transition';
-    import type { TorrentInfo } from '$lib/api/cmd';
+    import type { TorrentInfo } from '$lib/types/torrent';
+    import { fetchTrackers as fetchTrackersService } from '$lib/services/aria2';
     import { formatBytes } from '$lib';
-    import { appSettings, updateAppSettings } from '$lib/stores/settings';
+    import { appSettings, updateAppSettings } from '$lib/services/settings';
     import { createLogger } from '$lib/utils/logger';
     import BaseModal from '../common/BaseModal.svelte';
     import TorrentFileSelector from './TorrentFileSelector.svelte';
@@ -64,14 +64,16 @@
                 title: '选择保存位置'
             });
             if (selected) savePath = selected as string;
-        } catch (_) {}
+        } catch (e) {
+            logger.warn('Failed to select torrent save directory', { error: e });
+        }
     }
 
     async function fetchTrackers() {
         if (isFetchingTrackers) return;
         isFetchingTrackers = true;
         try {
-            publicTrackers = await invoke<string[]>('fetch_public_trackers');
+            publicTrackers = await fetchTrackersService();
             showTrackerPreview = true;
         } catch (e) {
             logger.error('Failed to fetch trackers', { error: e });

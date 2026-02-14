@@ -1,9 +1,10 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
   import { listen } from '@tauri-apps/api/event';
-  import { invoke } from '@tauri-apps/api/core';
   import { Eraser } from '@lucide/svelte';
   import { createLogger } from '$lib/utils/logger';
+  import { startAria2LogStream, stopAria2LogStream } from '$lib/services/aria2';
+  import { EVENT_ARIA2_STDOUT } from '$lib/api/events';
 
   const logger = createLogger('LogSettings');
 
@@ -14,8 +15,8 @@
 
   async function startStream() {
     try {
-        await invoke('start_log_stream');
-        unlisten = await listen<string>('aria2-stdout', (event) => {
+        await startAria2LogStream();
+        unlisten = await listen<string>(EVENT_ARIA2_STDOUT, (event) => {
             logs = [...logs, event.payload];
             // 限制日志条数，防止内存泄漏
             if (logs.length > 200) {
@@ -34,7 +35,7 @@
             unlisten();
             unlisten = null;
         }
-        await invoke('stop_log_stream');
+        await stopAria2LogStream();
     } catch (e) {
         logger.error('Failed to stop aria2 log stream', { error: e });
     }

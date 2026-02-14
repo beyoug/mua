@@ -30,7 +30,7 @@ pub async fn read_aria2_config(app: AppHandle) -> AppResult<String> {
 }
 
 #[tauri::command]
-pub async fn import_aria2_config(app: AppHandle, path: String) -> AppResult<String> {
+pub async fn import_aria2_config(app: AppHandle, path: String) -> AppResult<()> {
     let config_dir = app
         .path()
         .app_config_dir()
@@ -43,7 +43,7 @@ pub async fn import_aria2_config(app: AppHandle, path: String) -> AppResult<Stri
     let dest_path = config_dir.join("aria2.conf");
     std::fs::copy(&path, &dest_path)?;
 
-    Ok("Imported".to_string())
+    Ok(())
 }
 
 #[tauri::command]

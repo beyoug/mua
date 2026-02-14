@@ -7,7 +7,7 @@
 
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
 import type { DownloadTask } from '$lib/types/download';
-import { allTasks } from '$lib/stores/downloadStore';
+import { allTasks } from '$lib/services/download';
 import { createLogger } from '$lib/utils/logger';
 
 const logger = createLogger('Notifications');
