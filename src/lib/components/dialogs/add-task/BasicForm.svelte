@@ -164,8 +164,8 @@
     input,
     .path-selector {
         padding: 12px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
         color: var(--text-primary);
         font-size: 14px;
@@ -175,9 +175,8 @@
 
     textarea:focus,
     input:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px
-            color-mix(in srgb, var(--accent-primary) 15%, transparent);
+        border-color: var(--control-border-hover);
+        box-shadow: 0 0 0 3px var(--control-focus-ring);
     }
 
     textarea {
@@ -225,8 +224,8 @@
 
     .btn-xs-secondary:hover {
         background: var(--bg-hover);
-        color: var(--primary-color);
-        border-color: var(--primary-color);
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
     }
 
     @keyframes spin {

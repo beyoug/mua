@@ -373,10 +373,10 @@
     .modal-tabs {
         display: flex;
         position: relative;
-        background: var(--input-bg, rgba(0, 0, 0, 0.08));
+        background: var(--input-bg);
         border-radius: 12px;
         padding: 3px;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--terminal-inset-shadow);
     }
 
     .tab-btn {
@@ -419,12 +419,12 @@
         bottom: 3px;
         left: 3px;
         width: calc((100% - 6px) / 2);
-        background: var(--glass-bg, rgba(255, 255, 255, 0.1));
-        backdrop-filter: blur(8px);
+        background: var(--glass-bg);
+        backdrop-filter: var(--glass-chip-blur);
         border-radius: 9px;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        border: 1px solid var(--border-normal, rgba(255, 255, 255, 0.15));
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        border: 1px solid var(--border-normal);
+        box-shadow: var(--shadow-md);
     }
 
     .details-body {
@@ -462,10 +462,10 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        background: var(--input-bg, rgba(0, 0, 0, 0.05));
+        background: var(--input-bg);
         padding: 8px 12px;
         border-radius: 10px;
-        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+        border: 1px solid var(--border-subtle);
         transition: all 0.2s ease;
         min-height: 36px;
     }
@@ -476,8 +476,8 @@
     }
 
     .detail-value-box.error {
-        background: rgba(239, 68, 68, 0.05);
-        border-color: rgba(239, 68, 68, 0.2);
+        background: var(--danger-soft-bg);
+        border-color: var(--danger-soft-border);
     }
 
     .value-text {
@@ -489,7 +489,7 @@
     }
 
     .value-text.mono {
-        font-family: var(--font-mono, monospace);
+        font-family: var(--font-mono);
         font-size: 12px;
         color: var(--text-secondary);
         font-variant-numeric: tabular-nums;
@@ -526,9 +526,9 @@
     }
 
     .extension-badge.unknown {
-        color: var(--warning-color, #f59e0b);
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 20%, transparent);
+        color: var(--warning-soft-text);
+        background: var(--warning-soft-bg);
+        border-color: var(--warning-soft-border);
     }
 
     .identity-box {
@@ -619,18 +619,18 @@
     }
 
     .status-pill.status-complete {
-        background: color-mix(in srgb, var(--semantic-success, #10b981) 10%, transparent);
-        color: var(--semantic-success, #10b981);
+        background: var(--success-soft-bg);
+        color: var(--success-soft-text);
     }
 
     .status-pill.status-paused {
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        color: var(--warning-color, #f59e0b);
+        background: var(--warning-soft-bg);
+        color: var(--warning-soft-text);
     }
 
     .status-pill.status-error {
-        background: color-mix(in srgb, var(--semantic-danger, #ef4444) 10%, transparent);
-        color: var(--semantic-danger, #ef4444);
+        background: var(--danger-soft-bg);
+        color: var(--danger-soft-text);
     }
 
     .status-pill.status-removed {
@@ -639,8 +639,8 @@
     }
 
     .status-pill.status-start {
-        background: color-mix(in srgb, var(--semantic-success, #10b981) 10%, transparent);
-        color: var(--semantic-success, #10b981);
+        background: var(--success-soft-bg);
+        color: var(--success-soft-text);
     }
 
     .item-copy-btn {
@@ -663,7 +663,7 @@
         border-color: var(--accent-primary);
     }
 
-    .item-copy-btn :global(.success) { color: #10b981; }
+    .item-copy-btn :global(.success) { color: var(--success-soft-text); }
 
     .header-rows-list { display: flex; flex-direction: column; gap: 8px; }
 
@@ -710,18 +710,18 @@
     }
 
     .error-reason-box {
-        background: rgba(239, 68, 68, 0.08) !important;
-        border-color: rgba(239, 68, 68, 0.2) !important;
+        background: var(--danger-soft-bg) !important;
+        border-color: var(--danger-soft-border) !important;
         padding: 10px 12px !important;
     }
 
     .error-icon {
-        color: var(--semantic-danger, #ef4444);
+        color: var(--danger-soft-text);
         flex-shrink: 0;
     }
 
     .error-msg {
-        color: var(--semantic-danger, #ef4444) !important;
+        color: var(--danger-soft-text) !important;
         font-weight: 500;
         font-size: 12px;
     }

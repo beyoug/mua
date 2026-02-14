@@ -113,9 +113,9 @@
 	.modal-overlay {
 		position: fixed;
 		inset: 0;
-		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.4));
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
+		background: var(--dialog-overlay-bg);
+		backdrop-filter: var(--overlay-backdrop-blur);
+		-webkit-backdrop-filter: var(--overlay-backdrop-blur);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -129,7 +129,7 @@
 		border: 1px solid var(--glass-border);
 		border-radius: 18px;
 		overflow: hidden;
-		box-shadow: var(--glass-shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+		box-shadow: var(--glass-shadow), var(--elevation-modal);
 		display: flex;
 		flex-direction: column;
 		width: 90%;
@@ -149,7 +149,7 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		padding: 16px 24px;
-		border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+		border-bottom: 1px solid var(--border-color);
 	}
 
 	.modal-title {
@@ -177,7 +177,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--surface-hover, rgba(255, 255, 255, 0.05));
+		background: var(--surface-hover);
 		color: var(--text-primary);
 	}
 
@@ -207,10 +207,10 @@
 
 	.modal-footer {
 		padding: 16px 24px;
-		border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+		border-top: 1px solid var(--border-color);
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
-        background: rgba(255, 255, 255, 0.01);
+		background: var(--bg-secondary);
 	}
 </style>

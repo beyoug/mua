@@ -165,10 +165,10 @@
     .form-row input,
     .form-row textarea {
         padding: 12px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
-        color: var(--text-primary);
+        color: var(--control-text);
         font-size: 14px;
         outline: none;
         transition: all 0.2s ease;
@@ -176,8 +176,8 @@
 
     .form-row input:focus,
     .form-row textarea:focus {
-        border-color: var(--accent-primary);
-        background: var(--surface-hover);
+        border-color: var(--control-border-hover);
+        background: var(--control-bg-hover);
     }
 
     .headers-textarea {
@@ -192,23 +192,23 @@
         transition: all 0.2s;
         resize: vertical;
         min-height: 80px;
-        font-family: var(--font-mono, monospace);
+        font-family: var(--font-mono);
         line-height: 1.5;
     }
 
     .input-group {
         display: flex;
         align-items: stretch;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 12px;
         overflow: hidden;
         transition: all 0.2s ease;
     }
 
     .input-group:focus-within {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+        border-color: var(--control-border-hover);
+        box-shadow: 0 0 0 3px var(--control-focus-ring);
     }
 
     .grouped-input {
@@ -224,7 +224,7 @@
 
     .input-divider {
         width: 1px;
-        background: var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-border);
         margin: 8px 0;
     }
 

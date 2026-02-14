@@ -293,8 +293,8 @@
         display: flex;
         gap: 16px;
         padding: 12px 14px;
-        background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
+        background: var(--control-bg-hover);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
     }
 
@@ -314,10 +314,10 @@
 
     .parse-warning {
         padding: 12px 14px;
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 30%, transparent);
+        background: var(--warning-soft-bg);
+        border: 1px solid var(--warning-soft-border);
         border-radius: 10px;
-        color: var(--warning-color, #f59e0b);
+        color: var(--warning-soft-text);
         display: flex;
         flex-direction: column;
         gap: 4px;
@@ -388,8 +388,8 @@
         align-items: center;
         gap: 4px;
         padding: 3px 8px;
-        background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 6px;
         color: var(--text-secondary);
         font-size: 11px;
@@ -398,9 +398,9 @@
     }
 
     .mini-action:hover:not(:disabled) {
-        background: var(--surface-active);
+        background: var(--control-bg-hover);
         color: var(--text-primary);
-        border-color: var(--accent-primary);
+        border-color: var(--control-border-hover);
     }
 
     .mini-action:disabled {
@@ -414,8 +414,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 10px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
         color: var(--text-primary);
         font-size: 13px;
@@ -436,7 +436,7 @@
 
     /* Tracker 预览 */
     .tracker-preview {
-        background: var(--surface-active);
+        background: var(--settings-list-bg);
         border: 1px solid var(--accent-dim);
         border-radius: 8px;
         padding: 10px;
@@ -464,8 +464,8 @@
         padding: 2px 8px;
         border-radius: 4px;
         font-size: 10px;
-        border: 1px solid var(--border-subtle);
-        background: var(--surface-hover);
+        border: 1px solid var(--control-border);
+        background: var(--control-bg);
         color: var(--text-secondary);
         cursor: pointer;
         transition: all 0.2s;
@@ -473,7 +473,7 @@
 
     .mini-btn.primary {
         background: var(--accent-primary);
-        color: white;
+        color: var(--accent-btn-text);
         border-color: transparent;
     }
 
@@ -489,7 +489,7 @@
         max-height: 60px;
         overflow-y: auto;
         padding: 6px;
-        background: rgba(0, 0, 0, 0.1);
+        background: var(--control-bg-hover);
         border-radius: 4px;
     }
 
@@ -498,8 +498,8 @@
         width: 100%;
         height: 100px;
         padding: 10px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+        background: var(--control-bg);
+        border: 1px solid var(--control-border);
         border-radius: 10px;
         color: var(--text-primary);
         font-size: 12px;
@@ -511,8 +511,8 @@
     }
 
     .tracker-textarea:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+        border-color: var(--control-border-hover);
+        box-shadow: 0 0 0 3px var(--control-focus-ring);
     }
 
     /* Footer */

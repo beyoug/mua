@@ -210,7 +210,7 @@
 		height: 96px;
 		background: var(--bg-sidebar);
 		border: 1px solid var(--border-color);
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+		box-shadow: var(--elevation-soft);
 		border-radius: 32px;
 		display: flex;
 		align-items: center;

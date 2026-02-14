@@ -133,11 +133,11 @@
     
     .badge {
         font-size: 10px;
-        color: var(--warning-color, #f59e0b);
-        background: rgba(245, 158, 11, 0.1);
+        color: var(--warning-soft-text);
+        background: var(--warning-soft-bg);
         padding: 2px 6px;
         border-radius: 4px;
-        border: 1px solid rgba(245, 158, 11, 0.2);
+        border: 1px solid var(--warning-soft-border);
     }
 
     .settings-section {
@@ -170,13 +170,13 @@
     }
 
     .icon-btn:hover {
-        background: var(--surface-hover);
+        background: var(--settings-control-bg-hover);
         color: var(--text-primary);
     }
 
     .terminal-window {
         flex: 1;
-        background: #1e1e1e;
+        background: var(--terminal-bg);
         border-radius: 8px;
         border: 1px solid var(--border-color);
         padding: 12px;
@@ -187,13 +187,13 @@
         display: flex;
         flex-direction: column;
         min-height: 200px;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow: var(--terminal-inset-shadow);
     }
 
     .terminal-logs {
         flex: 1;
         overflow: auto;
-        color: #d4d4d4;
+        color: var(--terminal-text);
         white-space: pre;
     }
     
@@ -206,7 +206,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #666;
+        color: var(--terminal-muted);
     }
 
     .blink {
