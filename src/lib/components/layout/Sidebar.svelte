@@ -3,11 +3,18 @@
   侧边栏导航组件 - 包含 Logo、导航、统计面板
 -->
 <script lang="ts">
-	import { Download, CheckCircle, History, Settings, TrendingDown, Plus } from '@lucide/svelte';
+	import {
+		Download,
+		CheckCircle,
+		History,
+		Settings,
+		TrendingDown,
+		Plus,
+	} from "@lucide/svelte";
 
-	import { getCurrentWindow } from '@tauri-apps/api/window';
+	import { getCurrentWindow } from "@tauri-apps/api/window";
 
-	type NavItem = 'active' | 'complete' | 'history';
+	type NavItem = "active" | "complete" | "history";
 
 	interface Props {
 		activeNav?: NavItem;
@@ -19,29 +26,34 @@
 			activeCount: number;
 			completeCount: number;
 		};
+		blurred?: boolean;
 	}
 
 	let {
-		activeNav = 'active',
+		activeNav = "active",
 		onNavChange,
 		onSettingsClick,
 		onAddClick,
-		stats = { totalSpeed: { value: '0', unit: 'B/s' }, activeCount: 0, completeCount: 0 }
+		stats = {
+			totalSpeed: { value: "0", unit: "B/s" },
+			activeCount: 0,
+			completeCount: 0,
+		},
+		blurred = false,
 	}: Props = $props();
 
-    function startDrag() {
-        getCurrentWindow().startDragging();
-    }
-
+	function startDrag() {
+		getCurrentWindow().startDragging();
+	}
 
 	const navItems = [
-		{ id: 'active' as NavItem, icon: Download, label: '进行中' },
-		{ id: 'complete' as NavItem, icon: CheckCircle, label: '已完成' },
-		{ id: 'history' as NavItem, icon: History, label: '历史记录' }
+		{ id: "active" as NavItem, icon: Download, label: "进行中" },
+		{ id: "complete" as NavItem, icon: CheckCircle, label: "已完成" },
+		{ id: "history" as NavItem, icon: History, label: "历史记录" },
 	];
 </script>
 
-<aside class="sidebar">
+<aside class="sidebar" class:blurred>
 	<!-- Logo 区域 -->
 	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div class="logo-section" onmousedown={startDrag}>
@@ -70,7 +82,10 @@
 				class:active={activeNav === item.id}
 				onclick={() => onNavChange?.(item.id)}
 			>
-				<item.icon size={18} strokeWidth={activeNav === item.id ? 2.5 : 2} />
+				<item.icon
+					size={18}
+					strokeWidth={activeNav === item.id ? 2.5 : 2}
+				/>
 				<span>{item.label}</span>
 			</button>
 		{/each}
@@ -81,10 +96,13 @@
 
 	<!-- 统计面板 -->
 	<div class="stats-panel">
-        <div class="stat-item" title="总下载速度">
-            <TrendingDown size={16} />
-            <span class="stat-value">{stats.totalSpeed?.value ?? '0'} {stats.totalSpeed?.unit ?? 'B/s'}</span>
-        </div>
+		<div class="stat-item" title="总下载速度">
+			<TrendingDown size={16} />
+			<span class="stat-value"
+				>{stats.totalSpeed?.value ?? "0"}
+				{stats.totalSpeed?.unit ?? "B/s"}</span
+			>
+		</div>
 		<div class="stat-row">
 			<span class="stat-label">活跃</span>
 			<span class="stat-count">{stats.activeCount}</span>
@@ -117,11 +135,16 @@
 		display: flex;
 		flex-direction: column;
 		/* 顶部 padding: 红绿灯空间(约28px) + 原有间距 */
-		padding: 0 0 16px; 
+		padding: 0 0 16px;
 		position: fixed;
 		left: 12px;
 		top: 12px;
 		z-index: 5;
+		transition: filter 0.3s ease;
+	}
+
+	.sidebar.blurred {
+		filter: blur(4px);
 	}
 
 	.logo-section {
@@ -258,13 +281,13 @@
 		margin-bottom: 6px;
 	}
 
-    .stat-value {
-        font-family: var(--font-base);
-        font-variant-numeric: tabular-nums;
-        font-weight: 600;
-        color: var(--text-secondary);
-        font-size: 11px;
-    }
+	.stat-value {
+		font-family: var(--font-base);
+		font-variant-numeric: tabular-nums;
+		font-weight: 600;
+		color: var(--text-secondary);
+		font-size: 11px;
+	}
 
 	.stat-row {
 		display: flex;
