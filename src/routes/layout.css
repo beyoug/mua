@@ -44,5 +44,12 @@
     overflow: hidden !important;
     height: 100vh !important;
     touch-action: none !important;
+    touch-action: none !important;
+  }
+
+  /* 全局内容模糊工具类 */
+  .content-blurred {
+    filter: blur(4px);
+    transition: filter 0.3s ease;
   }
 }

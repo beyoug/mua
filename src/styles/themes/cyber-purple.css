@@ -30,6 +30,16 @@ html.theme-cyber-purple {
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(139, 92, 246, 0.15), transparent);
+
+  /* Glass Overrides */
+  --glass-bg: rgba(30, 20, 50, 0.6);
+  --glass-border: rgba(139, 92, 246, 0.2);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  --glass-blur: blur(20px);
+  --glass-saturate: saturate(180%);
+
+  --dialog-bg: rgba(30, 20, 50, 0.85);
+  --dialog-overlay-bg: rgba(10, 5, 20, 0.6);
 }
 
 /* ===== 深色模式背景 - 双椭圆梦幻紫 ===== */
@@ -54,6 +64,16 @@ html.light.theme-cyber-purple {
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(124, 58, 237, 0.08), transparent);
+
+  /* Glass Overrides - Light */
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(124, 58, 237, 0.15);
+  --glass-shadow: 0 8px 32px rgba(124, 58, 237, 0.1);
+  --glass-blur: blur(24px);
+  --glass-saturate: saturate(180%);
+
+  --dialog-bg: rgba(255, 255, 255, 0.9);
+  --dialog-overlay-bg: rgba(243, 232, 255, 0.4);
 }
 
 /* ===== 浅色模式背景 - 柔和紫调 ===== */

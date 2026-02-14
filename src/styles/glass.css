@@ -24,7 +24,7 @@
 html.light {
   --glass-bg: rgba(255, 255, 255, 0.45);
   --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-blur: blur(20px);
+  --glass-blur: blur(24px);
   --glass-saturate: saturate(150%);
   --glass-shadow:
     0 4px 6px -1px rgba(0, 0, 0, 0.05),
@@ -32,7 +32,7 @@ html.light {
     0 0 0 1px rgba(255, 255, 255, 0.3) inset;
 
   /* 弹窗专用背景 */
-  --dialog-bg: rgba(255, 255, 255, 0.75);
+  --dialog-bg: rgba(255, 255, 255, 0.8);
   /* 遮罩层背景颜色 - 浅色模式下更通透 */
   --dialog-overlay-bg: rgba(0, 0, 0, 0.2);
   /* 内部覆盖层背景 - 与弹窗保持一致 */
