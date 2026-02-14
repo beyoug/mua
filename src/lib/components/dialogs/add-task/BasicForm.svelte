@@ -1,6 +1,13 @@
 <script lang="ts">
-    import { AlertCircle, FileText, FileUp, FolderOpen, Link } from '@lucide/svelte';
-    import { fade } from 'svelte/transition';
+    import {
+        AlertCircle,
+        FileText,
+        FileUp,
+        FolderOpen,
+        Link,
+    } from "@lucide/svelte";
+    import { fade } from "svelte/transition";
+    import { compactPath } from "$lib/utils/path";
 
     interface Props {
         urls: string;
@@ -27,8 +34,14 @@
         onUrlInput,
         onUrlBlur,
         onSelectFolder,
-        onSelectTorrentFile
+        onSelectTorrentFile,
     }: Props = $props();
+
+    let displayPath = $state("");
+
+    $effect(() => {
+        compactPath(savePath).then((p) => (displayPath = p));
+    });
 </script>
 
 <div class="dialog-body" in:fade={{ duration: 150 }}>
@@ -37,9 +50,15 @@
             <Link size={14} />
             <span>下载链接 (支持 Magnet)</span>
             <div class="label-actions">
-                <button class="btn-xs-secondary" onclick={onSelectTorrentFile} disabled={isSelectingFile}>
+                <button
+                    class="btn-xs-secondary"
+                    onclick={onSelectTorrentFile}
+                    disabled={isSelectingFile}
+                >
                     {#if isSelectingFile}
-                        <span style="animation: spin 1s linear infinite; display: inline-flex;">
+                        <span
+                            style="animation: spin 1s linear infinite; display: inline-flex;"
+                        >
                             <AlertCircle size={12} />
                         </span>
                         <span>打开中...</span>
@@ -63,7 +82,9 @@
             placeholder="输入 HTTP/HTTPS/Magnet 链接，每行一个"
             value={urls}
             oninput={(event) => {
-                onUrlsChange((event.currentTarget as HTMLTextAreaElement).value);
+                onUrlsChange(
+                    (event.currentTarget as HTMLTextAreaElement).value,
+                );
                 onUrlInput();
             }}
             onblur={onUrlBlur}
@@ -77,7 +98,9 @@
             <span>保存位置</span>
         </label>
         <button class="path-selector" onclick={onSelectFolder}>
-            <span class="path-text">{savePath}</span>
+            <span class="path-text" title={savePath}
+                >{displayPath || savePath}</span
+            >
             <FolderOpen size={14} />
         </button>
     </div>
@@ -92,7 +115,10 @@
             class="text-input"
             placeholder="留空则使用默认文件名"
             value={filename}
-            oninput={(event) => onFilenameChange((event.currentTarget as HTMLInputElement).value)}
+            oninput={(event) =>
+                onFilenameChange(
+                    (event.currentTarget as HTMLInputElement).value,
+                )}
         />
     </div>
 </div>
@@ -150,7 +176,8 @@
     textarea:focus,
     input:focus {
         border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+        box-shadow: 0 0 0 3px
+            color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
     textarea {
