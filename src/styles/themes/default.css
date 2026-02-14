@@ -32,7 +32,18 @@ html.theme-default {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
 
+  --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
 
+  /* Glass Overrides - Dark */
+  /* Increase border opacity for better visibility */
+  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-blur: blur(20px);
+  --glass-saturate: saturate(120%);
+  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+
+  --dialog-bg: rgba(15, 23, 42, 0.85);
+  --dialog-overlay-bg: rgba(0, 0, 0, 0.6);
 }
 
 /* ===== 深色模式背景 ===== */

@@ -1,5 +1,6 @@
 import { get, writable } from 'svelte/store';
 import { invoke } from '@tauri-apps/api/core';
+import { downloadDir } from '@tauri-apps/api/path';
 import { createLogger } from '$lib/utils/logger';
 
 const logger = createLogger('SettingsStore');
@@ -80,6 +81,20 @@ export async function loadAppSettings() {
         // 自动迁移逻辑：将旧的端口范围格式转换为单端口
         if (config.dhtListenPort === '6881-6999') config.dhtListenPort = '6881';
         if (config.listenPort === '6881-6999') config.listenPort = '6881';
+
+        // 如果默认下载路径未设置或为占位符，尝试获取系统默认下载目录
+        if (!config.defaultSavePath || config.defaultSavePath === '...') {
+            try {
+                const systemDownloadDir = await downloadDir();
+                if (systemDownloadDir) {
+                    config.defaultSavePath = systemDownloadDir;
+                    // 可选：立即保存回后端，或者等待用户更改设置时保存
+                    // await saveAppSettings(config);
+                }
+            } catch (err) {
+                logger.warn('Failed to get system download dir', { error: err });
+            }
+        }
 
         appSettings.set({ ...DEFAULT_CONFIG, ...config });
     } catch (e) {

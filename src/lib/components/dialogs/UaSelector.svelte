@@ -3,10 +3,10 @@
   User Agent 选择器 - 从 AddTaskDialog 中提取，支持预设/自定义/历史记录
 -->
 <script lang="ts">
-    import { Trash2, ChevronRight } from '@lucide/svelte';
-    import { fade } from 'svelte/transition';
-    import { clickOutside } from '$lib';
-    import { appSettings, updateAppSettings } from '$lib/stores/settings';
+    import { Trash2, ChevronRight } from "@lucide/svelte";
+    import { fade } from "svelte/transition";
+    import { clickOutside } from "$lib";
+    import { appSettings, updateAppSettings } from "$lib/stores/settings";
 
     interface Props {
         /** 当前选中的 UA 值（空字符串=默认, 'custom'=自定义模式, 其他=具体 UA 字符串） */
@@ -19,47 +19,61 @@
         onCustomChange: (value: string) => void;
     }
 
-    let { selectedValue, customValue, onValueChange, onCustomChange }: Props = $props();
+    let { selectedValue, customValue, onValueChange, onCustomChange }: Props =
+        $props();
 
     // 内置 UA 预设
     const BUILTIN_UAS = [
-        { name: 'Chrome', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36' },
-        { name: 'Firefox', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0' },
-        { name: 'Safari', value: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15' }
+        {
+            name: "Chrome",
+            value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+        },
+        {
+            name: "Firefox",
+            value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10.15; rv:120.0) Gecko/20100101 Firefox/120.0",
+        },
+        {
+            name: "Safari",
+            value: "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.2 Safari/605.1.15",
+        },
     ];
 
     let isDropdownOpen = $state(false);
 
     function truncateUa(ua: string) {
-        if (ua.length > 40) return ua.substring(0, 37) + '...';
+        if (ua.length > 40) return ua.substring(0, 37) + "...";
         return ua;
     }
 
     // 组合展示用的 UA 列表
     const displayUas = $derived([
-        { id: 'default', name: '默认', value: '', builtin: true },
+        { id: "default", name: "默认", value: "", builtin: true },
         ...($appSettings.uaHistory || []).map((val, index) => ({
             id: `history-${index}`,
             name: truncateUa(val),
             value: val,
-            builtin: false
+            builtin: false,
         })),
-        ...BUILTIN_UAS.filter(b => !($appSettings.uaHistory || []).includes(b.value)).map((b, index) => ({
+        ...BUILTIN_UAS.filter(
+            (b) => !($appSettings.uaHistory || []).includes(b.value),
+        ).map((b, index) => ({
             id: `builtin-${index}`,
             name: b.name,
             value: b.value,
-            builtin: true
-        }))
+            builtin: true,
+        })),
     ]);
 
     const activeUaName = $derived.by(() => {
-        if (selectedValue === 'custom') return '自定义';
-        if (selectedValue === '') return '默认';
-        const found = displayUas.find(u => u.value === selectedValue);
+        if (selectedValue === "custom") return "自定义";
+        if (selectedValue === "") return "默认";
+        const found = displayUas.find((u) => u.value === selectedValue);
         return found ? found.name : truncateUa(selectedValue);
     });
 
-    const isCustomUaInvalid = $derived(selectedValue === 'custom' && !customValue.trim());
+    const isCustomUaInvalid = $derived(
+        selectedValue === "custom" && !customValue.trim(),
+    );
 
     function handleSelect(value: string) {
         onValueChange(value);
@@ -68,27 +82,27 @@
 
     async function removeHistoryItem(uaValue: string) {
         const history = $appSettings.uaHistory || [];
-        const newHistory = history.filter(v => v !== uaValue);
+        const newHistory = history.filter((v) => v !== uaValue);
         await updateAppSettings({ uaHistory: newHistory });
-        if (selectedValue === uaValue) onValueChange('');
+        if (selectedValue === uaValue) onValueChange("");
     }
 
     /** 判断给定 UA 是否为内置预设 */
     export function isBuiltinUa(ua: string): boolean {
-        return BUILTIN_UAS.some(b => b.value === ua);
+        return BUILTIN_UAS.some((b) => b.value === ua);
     }
 
     /** 获取有效的 UA 值（解析 custom 模式） */
     export function getEffectiveUa(): string {
-        return selectedValue === 'custom' ? customValue : selectedValue;
+        return selectedValue === "custom" ? customValue : selectedValue;
     }
 </script>
 
-<div class="ua-manager" use:clickOutside={() => isDropdownOpen = false}>
+<div class="ua-manager" use:clickOutside={() => (isDropdownOpen = false)}>
     <button
         class="ua-dropdown-trigger"
         class:open={isDropdownOpen}
-        onclick={() => isDropdownOpen = !isDropdownOpen}
+        onclick={() => (isDropdownOpen = !isDropdownOpen)}
     >
         <span class="trigger-text">{activeUaName}</span>
         <ChevronRight size={14} class="chevron" />
@@ -98,19 +112,36 @@
         <div class="ua-dropdown-content" transition:fade={{ duration: 150 }}>
             <div class="ua-list-container">
                 {#each displayUas as ua}
-                    <div class="ua-option" class:active={selectedValue === ua.value && selectedValue !== 'custom'}>
-                        <button class="ua-select-btn" onclick={() => handleSelect(ua.value)}>
+                    <div
+                        class="ua-option"
+                        class:active={selectedValue === ua.value &&
+                            selectedValue !== "custom"}
+                    >
+                        <button
+                            class="ua-select-btn"
+                            onclick={() => handleSelect(ua.value)}
+                        >
                             <span class="ua-name">{ua.name}</span>
                         </button>
                         {#if !ua.builtin}
-                            <button class="ua-delete-btn" onclick={() => removeHistoryItem(ua.value)} title="删除记录">
+                            <button
+                                class="ua-delete-btn"
+                                onclick={() => removeHistoryItem(ua.value)}
+                                title="删除记录"
+                            >
                                 <Trash2 size={12} />
                             </button>
                         {/if}
                     </div>
                 {/each}
-                <div class="ua-option" class:active={selectedValue === 'custom'}>
-                    <button class="ua-select-btn" onclick={() => handleSelect('custom')}>
+                <div
+                    class="ua-option"
+                    class:active={selectedValue === "custom"}
+                >
+                    <button
+                        class="ua-select-btn"
+                        onclick={() => handleSelect("custom")}
+                    >
                         <span class="ua-name">自定义...</span>
                     </button>
                 </div>
@@ -118,7 +149,7 @@
         </div>
     {/if}
 
-    {#if selectedValue === 'custom'}
+    {#if selectedValue === "custom"}
         <input
             type="text"
             class="ua-custom-input"
@@ -132,7 +163,12 @@
 </div>
 
 <style>
-    .ua-manager { display: flex; flex-direction: column; gap: 8px; position: relative; }
+    .ua-manager {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+        position: relative;
+    }
     .ua-dropdown-trigger {
         display: flex;
         align-items: center;
@@ -144,9 +180,15 @@
         color: var(--text-primary);
         cursor: pointer;
     }
-    .ua-dropdown-trigger:hover { border-color: var(--accent-primary); }
-    .ua-dropdown-trigger :global(.chevron) { transition: transform 0.2s; }
-    .ua-dropdown-trigger.open :global(.chevron) { transform: rotate(90deg); }
+    .ua-dropdown-trigger:hover {
+        border-color: var(--accent-primary);
+    }
+    .ua-dropdown-trigger :global(.chevron) {
+        transition: transform 0.2s;
+    }
+    .ua-dropdown-trigger.open :global(.chevron) {
+        transform: rotate(90deg);
+    }
 
     .ua-dropdown-content {
         position: absolute;
@@ -154,7 +196,7 @@
         left: 0;
         right: 0;
         margin-top: 4px;
-        background: var(--overlay-bg, var(--dialog-bg));
+        background: var(--glass-menu-bg, var(--dialog-bg));
         backdrop-filter: blur(20px) saturate(180%);
         border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
         border-radius: 12px;
@@ -163,7 +205,10 @@
         overflow: hidden;
     }
 
-    .ua-list-container { max-height: 240px; overflow-y: auto; }
+    .ua-list-container {
+        max-height: 240px;
+        overflow-y: auto;
+    }
     .ua-option {
         display: flex;
         align-items: center;
@@ -171,8 +216,13 @@
         transition: background 0.15s ease;
     }
     /* hover 使用 accent 色调提供更明显的视觉反馈 */
-    .ua-option:hover { background: color-mix(in srgb, var(--accent-primary) 8%, transparent); }
-    .ua-option.active { color: var(--accent-primary); background: color-mix(in srgb, var(--accent-primary) 12%, transparent); }
+    .ua-option:hover {
+        background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+    }
+    .ua-option.active {
+        color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+    }
 
     .ua-select-btn {
         flex: 1;
@@ -193,7 +243,10 @@
         cursor: pointer;
         border-radius: 4px;
     }
-    .ua-delete-btn:hover { color: var(--danger-color); background: rgba(239, 68, 68, 0.1); }
+    .ua-delete-btn:hover {
+        color: var(--danger-color);
+        background: rgba(239, 68, 68, 0.1);
+    }
 
     .ua-custom-input {
         margin-top: 8px;
@@ -210,7 +263,8 @@
 
     .ua-custom-input:focus {
         border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        box-shadow: 0 0 0 2px
+            color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 
     .ua-custom-input.error {
@@ -219,6 +273,7 @@
     }
 
     .ua-custom-input.error:focus {
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--danger-color) 15%, transparent);
+        box-shadow: 0 0 0 2px
+            color-mix(in srgb, var(--danger-color) 15%, transparent);
     }
 </style>
