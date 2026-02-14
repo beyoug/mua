@@ -1,5 +1,6 @@
 use crate::aria2::client::{self as aria2_client, Aria2Task};
 use crate::core::error::{AppError, AppResult};
+use crate::core::events::EVENT_TASKS_DELTA;
 use crate::core::store::TaskStore;
 use crate::core::types::TaskState;
 use serde_json::json;
@@ -21,7 +22,7 @@ fn calculate_remaining_secs(raw_speed: u64, total: u64, completed: u64) -> u64 {
 }
 
 // 前端 DTO - 只传输原始数值，格式化由前端负责
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, PartialEq)]
 pub struct FrontendTask {
     pub id: String,
     pub filename: String,
@@ -48,6 +49,38 @@ pub struct FrontendTask {
     pub max_download_limit: String,
     #[serde(rename = "completedAt")]
     pub completed_at: Option<String>,
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "op", rename_all = "snake_case")]
+pub enum TaskDeltaChange {
+    Upsert { task: FrontendTask },
+    Remove { id: String },
+}
+
+#[derive(Debug, Clone, serde::Serialize)]
+#[serde(tag = "type", rename_all = "snake_case")]
+pub enum TaskDeltaEvent {
+    Snapshot {
+        revision: u64,
+        tasks: Vec<FrontendTask>,
+    },
+    Delta {
+        #[serde(rename = "fromRevision")]
+        from_revision: u64,
+        #[serde(rename = "toRevision")]
+        to_revision: u64,
+        seq: u64,
+        changes: Vec<TaskDeltaChange>,
+    },
+}
+
+fn to_task_map(tasks: &[FrontendTask]) -> HashMap<String, FrontendTask> {
+    let mut map = HashMap::with_capacity(tasks.len());
+    for task in tasks {
+        map.insert(task.id.clone(), task.clone());
+    }
+    map
 }
 
 pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<Vec<FrontendTask>> {
@@ -328,6 +361,11 @@ pub fn start_background_sync(app_handle: AppHandle) {
         // 启动宽限期：等待 Sidecar 完全初始化（绑定端口）
         tokio::time::sleep(std::time::Duration::from_secs(1)).await;
 
+        let mut last_snapshot: HashMap<String, FrontendTask> = HashMap::new();
+        let mut revision: u64 = 0;
+        let mut seq: u64 = 0;
+        let mut emitted_snapshot = false;
+
         loop {
             let state = app_handle.state::<crate::core::store::TaskStore>();
             let mut has_active_tasks = false;
@@ -343,12 +381,63 @@ pub fn start_background_sync(app_handle: AppHandle) {
                         }
                     }
 
-                    if let Err(e) = app_handle.emit("tasks-update", tasks) {
-                        crate::app_warn!(
-                            "Core::Sync",
-                            "tasks_update_emit_failed",
-                            json!({ "error": e.to_string() })
-                        );
+                    let current_map = to_task_map(&tasks);
+
+                    if !emitted_snapshot {
+                        revision = revision.saturating_add(1);
+                        let snapshot_event = TaskDeltaEvent::Snapshot {
+                            revision,
+                            tasks: tasks.clone(),
+                        };
+
+                        if let Err(e) = app_handle.emit(EVENT_TASKS_DELTA, snapshot_event) {
+                            crate::app_warn!(
+                                "Core::Sync",
+                                "tasks_delta_snapshot_emit_failed",
+                                json!({ "error": e.to_string() })
+                            );
+                        } else {
+                            emitted_snapshot = true;
+                            last_snapshot = current_map;
+                        }
+                    } else {
+                        let mut changes: Vec<TaskDeltaChange> = Vec::new();
+
+                        for (id, task) in current_map.iter() {
+                            match last_snapshot.get(id) {
+                                Some(prev) if prev == task => {}
+                                _ => changes.push(TaskDeltaChange::Upsert { task: task.clone() }),
+                            }
+                        }
+
+                        for id in last_snapshot.keys() {
+                            if !current_map.contains_key(id) {
+                                changes.push(TaskDeltaChange::Remove { id: id.clone() });
+                            }
+                        }
+
+                        if !changes.is_empty() {
+                            let from_revision = revision;
+                            revision = revision.saturating_add(1);
+                            seq = seq.saturating_add(1);
+
+                            let delta_event = TaskDeltaEvent::Delta {
+                                from_revision,
+                                to_revision: revision,
+                                seq,
+                                changes,
+                            };
+
+                            if let Err(e) = app_handle.emit(EVENT_TASKS_DELTA, delta_event) {
+                                crate::app_warn!(
+                                    "Core::Sync",
+                                    "tasks_delta_emit_failed",
+                                    json!({ "error": e.to_string() })
+                                );
+                            } else {
+                                last_snapshot = current_map;
+                            }
+                        }
                     }
                 }
                 Err(e) => {

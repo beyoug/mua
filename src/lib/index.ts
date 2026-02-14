@@ -21,7 +21,6 @@ export {
     isTerminalTask
 } from './utils/downloadStates';
 
-// Stores
 export {
     activeTasks,
     completeTasks,
@@ -38,7 +37,8 @@ export {
     resumeAll,
     hasDownloadingTasks,
     hasPausedTasks
-} from './stores/downloadStore';
+} from './services/download';
 
 // Types
 export type { DownloadTask, DownloadConfig, DownloadState, DownloadStats } from './types/download';
+export type { TorrentInfo, TorrentFile } from './types/torrent';

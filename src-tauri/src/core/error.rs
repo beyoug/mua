@@ -105,4 +105,27 @@ impl AppError {
     pub fn io<S: Into<String>>(msg: S) -> Self {
         Self::Fs(msg.into())
     }
+
+    pub fn is_aria2_not_found(&self) -> bool {
+        let Self::Aria2(message) = self else {
+            return false;
+        };
+
+        if let Ok(value) = serde_json::from_str::<serde_json::Value>(message) {
+            if value.get("code").and_then(|v| v.as_i64()) == Some(1) {
+                return true;
+            }
+
+            if value
+                .get("message")
+                .and_then(|v| v.as_str())
+                .is_some_and(|m| m.to_lowercase().contains("not found"))
+            {
+                return true;
+            }
+        }
+
+        let lower = message.to_lowercase();
+        lower.contains("not found") || lower.contains("error 1") || lower.contains("gid")
+    }
 }

@@ -2,7 +2,10 @@
 //! 包含应用配置的读写操作
 
 use crate::core::error::AppResult;
+use crate::core::events::EVENT_ARIA2_STDOUT;
 use tauri::{AppHandle, Manager};
+
+const INFINITE_SEED_TIME: &str = "999999999";
 
 #[tauri::command]
 pub async fn get_app_config(app: AppHandle) -> AppResult<crate::core::config::AppConfig> {
@@ -80,28 +83,9 @@ pub async fn save_app_config(
     );
 
     if config.enable_seeding {
-        // 启用做种：清除 seed-time 限制（或设置为无穷大？）
-        // Aria2 中没有直接清除选项的方法，我们设置为 0 可能会被误解为停止。
-        // 但根据文档，seed-time=0 是停止。
-        // 我们不发送 seed-time，让其使用默认值（无限制，仅受 ratio 控制）。
-        // 如果需要强制覆盖之前可能设置的 0，可能需要设置为很大的值？
-        // 实际上 changeGlobalOption 只能修改，不能删除。
-        // 暂时不发送，这可能意味着无法从“禁用”切换回“启用”而不重启？
-        // 为了支持动态切换，我们需要发送一个值。
-        // 这里假设发送空字符串能重置？或者发送一个极大的值。
-        // 实际上 aria2 不支持 infinite time via option specific value except omit.
-        // 让我们尝试不发送，看看是否影响。如果不行，可能需要重启生效。
-        // 暂时策略：如果不启用做种，发送 seed-time=0。
-        // 如果启用做种，不发送 seed-time。
-        // 但这在运行时切换会有问题（旧状态保留）。
-        // 更好的策略：如果 sidecar 重启，args 会重置。
-        // 对于运行时 update，我们尝试发送 "0.0" (Start seeding immediately? No)
-        // 这是一个已知痛点。
-        // 让我们查阅文档：--seed-time: "Specify seeding time in (fractional) minutes. Also see --seed-ratio option. Specifying 0 disables seeding after download completes."
-        // 如果我们发送 "999999999"，即 ~1900 年，约等于无限。
         options.insert(
             "seed-time".to_string(),
-            serde_json::Value::String("999999999".to_string()),
+            serde_json::Value::String(INFINITE_SEED_TIME.to_string()),
         );
     } else {
         options.insert(
@@ -170,7 +154,7 @@ pub fn start_log_stream(app: AppHandle) {
     if let Some(state) = app.try_state::<crate::aria2::sidecar::SidecarState>() {
         if let Ok(logs) = state.recent_logs.lock() {
             for log in logs.iter() {
-                let _ = tauri::Emitter::emit(&app, "aria2-stdout", log);
+                let _ = tauri::Emitter::emit(&app, EVENT_ARIA2_STDOUT, log);
             }
         }
     }

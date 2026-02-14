@@ -3,12 +3,12 @@
   BT/磁力链接相关设置与高级配置
 -->
 <script lang="ts">
-  import { appSettings, updateAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/services/settings';
   import { HelpCircle, ChevronUp, ChevronDown, RefreshCw, Plus, Info } from '@lucide/svelte';
   import { fade } from 'svelte/transition';
-  import { invoke } from '@tauri-apps/api/core';
   import { relaunch } from '@tauri-apps/plugin-process';
   import { createLogger } from '$lib/utils/logger';
+  import { fetchTrackers as fetchTrackersService } from '$lib/services/aria2';
 
   const logger = createLogger('BTSettings');
 
@@ -60,7 +60,7 @@
       if (isFetchingTrackers) return;
       isFetchingTrackers = true;
       try {
-          publicTrackers = await invoke<string[]>('fetch_public_trackers');
+          publicTrackers = await fetchTrackersService();
           showTrackerPreview = true;
       } catch (e) {
           logger.error('Failed to fetch public trackers', { error: e });

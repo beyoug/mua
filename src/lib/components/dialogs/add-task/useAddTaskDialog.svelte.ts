@@ -1,6 +1,6 @@
 import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { get } from 'svelte/store';
-import { appSettings, updateAppSettings } from '$lib/stores/settings';
+import { appSettings, updateAppSettings } from '$lib/services/settings';
 import { isMagnetUrl, isValidDownloadUrl } from '$lib';
 import type { DownloadConfig } from '$lib/types/download';
 import type UaSelector from '../UaSelector.svelte';

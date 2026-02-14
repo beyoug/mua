@@ -5,8 +5,8 @@
 <script lang="ts">
   import { X, Palette, Settings2, Download, Cpu, Info, Terminal, Network } from '@lucide/svelte';
   import { fade, scale } from 'svelte/transition';
-  import { loadAria2Config } from '$lib/stores/aria2Config';
-  import { loadAppSettings } from '$lib/stores/settings';
+	import { loadAria2Config } from '$lib/services/aria2Config';
+	import { loadAppSettings } from '$lib/services/settings';
   import { createScrollLockEffect } from '$lib';
   
   import AppearanceSettings from './AppearanceSettings.svelte';

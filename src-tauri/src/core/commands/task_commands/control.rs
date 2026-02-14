@@ -8,10 +8,10 @@ use futures::future::join_all;
 use serde_json::json;
 
 #[tauri::command]
-pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
-    let result = aria2_client::pause(gid.clone()).await?;
+pub async fn pause_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<()> {
+    aria2_client::pause(gid.clone()).await?;
     state.update_task_state(&gid, TaskState::Paused);
-    Ok(result)
+    Ok(())
 }
 
 #[tauri::command]
@@ -32,8 +32,7 @@ pub async fn resume_task(state: tauri::State<'_, TaskStore>, gid: String) -> App
             Ok(res)
         }
         Err(e) => {
-            let msg = e.to_string().to_lowercase();
-            if msg.contains("not found") || msg.contains("error 1") {
+            if e.is_aria2_not_found() {
                 smart_resume_task(&state, gid).await
             } else {
                 Err(e)
@@ -43,31 +42,31 @@ pub async fn resume_task(state: tauri::State<'_, TaskStore>, gid: String) -> App
 }
 
 #[tauri::command]
-pub async fn cancel_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<String> {
-    let result = aria2_client::remove(gid.clone()).await?;
+pub async fn cancel_task(state: tauri::State<'_, TaskStore>, gid: String) -> AppResult<()> {
+    aria2_client::remove(gid.clone()).await?;
     state.update_task_state(&gid, TaskState::Removed);
-    Ok(result)
+    Ok(())
 }
 
 #[tauri::command]
-pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<String> {
-    let result = aria2_client::pause_all().await?;
+pub async fn pause_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<()> {
+    aria2_client::pause_all().await?;
     state.update_all_active_to_paused();
-    Ok(result)
+    Ok(())
 }
 
 #[tauri::command]
-pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<String> {
-    let result = aria2_client::unpause_all().await?;
+pub async fn resume_all_tasks(state: tauri::State<'_, TaskStore>) -> AppResult<()> {
+    aria2_client::unpause_all().await?;
     state.update_all_paused_to_waiting();
-    Ok(result)
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
-) -> AppResult<String> {
+) -> AppResult<()> {
     state.update_batch_state(&gids, TaskState::Removed);
     state.save();
 
@@ -77,7 +76,7 @@ pub async fn cancel_tasks(
         .collect();
     let _ = join_all(futures).await;
 
-    Ok("OK".to_string())
+    Ok(())
 }
 
 async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> {

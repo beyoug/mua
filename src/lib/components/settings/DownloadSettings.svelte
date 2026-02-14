@@ -1,7 +1,7 @@
 <script lang="ts">
   import { FolderOpen } from '@lucide/svelte';
   import { open as openDialog } from '@tauri-apps/plugin-dialog';
-  import { appSettings, updateAppSettings } from '$lib/stores/settings';
+  import { appSettings, updateAppSettings } from '$lib/services/settings';
   import { createLogger } from '$lib/utils/logger';
 
   const logger = createLogger('DownloadSettings');

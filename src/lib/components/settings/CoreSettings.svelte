@@ -1,9 +1,9 @@
 <script lang="ts">
     import { FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
-    import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/stores/aria2Config';
-    import { appSettings, updateAppSettings } from '$lib/stores/settings';
+    import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/services/aria2Config';
+    import { appSettings, updateAppSettings } from '$lib/services/settings';
     import { onMount } from 'svelte';
-    import { importCustomBinary, getAria2VersionInfo } from '$lib/api/cmd';
+    import { importAria2Binary, getAria2KernelVersionInfo } from '$lib/services/aria2';
     import type { Aria2VersionInfo } from '$lib/types/download';
     import { open as openDialog } from '@tauri-apps/plugin-dialog';
     import { relaunch } from '@tauri-apps/plugin-process';
@@ -35,7 +35,7 @@
 
     async function loadVersionInfo() {
         try {
-            aria2Version = await getAria2VersionInfo();
+            aria2Version = await getAria2KernelVersionInfo();
         } catch (e) {
             logger.error('Failed to load aria2 version info', { error: e });
         }
@@ -54,7 +54,7 @@
 
             const path = resolveDialogPath(selected as DialogSelection);
             if (path) {
-                const version = await importCustomBinary(path);
+                const version = await importAria2Binary(path);
                 alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
                 await saveSettings();
                 await loadVersionInfo();

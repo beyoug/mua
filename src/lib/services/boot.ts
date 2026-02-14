@@ -1,8 +1,9 @@
 import { listen } from '@tauri-apps/api/event';
 import { message } from '@tauri-apps/plugin-dialog';
-import { loadAppSettings } from '$lib/stores/settings';
+import { loadAppSettings } from '$lib/services/settings';
 import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
 import { createLogger } from '$lib/utils/logger';
+import { EVENT_ARIA2_SIDECAR_ERROR } from '$lib/api/events';
 
 const logger = createLogger('Boot');
 
@@ -20,8 +21,8 @@ interface Aria2SidecarErrorPayload {
 export async function bootApp() {
 
     try {
-        // 1. 环境治理：禁用系统级右键菜单（原子化控制）
-        document.addEventListener('contextmenu', (e) => e.preventDefault());
+        const preventContextMenu = (e: MouseEvent) => e.preventDefault();
+        document.addEventListener('contextmenu', preventContextMenu);
 
         // 2. 状态映射：加载关键应用配置
         await loadAppSettings();
@@ -30,7 +31,7 @@ export async function bootApp() {
         await initNotifications();
 
         // 4. 事件订阅：链路监控
-        const unlistenSidecar = await listen<Aria2SidecarErrorPayload>('aria2-sidecar-error', async (event) => {
+        const unlistenSidecar = await listen<Aria2SidecarErrorPayload>(EVENT_ARIA2_SIDECAR_ERROR, async (event) => {
             const payload = event.payload;
             logger.error('Received sidecar error event', { payload });
             await message(
@@ -46,6 +47,7 @@ export async function bootApp() {
         return () => {
             unlistenSidecar();
             cleanupNotifications();
+            document.removeEventListener('contextmenu', preventContextMenu);
         };
     } catch (e) {
         logger.error('Critical failure during frontend initialization', { error: e });

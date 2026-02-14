@@ -1,7 +1,7 @@
 <script lang="ts">
   import { slide } from 'svelte/transition';
   import { Check, File, Folder } from '@lucide/svelte';
-  import type { TorrentInfo, TorrentFile } from '$lib/api/cmd';
+import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   import { formatBytes } from '$lib/utils/formatters';
 
   let { torrentInfo, onSelectionChange } = $props<{

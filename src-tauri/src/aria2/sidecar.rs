@@ -1,4 +1,5 @@
 use chrono::Local;
+use crate::core::events::{EVENT_ARIA2_SIDECAR_ERROR, EVENT_ARIA2_STDOUT};
 use serde_json::json;
 use std::sync::Mutex;
 use std::time::Duration;
@@ -389,7 +390,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                             app.try_state::<crate::aria2::sidecar::LogStreamEnabled>()
                         {
                             if state.0.load(std::sync::atomic::Ordering::Relaxed) {
-                                let _ = app.emit("aria2-stdout", log_str);
+                                let _ = app.emit(EVENT_ARIA2_STDOUT, log_str);
                             }
                         }
                     }
@@ -422,7 +423,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                             app.try_state::<crate::aria2::sidecar::LogStreamEnabled>()
                         {
                             if state.0.load(std::sync::atomic::Ordering::Relaxed) {
-                                let _ = app.emit("aria2-stdout", log_str);
+                                    let _ = app.emit(EVENT_ARIA2_STDOUT, log_str);
                             }
                         }
                     }
@@ -453,7 +454,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                             crate::app_error!("Aria2::Sidecar", "unexpected_exit_emitting_event");
                             let stderr = stderr_buffer.join("");
                             let _ = app.emit(
-                                "aria2-sidecar-error",
+        EVENT_ARIA2_SIDECAR_ERROR,
                                 serde_json::json!({
                                     "message": "Aria2 sidecar 意外退出",
                                     "code": payload.code,

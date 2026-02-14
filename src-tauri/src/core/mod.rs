@@ -1,6 +1,7 @@
 pub mod boot;
 pub mod commands;
 pub mod config;
+pub mod events;
 pub mod error;
 pub mod logging;
 pub mod store;

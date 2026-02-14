@@ -5,12 +5,30 @@ use crate::utils;
 use futures::future::join_all;
 use serde_json::json;
 
+fn delete_task_files(save_path: &str, filename: &str) {
+    let full_path = utils::get_full_path(save_path, filename);
+    let resolved_path = utils::resolve_path(&full_path);
+
+    if std::path::Path::new(&resolved_path).exists() {
+        if let Err(e) = std::fs::remove_file(&resolved_path) {
+            crate::app_error!(
+                "Core::TaskRemove",
+                "file_delete_failed",
+                json!({ "path": resolved_path, "error": e.to_string() })
+            );
+        }
+    }
+
+    let aria2_file_path = format!("{}.aria2", resolved_path);
+    let _ = std::fs::remove_file(&aria2_file_path);
+}
+
 #[tauri::command]
 pub async fn remove_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
     delete_file: bool,
-) -> AppResult<String> {
+) -> AppResult<()> {
     let tasks_info: Vec<_> = gids.iter().filter_map(|gid| state.get_task(gid)).collect();
 
     let active_gids: Vec<String> = tasks_info
@@ -36,23 +54,11 @@ pub async fn remove_tasks(
 
     if delete_file {
         for task in &tasks_info {
-            let full_path = utils::get_full_path(&task.save_path, &task.filename);
-            let resolved_path = utils::resolve_path(&full_path);
-            if std::path::Path::new(&resolved_path).exists() {
-                if let Err(e) = std::fs::remove_file(&resolved_path) {
-                    crate::app_error!(
-                        "Core::TaskRemove",
-                        "file_delete_failed",
-                        json!({ "path": resolved_path, "error": e.to_string() })
-                    );
-                }
-            }
-            let aria2_file_path = format!("{}.aria2", resolved_path);
-            let _ = std::fs::remove_file(&aria2_file_path);
+            delete_task_files(&task.save_path, &task.filename);
         }
     }
 
-    Ok("OK".to_string())
+    Ok(())
 }
 
 #[tauri::command]
@@ -60,7 +66,7 @@ pub async fn remove_task_record(
     state: tauri::State<'_, TaskStore>,
     gid: String,
     delete_file: bool,
-) -> AppResult<String> {
+) -> AppResult<()> {
     remove_task_inner(&state, gid, delete_file).await
 }
 
@@ -75,7 +81,7 @@ pub async fn show_task_in_folder(state: tauri::State<'_, TaskStore>, gid: String
     }
 }
 
-async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) -> AppResult<String> {
+async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) -> AppResult<()> {
     let task_opt = state.get_task(&gid);
 
     let is_active = task_opt.as_ref().is_some_and(|t| t.state.is_active());
@@ -91,36 +97,9 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
 
     if delete_file {
         if let Some(task) = task_opt {
-            let full_path = utils::get_full_path(&task.save_path, &task.filename);
-            let resolved_path = utils::resolve_path(&full_path);
-
-            if std::path::Path::new(&resolved_path).exists() {
-                match std::fs::remove_file(&resolved_path) {
-                    Ok(_) => crate::app_info!(
-                        "Core::TaskRemove",
-                        "file_deleted",
-                        json!({ "path": resolved_path })
-                    ),
-                    Err(e) => crate::app_error!(
-                        "Core::TaskRemove",
-                        "file_delete_failed",
-                        json!({ "path": resolved_path, "error": e.to_string() })
-                    ),
-                }
-            } else {
-                crate::app_warn!(
-                    "Core::TaskRemove",
-                    "file_not_found_on_delete",
-                    json!({ "path": resolved_path })
-                );
-            }
-
-            let aria2_file_path = format!("{}.aria2", resolved_path);
-            if std::path::Path::new(&aria2_file_path).exists() {
-                let _ = std::fs::remove_file(&aria2_file_path);
-            }
+            delete_task_files(&task.save_path, &task.filename);
         }
     }
 
-    Ok("OK".to_string())
+    Ok(())
 }

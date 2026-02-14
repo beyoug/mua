@@ -5,8 +5,10 @@
  * - 三种颜色模式（深色、浅色、自动）
  * - 持久化到 localStorage
  */
-import { derived, get } from 'svelte/store';
-import { appSettings, updateAppSettings } from './settings';
+import { derived, get, readable } from 'svelte/store';
+import { browser } from '$app/environment';
+import { appSettings, updateAppSettings } from '$lib/services/settings';
+import type { AppConfig } from '$lib/services/settings';
 
 // ============ 主题色 ============
 export type ThemeId = 'cyberpunk' | 'cyber-purple' | 'default';
@@ -57,13 +59,16 @@ export const colorModes: { id: ColorMode; name: string }[] = [
 /**
  * 通用的设置保存包装
  */
-async function updateConfigKey<K extends keyof import('./settings').AppConfig>(key: K, value: import('./settings').AppConfig[K]) {
+async function updateConfigKey<K extends keyof AppConfig>(
+	key: K,
+	value: AppConfig[K]
+) {
 	const current = get(appSettings);
 	if (current[key] === value) return;
 
 	await updateAppSettings({
 		[key]: value
-	} as Pick<import('./settings').AppConfig, K>);
+	} as Pick<AppConfig, K>);
 }
 
 // ============ Theme Store (Derived from AppSettings) ============
@@ -87,19 +92,23 @@ export const particlesEnabled = {
 	}
 };
 
-// ============ 系统偏好检测 ============
-import { writable } from 'svelte/store';
-import { browser } from '$app/environment';
+export const systemPrefersDark = readable(true, (set) => {
+	if (!browser) {
+		return;
+	}
 
-export const systemPrefersDark = writable(true);
-
-if (browser) {
 	const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-	systemPrefersDark.set(mediaQuery.matches);
-	mediaQuery.addEventListener('change', (e) => {
-		systemPrefersDark.set(e.matches);
-	});
-}
+	set(mediaQuery.matches);
+
+	const onChange = (event: MediaQueryListEvent) => {
+		set(event.matches);
+	};
+
+	mediaQuery.addEventListener('change', onChange);
+	return () => {
+		mediaQuery.removeEventListener('change', onChange);
+	};
+});
 
 // 实际应用的颜色模式（考虑 auto）
 export const effectiveColorMode = derived(

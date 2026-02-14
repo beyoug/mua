@@ -9,22 +9,21 @@
 	import TorrentConfigDialog from "$lib/components/dialogs/TorrentConfigDialog.svelte";
 	import type { TorrentDialogResult } from "$lib/components/dialogs/TorrentConfigDialog.svelte";
 	import { onMount } from "svelte";
-	import { parseTorrent, type TorrentInfo } from "$lib/api/cmd";
+	import { parseTorrentFile } from "$lib/services/torrent";
+	import type { TorrentInfo } from "$lib/types/torrent";
 	import type { DownloadConfig, DownloadTask } from "$lib/types/download";
 	import {
 		activeTasks,
 		completeTasks,
 		allTasks,
 		downloadStats,
-		pauseTask,
-		pauseAll,
-		resumeAll,
 		hasDownloadingTasks,
 		hasPausedTasks,
 	} from "$lib";
 	import { isRemovableTask } from "$lib";
-	import { TaskController } from "$lib/services/taskController.svelte";
+	import { TaskController } from "$lib/services/download";
 	import { createLogger } from "$lib/utils/logger";
+	import { createDragDropWatchdog } from "$lib/services/dragDropWatchdog";
 
 	const logger = createLogger("HomePage");
 
@@ -34,6 +33,7 @@
 	// ============ 界面状态 ============
 	let showAddDialog = $state(false);
 	let showSettings = $state(false);
+	let showTorrentConfig = $state(false);
 
 	// 任务详情弹窗状态
 	let detailsTaskId = $state<string | null>(null);
@@ -49,30 +49,17 @@
 
 	// ============ 全局拖拽状态 ============
 	let isDragOver = $state(false);
-	let showTorrentConfig = $state(false);
 	let pendingTorrentInfo = $state<TorrentInfo | null>(null);
 	let pendingTorrentPath = $state("");
 	let pendingParseError = $state("");
 	let torrentParseRequestId = 0;
 
-	// 拖拽看门狗：防止 drag-leave 丢失导致遮罩卡死
-	let lastDragTime = 0;
-	$effect(() => {
-		if (isDragOver) {
-			lastDragTime = Date.now();
-			const interval = setInterval(() => {
-				// 如果超过 300ms 没有收到 drag-over 事件，认为拖拽已结束
-				if (Date.now() - lastDragTime > 300) {
-					isDragOver = false;
-				}
-			}, 100);
-			return () => clearInterval(interval);
-		}
-	});
-
 	// 全局 Tauri drag-drop 事件监听（onMount + 动态导入，避免 SSR 问题）
 	onMount(() => {
 		const unlisteners: (() => void)[] = [];
+		const watchdog = createDragDropWatchdog(() => {
+			isDragOver = false;
+		});
 
 		(async () => {
 			try {
@@ -83,15 +70,14 @@
 					position: { x: number; y: number };
 				}>("tauri://drag-enter", () => {
 					isDragOver = true;
-					lastDragTime = Date.now();
+					watchdog.touch();
 				});
 				unlisteners.push(u1);
 
 				const u2 = await listen<{ position: { x: number; y: number } }>(
 					"tauri://drag-over",
 					() => {
-						// 持续触发，更新时间戳
-						lastDragTime = Date.now();
+						watchdog.touch();
 					},
 				);
 				unlisteners.push(u2);
@@ -101,6 +87,7 @@
 					position: { x: number; y: number };
 				}>("tauri://drag-drop", (event) => {
 					isDragOver = false;
+					watchdog.stop();
 					const paths = event.payload.paths;
 					if (paths && paths.length > 0) {
 						handleGlobalFileDrop(paths);
@@ -110,6 +97,7 @@
 
 				const u4 = await listen("tauri://drag-leave", () => {
 					isDragOver = false;
+					watchdog.stop();
 				});
 				unlisteners.push(u4);
 			} catch (e) {
@@ -121,6 +109,7 @@
 
 		return () => {
 			unlisteners.forEach((fn) => fn());
+			watchdog.stop();
 		};
 	});
 
@@ -134,7 +123,7 @@
 		showAddDialog = false; // 关闭 AddTaskDialog
 
 		// 后台异步解析，不阻塞 UI
-		parseTorrent(path)
+		parseTorrentFile(path)
 			.then((info) => {
 				if (requestId !== torrentParseRequestId) return;
 				if (info.files.length > 1000) {
@@ -183,7 +172,7 @@
 		};
 
 		try {
-			await controller.handleAddTask(config);
+			await controller.addTasks(config);
 			showTorrentConfig = false;
 			pendingTorrentInfo = null;
 			pendingTorrentPath = "";
@@ -285,7 +274,7 @@
 			);
 
 			if (allCompleted) {
-				controller.handleNavChange("complete");
+				controller.setNav("complete");
 			}
 		}
 		prevActiveIds = currentIds;
@@ -294,7 +283,7 @@
 	// ============ Event Handlers ============
 
 	async function handleAddTask(config: DownloadConfig | DownloadConfig[]) {
-		await controller.handleAddTask(config);
+		await controller.addTasks(config);
 		showAddDialog = false;
 	}
 
@@ -311,7 +300,7 @@
 <!-- 侧边栏 -->
 <Sidebar
 	activeNav={controller.activeNav}
-	onNavChange={(nav) => controller.handleNavChange(nav)}
+	onNavChange={(nav) => controller.setNav(nav)}
 	onSettingsClick={() => (showSettings = true)}
 	onAddClick={() => (showAddDialog = true)}
 	stats={$downloadStats}
@@ -329,9 +318,9 @@
 			{hasRemovable}
 			isSelectionMode={controller.isSelectionMode}
 			selectedCount={controller.selectedIds.size}
-			onGlobalPause={pauseAll}
-			onGlobalResume={resumeAll}
-			onTrashClick={() => controller.handleTrashClick(filteredTasks)}
+			onGlobalPause={() => controller.pauseAll()}
+			onGlobalResume={() => controller.resumeAll()}
+			onTrashClick={() => controller.onTrashClick(filteredTasks)}
 			onExitSelection={() => controller.exitSelectionMode()}
 		/>
 
@@ -342,10 +331,10 @@
 			isSelectionMode={controller.isSelectionMode}
 			selectedIds={controller.selectedIds}
 			onSelect={(id) => controller.toggleSelection(id)}
-			onPause={pauseTask}
-			onResume={(id) => controller.handleResumeTask(id)}
-			onCancel={(task) => controller.handleCancelTask(task)}
-			onOpenFolder={(id) => controller.handleOpenFolder(id)}
+			onPause={(id) => controller.pauseTask(id)}
+			onResume={(id) => controller.resumeTask(id)}
+			onCancel={(task) => controller.cancelOrDeleteTask(task)}
+			onOpenFolder={(id) => controller.openTaskFolder(id)}
 			onShowDetails={handleShowDetails}
 			groupByDate={controller.activeNav === "history"}
 		/>
@@ -374,7 +363,7 @@
 		controller.showClearDialog = false;
 		controller.itemToDelete = null;
 	}}
-	onConfirm={(del) => controller.performClear(del)}
+	onConfirm={(del) => controller.confirmClear(del)}
 />
 
 <!-- 任务详情弹窗 (页面级别渲染以解决 z-index 问题) -->
@@ -392,7 +381,7 @@
 		headers={detailsTask.headers}
 		addedAt={detailsTask.addedAt}
 		completedAt={detailsTask.completedAt}
-		onOpenFolder={() => controller.handleOpenFolder(detailsTask.id)}
+	onOpenFolder={() => controller.openTaskFolder(detailsTask.id)}
 		onClose={() => (detailsTaskId = null)}
 	/>
 {/if}

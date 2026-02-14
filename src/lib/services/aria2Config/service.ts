@@ -1,9 +1,13 @@
 import { writable } from 'svelte/store';
 import { open as openDialog, message } from '@tauri-apps/plugin-dialog';
-import { getAria2ConfigPath, readAria2Config, importAria2Config as importAria2ConfigCmd } from '$lib/api/cmd';
+import {
+    getAria2ConfigPath,
+    readAria2Config,
+    importAria2Config as importAria2ConfigCmd
+} from '$lib/api/aria2';
 import { createLogger } from '$lib/utils/logger';
 
-const logger = createLogger('Aria2ConfigStore');
+const logger = createLogger('Aria2ConfigService');
 
 export const aria2Config = writable<string>('');
 export const configPath = writable<string>('');

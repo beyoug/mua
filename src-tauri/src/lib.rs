@@ -10,7 +10,7 @@ use tauri::Manager;
 use ui::tray::update_tray_icon_with_speed;
 
 pub fn run() {
-    tauri::Builder::default()
+    let app = tauri::Builder::default()
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_autostart::Builder::new().build())
         .plugin(tauri_plugin_notification::init())
@@ -87,9 +87,17 @@ pub fn run() {
                 }
             }
         })
-        .build(tauri::generate_context!())
-        .expect("error while building tauri application")
-        .run(|app, event| match event {
+        .build(tauri::generate_context!());
+
+    let app = match app {
+        Ok(app) => app,
+        Err(error) => {
+            eprintln!("failed to build tauri application: {error}");
+            return;
+        }
+    };
+
+    app.run(|app, event| match event {
             tauri::RunEvent::Exit => {
                 // Signal shutdown to sidecar loop
                 if let Some(state) = app.try_state::<crate::aria2::sidecar::ShutdownState>() {
