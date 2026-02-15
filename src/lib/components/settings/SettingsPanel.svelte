@@ -3,19 +3,28 @@
   浮动设置面板 - 侧边栏导航布局
 -->
 <script lang="ts">
-  import { X, Palette, Settings2, Download, Cpu, Info, Terminal, Network } from '@lucide/svelte';
-  import { fade, scale } from 'svelte/transition';
-	import { loadAria2Config } from '$lib/services/aria2Config';
-	import { loadAppSettings } from '$lib/services/settings';
-  import { createScrollLockEffect } from '$lib';
-  
-  import AppearanceSettings from './AppearanceSettings.svelte';
-  import GeneralSettings from './GeneralSettings.svelte';
-  import DownloadSettings from './DownloadSettings.svelte';
-  import CoreSettings from './CoreSettings.svelte';
-  import AboutSettings from './AboutSettings.svelte';
-  import LogSettings from './LogSettings.svelte';
-  import BTSettings from './BTSettings.svelte';
+  import {
+    X,
+    Palette,
+    Settings2,
+    Download,
+    Cpu,
+    Info,
+    Terminal,
+    Network,
+  } from "@lucide/svelte";
+  import { fade, scale } from "svelte/transition";
+  import { loadAria2Config } from "$lib/services/aria2Config";
+  import { loadAppSettings } from "$lib/services/settings";
+  import { createScrollLockEffect } from "$lib";
+
+  import AppearanceSettings from "./AppearanceSettings.svelte";
+  import GeneralSettings from "./GeneralSettings.svelte";
+  import DownloadSettings from "./DownloadSettings.svelte";
+  import CoreSettings from "./CoreSettings.svelte";
+  import AboutSettings from "./AboutSettings.svelte";
+  import LogSettings from "./LogSettings.svelte";
+  import BTSettings from "./BTSettings.svelte";
 
   interface Props {
     open: boolean;
@@ -23,22 +32,29 @@
   }
 
   let { open, onClose }: Props = $props();
-  
-  type TabId = 'appearance' | 'general' | 'download' | 'bt' | 'core' | 'about' | 'logs';
-  let activeTab: TabId = $state('appearance');
+
+  type TabId =
+    | "appearance"
+    | "general"
+    | "download"
+    | "bt"
+    | "core"
+    | "about"
+    | "logs";
+  let activeTab: TabId = $state("appearance");
 
   const navItems = [
-    { id: 'appearance' as TabId, label: '外观', icon: Palette },
-    { id: 'general' as TabId, label: '通用', icon: Settings2 },
-    { id: 'download' as TabId, label: '下载', icon: Download },
-    { id: 'bt' as TabId, label: 'BT', icon: Network },
-    { id: 'core' as TabId, label: '核心', icon: Cpu },
-    { id: 'logs' as TabId, label: '日志', icon: Terminal },
-    { id: 'about' as TabId, label: '关于', icon: Info },
+    { id: "appearance" as TabId, label: "外观", icon: Palette },
+    { id: "general" as TabId, label: "通用", icon: Settings2 },
+    { id: "download" as TabId, label: "下载", icon: Download },
+    { id: "bt" as TabId, label: "BT", icon: Network },
+    { id: "core" as TabId, label: "核心", icon: Cpu },
+    { id: "logs" as TabId, label: "日志", icon: Terminal },
+    { id: "about" as TabId, label: "关于", icon: Info },
   ];
 
   function handleKeydown(e: KeyboardEvent) {
-    if (e.key === 'Escape') {
+    if (e.key === "Escape") {
       onClose();
     }
   }
@@ -58,22 +74,25 @@
 
 {#if open}
   <!-- svelte-ignore a11y_no_static_element_interactions -->
-  <div class="panel-overlay" 
-    in:fade={{ duration: 150 }} 
+  <div
+    class="panel-overlay"
+    in:fade={{ duration: 150 }}
     out:fade={{ duration: 100 }}
-    onclick={onClose} 
-    onkeydown={handleKeydown}>
+    onclick={onClose}
+    onkeydown={handleKeydown}
+  >
     <!-- svelte-ignore a11y_no_static_element_interactions -->
     <!-- svelte-ignore a11y_click_events_have_key_events -->
-    <div class="panel" 
+    <div
+      class="panel"
       in:scale={{ duration: 150, start: 0.98, opacity: 0.5 }}
       out:fade={{ duration: 80 }}
-      onclick={(e) => e.stopPropagation()}>
-      
+      onclick={(e) => e.stopPropagation()}
+    >
       <!-- 左侧内容区 (原右侧) -->
       <main class="panel-content">
         <header class="content-header">
-          <h3>{navItems.find(i => i.id === activeTab)?.label}</h3>
+          <h3>{navItems.find((i) => i.id === activeTab)?.label}</h3>
           <button class="close-btn" onclick={onClose}>
             <X size={18} />
           </button>
@@ -81,23 +100,27 @@
 
         <div class="content-body">
           {#key activeTab}
-            <div class="tab-pane" in:fade={{ duration: 120 }} out:fade={{ duration: 90 }}>
+            <div
+              class="tab-pane"
+              in:fade={{ duration: 120 }}
+              out:fade={{ duration: 90 }}
+            >
               <div in:scale={{ duration: 180, start: 0.985 }}>
-                {#if activeTab === 'appearance'}
+                {#if activeTab === "appearance"}
                   <AppearanceSettings />
-                {:else if activeTab === 'general'}
+                {:else if activeTab === "general"}
                   <GeneralSettings />
-                {:else if activeTab === 'download'}
+                {:else if activeTab === "download"}
                   <DownloadSettings />
-                {:else if activeTab === 'bt'}
+                {:else if activeTab === "bt"}
                   <BTSettings />
-                {:else if activeTab === 'core'}
+                {:else if activeTab === "core"}
                   <CoreSettings />
-                {:else if activeTab === 'logs'}
+                {:else if activeTab === "logs"}
                   <div class="tab-pane-fill">
                     <LogSettings />
                   </div>
-                {:else if activeTab === 'about'}
+                {:else if activeTab === "about"}
                   <AboutSettings />
                 {/if}
               </div>
@@ -113,10 +136,10 @@
         </header>
         <nav class="sidebar-nav">
           {#each navItems as item}
-            <button 
-              class="nav-item" 
+            <button
+              class="nav-item"
               class:active={activeTab === item.id}
-              onclick={() => activeTab = item.id}
+              onclick={() => (activeTab = item.id)}
             >
               <item.icon size={16} />
               <span>{item.label}</span>
@@ -146,7 +169,7 @@
     background: var(--dialog-bg);
     backdrop-filter: var(--glass-blur) var(--glass-saturate);
     -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-    border: 1px solid var(--glass-border);
+    border: none;
     border-radius: 18px;
     box-shadow: var(--glass-shadow);
     display: flex;
@@ -157,20 +180,25 @@
   .panel-sidebar {
     width: 100px;
     background: var(--bg-secondary);
-    border-left: 1px solid var(--border-color);
+    border-left: none;
     display: flex;
     flex-direction: column;
   }
 
   .sidebar-header {
-    padding: 24px 20px 16px;
+    padding: 0 16px; /* Unified padding */
+    height: 60px; /* Standardized height */
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
   }
 
   .sidebar-header h2 {
-    font-size: 18px;
-    font-weight: 600;
+    font-size: 20px; /* Up from 18px */
+    font-weight: 700; /* Up from 600 */
     color: var(--text-primary);
     margin: 0;
+    letter-spacing: -0.01em;
   }
 
   .sidebar-nav {
@@ -184,10 +212,10 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    padding: 8px 12px;
+    padding: 7px 10px;
     border: none;
     background: transparent;
-    border: 1px solid transparent;
+    border: 1px solid transparent; /* Keep transparent border to prevent layout shift on hover if hover adds border */
     color: var(--text-secondary);
     border-radius: 8px;
     font-size: 13px;
@@ -210,7 +238,9 @@
     background: var(--accent-primary);
     opacity: 0;
     transform: translateY(-50%) scale(0.7);
-    transition: opacity 0.2s ease, transform 0.22s ease;
+    transition:
+      opacity 0.2s ease,
+      transform 0.22s ease;
   }
 
   .nav-item:hover {
@@ -225,7 +255,8 @@
     color: var(--nav-active-text);
     border-color: var(--nav-active-border);
     box-shadow: var(--shadow-sm);
-    transform: translateX(2px);
+    transform: translateX(3px); /* Increased slightly */
+    font-weight: 600; /* Bolder text for active state */
   }
 
   .nav-item.active::after {
@@ -245,12 +276,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
-    /* border-bottom: 1px solid var(--border-color); */
+    padding: 0 24px; /* Unified padding */
+    height: 60px; /* Standardized height */
+    box-sizing: border-box;
   }
 
   .content-header h3 {
-    font-size: 16px;
+    font-size: 15px; /* Slightly smaller for refinement */
     font-weight: 600;
     color: var(--text-primary);
     margin: 0;
@@ -277,7 +309,8 @@
 
   .content-body {
     flex: 1;
-    padding: 8px 24px 24px;
+    flex: 1;
+    padding: 8px 24px 24px; /* Increased side padding to 24px */
     overflow-y: auto;
     scrollbar-gutter: stable;
     position: relative;
@@ -303,48 +336,35 @@
   }
 
   :global(.settings-section) {
-    margin-bottom: 20px;
+    margin-bottom: 16px; /* Increased breathing room */
     background: var(--settings-section-bg);
-    border: 1px solid var(--settings-section-border);
-    border-radius: 14px;
-    padding: 14px;
+    border: none;
+    padding: 12px; /* Reduced from 16px */
     box-shadow: var(--settings-section-shadow);
+    border-radius: 12px;
   }
 
   :global(.section-title) {
-    font-size: 11px;
+    font-size: 12px;
     font-weight: 600;
-    color: var(--settings-section-title);
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
+    color: var(--text-secondary);
     margin-bottom: 12px;
-    padding-left: 10px;
-    position: relative;
+    padding-left: 2px;
     line-height: 1.2;
-  }
-
-  :global(.section-title::before) {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 4px;
-    height: 14px;
-    border-radius: 999px;
-    background: var(--settings-section-title-bg);
+    letter-spacing: 0.04em;
+    text-transform: uppercase; /* Re-added uppercase */
   }
 
   /* ── 共享设置布局 ── */
   :global(.settings-container) {
     display: flex;
     flex-direction: column;
-    gap: 12px;
+    gap: 8px; /* Reduced from 12px */
   }
 
   :global(.setting-list) {
     background: var(--settings-list-bg);
-    border: 1px solid var(--settings-list-border);
+    border: none;
     border-radius: 10px;
     overflow: hidden;
   }
@@ -353,9 +373,13 @@
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--settings-list-border);
-    transition: background 0.2s;
+    padding: 10px 16px; /* Reduced to 10px */
+    border-bottom: none;
+    margin-bottom: 2px;
+    border-radius: 8px; /* Added subtle radius */
+    transition:
+      background 0.2s ease,
+      transform 0.2s ease;
   }
 
   :global(.setting-item:last-child) {
@@ -379,14 +403,18 @@
   }
 
   :global(.setting-name) {
-    font-size: 13px;
+    font-size: 15px; /* Up from 14px */
     font-weight: 500;
     color: var(--settings-list-row-text);
+    letter-spacing: 0.01em;
+    margin-bottom: 3px; /* Increased spacing */
   }
 
   :global(.setting-desc) {
-    font-size: 11px;
-    color: var(--settings-list-row-text-muted);
+    font-size: 11px; /* Reduced to 11px */
+    color: #94a3b8;
+    line-height: 1.4;
+    margin-top: 2px;
   }
 
   /* ── 统一 Switch 开关 ── */
@@ -411,8 +439,12 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: var(--settings-switch-track-off);
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: var(
+      --settings-switch-track-off,
+      #cbd5e1
+    ); /* Fallback to concrete gray */
+    border: 1px solid rgba(0, 0, 0, 0.05); /* Slight border for definition */
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 20px;
   }
 
@@ -423,14 +455,15 @@
     width: 14px;
     left: 2px;
     bottom: 2px;
-    background-color: var(--settings-switch-thumb);
-    transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
+    background-color: white; /* Force white thumb */
+    transition: 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 50%;
     box-shadow: var(--settings-switch-thumb-shadow);
   }
 
   :global(input:checked + .slider) {
-    background-color: var(--settings-switch-track-on);
+    background-color: #2563eb !important; /* Force Blue 600 */
+    opacity: 1;
   }
 
   :global(input:checked + .slider:before) {

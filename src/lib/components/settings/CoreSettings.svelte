@@ -1,118 +1,151 @@
 <script lang="ts">
-    import { FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
-    import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/services/aria2Config';
-    import { appSettings, updateAppSettings } from '$lib/services/settings';
-    import { onMount } from 'svelte';
-    import { importAria2Binary, getAria2KernelVersionInfo } from '$lib/services/aria2';
-    import type { Aria2VersionInfo } from '$lib/types/download';
-    import { open as openDialog } from '@tauri-apps/plugin-dialog';
-    import { relaunch } from '@tauri-apps/plugin-process';
-    import { createLogger } from '$lib/utils/logger';
+  import {
+    FileCode,
+    FileUp,
+    Key,
+    RefreshCw,
+    Copy,
+    Eye,
+    EyeOff,
+    AlertCircle,
+    RotateCcw,
+  } from "@lucide/svelte";
+  import {
+    aria2Config,
+    configPath,
+    isImporting,
+    loadAria2Config,
+    importAria2Config,
+  } from "$lib/services/aria2Config";
+  import { appSettings, updateAppSettings } from "$lib/services/settings";
+  import { onMount } from "svelte";
+  import {
+    importAria2Binary,
+    getAria2KernelVersionInfo,
+  } from "$lib/services/aria2";
+  import type { Aria2VersionInfo } from "$lib/types/download";
+  import { open as openDialog } from "@tauri-apps/plugin-dialog";
+  import { relaunch } from "@tauri-apps/plugin-process";
+  import { createLogger } from "$lib/utils/logger";
 
-    const logger = createLogger('CoreSettings');
+  const logger = createLogger("CoreSettings");
 
-    let isDirty = $state(false);
-    let showSecret = $state(false);
-    let aria2Version = $state<Aria2VersionInfo | null>(null);
-    let isImportingKernel = $state(false);
+  let isDirty = $state(false);
+  let showSecret = $state(false);
+  let aria2Version = $state<Aria2VersionInfo | null>(null);
+  let isImportingKernel = $state(false);
 
-    type DialogSelection = string | { path?: string } | Array<string | { path?: string }> | null;
+  type DialogSelection =
+    | string
+    | { path?: string }
+    | Array<string | { path?: string }>
+    | null;
 
-    function resolveDialogPath(selection: DialogSelection): string | null {
-        if (!selection) return null;
-        if (typeof selection === 'string') return selection;
-        if (Array.isArray(selection)) {
-            const first = selection[0];
-            if (!first) return null;
-            return typeof first === 'string' ? first : first.path ?? null;
-        }
-        return selection.path ?? null;
+  function resolveDialogPath(selection: DialogSelection): string | null {
+    if (!selection) return null;
+    if (typeof selection === "string") return selection;
+    if (Array.isArray(selection)) {
+      const first = selection[0];
+      if (!first) return null;
+      return typeof first === "string" ? first : (first.path ?? null);
     }
+    return selection.path ?? null;
+  }
 
-    onMount(() => {
-        loadVersionInfo();
-    });
+  onMount(() => {
+    loadVersionInfo();
+  });
 
-    async function loadVersionInfo() {
-        try {
-            aria2Version = await getAria2KernelVersionInfo();
-        } catch (e) {
-            logger.error('Failed to load aria2 version info', { error: e });
-        }
+  async function loadVersionInfo() {
+    try {
+      aria2Version = await getAria2KernelVersionInfo();
+    } catch (e) {
+      logger.error("Failed to load aria2 version info", { error: e });
     }
+  }
 
-    async function importKernel() {
-        isImportingKernel = true;
-        try {
-            const selected = await openDialog({
-                filters: [{
-                    name: 'Executable',
-                    extensions: window.navigator.userAgent.includes('Win') ? ['exe'] : []
-                }],
-                multiple: false
-            });
+  async function importKernel() {
+    isImportingKernel = true;
+    try {
+      const selected = await openDialog({
+        filters: [
+          {
+            name: "Executable",
+            extensions: window.navigator.userAgent.includes("Win")
+              ? ["exe"]
+              : [],
+          },
+        ],
+        multiple: false,
+      });
 
-            const path = resolveDialogPath(selected as DialogSelection);
-            if (path) {
-                const version = await importAria2Binary(path);
-                alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
-                await saveSettings();
-                await loadVersionInfo();
-            }
-        } catch (e) {
-            logger.error('Failed to import custom aria2 binary', { error: e });
-            alert('导入失败: ' + e);
-        } finally {
-            isImportingKernel = false;
-        }
+      const path = resolveDialogPath(selected as DialogSelection);
+      if (path) {
+        const version = await importAria2Binary(path);
+        alert(
+          `内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`,
+        );
+        await saveSettings();
+        await loadVersionInfo();
+      }
+    } catch (e) {
+      logger.error("Failed to import custom aria2 binary", { error: e });
+      alert("导入失败: " + e);
+    } finally {
+      isImportingKernel = false;
     }
+  }
 
-    async function restartApp() {
-        if (confirm('确定要重启应用以应用更改吗？')) {
-            await relaunch();
-        }
+  async function restartApp() {
+    if (confirm("确定要重启应用以应用更改吗？")) {
+      await relaunch();
     }
+  }
 
-    function onPortChange() {
-        isDirty = true;
-    }
+  function onPortChange() {
+    isDirty = true;
+  }
 
-    async function saveSettings() {
-        try {
-            await updateAppSettings({
-                rpcPort: $appSettings.rpcPort,
-                rpcSecret: $appSettings.rpcSecret,
-                useCustomAria2: $appSettings.useCustomAria2,
-            });
-            isDirty = false;
-        } catch (e) {
-            logger.error('Failed to save core settings', { error: e });
-        }
+  async function saveSettings() {
+    try {
+      await updateAppSettings({
+        rpcPort: $appSettings.rpcPort,
+        rpcSecret: $appSettings.rpcSecret,
+        useCustomAria2: $appSettings.useCustomAria2,
+      });
+      isDirty = false;
+    } catch (e) {
+      logger.error("Failed to save core settings", { error: e });
     }
+  }
 
-    function generateSecret() {
-        if (confirm('重新生成密钥将导致当前连接断开，且需要重启应用生效。确定要继续吗？')) {
-             $appSettings.rpcSecret = crypto.randomUUID();
-             saveSettings();
-             isDirty = false;
-        }
+  function generateSecret() {
+    if (
+      confirm(
+        "重新生成密钥将导致当前连接断开，且需要重启应用生效。确定要继续吗？",
+      )
+    ) {
+      $appSettings.rpcSecret = crypto.randomUUID();
+      saveSettings();
+      isDirty = false;
     }
+  }
 
-    async function copySecret() {
-        if ($appSettings.rpcSecret) {
-            try {
-                await navigator.clipboard.writeText($appSettings.rpcSecret);
-            } catch (e) {
-                logger.error('Failed to copy rpc secret', { error: e });
-            }
-        }
+  async function copySecret() {
+    if ($appSettings.rpcSecret) {
+      try {
+        await navigator.clipboard.writeText($appSettings.rpcSecret);
+      } catch (e) {
+        logger.error("Failed to copy rpc secret", { error: e });
+      }
     }
+  }
 </script>
 
 <div class="settings-container">
   <section class="settings-section">
     <h4 class="section-title">RPC 服务</h4>
-    
+
     <div class="setting-list">
       <div class="setting-item">
         <div class="setting-info">
@@ -120,11 +153,11 @@
           <div class="setting-desc">Aria2 RPC 服务的端口</div>
         </div>
         <div class="input-actions">
-          <input 
-            type="number" 
+          <input
+            type="number"
             bind:value={$appSettings.rpcPort}
             oninput={onPortChange}
-            class="inner-input-field" 
+            class="inner-input-field"
           />
           {#if isDirty}
             <button class="small-save-btn" onclick={saveSettings}>保存</button>
@@ -137,21 +170,28 @@
           <div class="setting-name">连接密钥 (Secret)</div>
           <div class="setting-desc">用于 RPC 通信的身份验证</div>
         </div>
-        
+
         <div class="secret-field">
           <div class="secret-box">
-            <input 
-              type={showSecret ? "text" : "password"} 
+            <input
+              type={showSecret ? "text" : "password"}
               bind:value={$appSettings.rpcSecret}
               readonly
             />
-            <button class="icon-toggle" onclick={() => showSecret = !showSecret}>
+            <button
+              class="icon-toggle"
+              onclick={() => (showSecret = !showSecret)}
+            >
               {#if showSecret}<EyeOff size={14} />{:else}<Eye size={14} />{/if}
             </button>
           </div>
           <div class="side-actions">
-            <button class="mini-btn" onclick={copySecret} title="复制"><Copy size={14} /></button>
-            <button class="mini-btn" onclick={generateSecret} title="重新生成"><RefreshCw size={14} /></button>
+            <button class="mini-btn" onclick={copySecret} title="复制"
+              ><Copy size={14} /></button
+            >
+            <button class="mini-btn" onclick={generateSecret} title="重新生成"
+              ><RefreshCw size={14} /></button
+            >
           </div>
         </div>
       </div>
@@ -160,63 +200,73 @@
 
   <section class="settings-section">
     <h4 class="section-title">内核管理</h4>
-    
+
     <div class="kernel-card">
       <div class="kernel-header">
-         <div class="kernel-info">
-             <div class="kernel-label">当前内核版本</div>
-             <div class="kernel-value">
-                 {#if aria2Version}
-                     <span class="version-text">{aria2Version.version}</span>
-                     {#if aria2Version.is_custom}
-                        <span class="badge warning">自定义</span>
-                     {:else}
-                        <span class="badge gray">内置</span>
-                     {/if}
-                 {:else}
-                     <span class="loading-text">检测中...</span>
-                 {/if}
-             </div>
-             {#if aria2Version?.path}
-                <div class="kernel-path" title={aria2Version.path}>{aria2Version.path}</div>
-             {/if}
-         </div>
-      </div>
-      
-      <div class="kernel-actions">
-           <div class="toggle-row">
-               <span class="toggle-label">启用自定义内核</span>
-               <label class="switch">
-                 <input 
-                    type="checkbox" 
-                    bind:checked={$appSettings.useCustomAria2} 
-                    disabled={!aria2Version?.custom_binary_exists}
-                    onchange={async () => {
-                        await saveSettings();
-                        loadVersionInfo();
-                    }}
-                 />
-                 <span class="slider"></span>
-               </label>
-               
-               <button class="mini-btn" onclick={restartApp} title="重启应用">
-                   <RotateCcw size={14} />
-               </button>
-           </div>
-           
-           <button class="secondary-btn" onclick={importKernel} disabled={isImportingKernel}>
-              {#if isImportingKernel}
-                  <RefreshCw size={14} class="spin" />
+        <div class="kernel-info">
+          <div class="kernel-label">当前内核版本</div>
+          <div class="kernel-value">
+            {#if aria2Version}
+              <span class="version-text">
+                {aria2Version.version.replace(/Built-in\s*\(|\)/g, "")}
+              </span>
+              {#if aria2Version.is_custom}
+                <span class="badge warning">自定义</span>
               {:else}
-                  <FileUp size={14} />
+                <span class="badge gray">内置</span>
               {/if}
-              <span>导入新内核...</span>
-           </button>
+            {:else}
+              <span class="loading-text">检测中...</span>
+            {/if}
+          </div>
+          {#if aria2Version?.path}
+            <div class="kernel-path" title={aria2Version.path}>
+              {aria2Version.path}
+            </div>
+          {/if}
+        </div>
       </div>
-      
+
+      <div class="kernel-actions">
+        <div class="toggle-row">
+          <span class="toggle-label">启用自定义内核</span>
+          <label class="switch">
+            <input
+              type="checkbox"
+              bind:checked={$appSettings.useCustomAria2}
+              disabled={!aria2Version?.custom_binary_exists}
+              onchange={async () => {
+                await saveSettings();
+                loadVersionInfo();
+              }}
+            />
+            <span class="slider"></span>
+          </label>
+
+          <button class="mini-btn" onclick={restartApp} title="重启应用">
+            <RotateCcw size={14} />
+          </button>
+        </div>
+
+        <button
+          class="secondary-btn"
+          onclick={importKernel}
+          disabled={isImportingKernel}
+        >
+          {#if isImportingKernel}
+            <RefreshCw size={14} class="spin" />
+          {:else}
+            <FileUp size={14} />
+          {/if}
+          <span>导入新内核...</span>
+        </button>
+      </div>
+
       <div class="kernel-tip">
-          <AlertCircle size={12} />
-          <span>支持导入外部 aria2c 可执行文件 (v1.35.0+)。需要重启应用生效。</span>
+        <AlertCircle size={12} />
+        <span
+          >支持导入外部 aria2c 可执行文件 (v1.35.0+)。需要重启应用生效。</span
+        >
       </div>
     </div>
   </section>
@@ -228,17 +278,21 @@
         <FileCode size={20} class="core-icon" />
         <div class="import-info">
           <div class="comp-name">自定义 aria2.conf</div>
-          <div class="comp-path">{$configPath || '加载中...'}</div>
+          <div class="comp-path">{$configPath || "加载中..."}</div>
         </div>
       </div>
-      
+
       <div class="config-actions">
         {#if $aria2Config}
           <div class="badge success">已加载自定义配置</div>
         {:else}
           <div class="badge gray">使用内置默认配置</div>
         {/if}
-        <button class="secondary-btn" onclick={importAria2Config} disabled={$isImporting}>
+        <button
+          class="secondary-btn"
+          onclick={importAria2Config}
+          disabled={$isImporting}
+        >
           <FileUp size={14} />
           <span>导入配置</span>
         </button>
@@ -299,7 +353,7 @@
     padding: 8px 36px 8px 12px;
     color: var(--text-primary);
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: "JetBrains Mono", monospace;
   }
 
   .icon-toggle {
@@ -384,11 +438,25 @@
     border-radius: 4px;
     font-size: 10px;
     font-weight: 600;
+    display: inline-flex;
+    align-items: center;
+    height: 20px;
+    line-height: 1;
   }
 
-  .badge.success { background: var(--success-soft-bg); color: var(--success-soft-text); }
-  .badge.gray { background: var(--settings-chip-neutral-bg); color: var(--settings-chip-neutral-text); border: 1px solid var(--settings-chip-neutral-border); }
-  .badge.warning { background: var(--warning-soft-bg); color: var(--warning-soft-text); }
+  .badge.success {
+    background: var(--success-soft-bg);
+    color: var(--success-soft-text);
+  }
+  .badge.gray {
+    background: var(--settings-chip-neutral-bg);
+    color: var(--settings-chip-neutral-text);
+    border: 1px solid var(--settings-chip-neutral-border);
+  }
+  .badge.warning {
+    background: var(--warning-soft-bg);
+    color: var(--warning-soft-text);
+  }
 
   .secondary-btn {
     display: flex;
@@ -409,7 +477,7 @@
     background: var(--settings-control-bg-hover);
     border-color: var(--settings-control-border-hover);
   }
-  
+
   /* Kernel Card */
   .kernel-card {
     background: var(--settings-list-bg);
@@ -420,84 +488,86 @@
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .kernel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: flex-start;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
   }
-  
+
   .kernel-info {
-      display: flex;
-      flex-direction: column;
-      gap: 4px;
-      overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    overflow: hidden;
   }
-  
+
   .kernel-label {
-      font-size: 11px;
-      color: var(--text-muted);
+    font-size: 11px;
+    color: var(--text-muted);
   }
-  
+
   .kernel-value {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  
+
   .version-text {
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text-primary);
-      font-family: 'JetBrains Mono', monospace;
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text-primary);
+    font-family: "JetBrains Mono", monospace;
   }
-  
+
   .kernel-path {
-      font-size: 10px;
-      color: var(--text-muted);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      max-width: 300px;
-      opacity: 0.7;
+    font-size: 10px;
+    color: var(--text-muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 300px;
+    opacity: 0.7;
   }
-  
+
   .kernel-actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      padding-top: 12px;
-      border-top: 1px solid var(--settings-list-border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 12px;
+    border-top: 1px solid var(--settings-list-border);
   }
-  
+
   .toggle-row {
-      display: flex;
-      align-items: center;
-      gap: 8px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
   }
-  
+
   .toggle-label {
-      font-size: 12px;
-      color: var(--text-secondary);
+    font-size: 12px;
+    color: var(--text-secondary);
   }
-  
+
   .kernel-tip {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      font-size: 10px;
-      color: var(--text-tertiary);
-      padding: 8px 12px;
-      background: var(--settings-control-bg);
-      border: 1px solid var(--settings-control-border);
-      border-radius: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    padding: 8px 12px;
+    background: var(--settings-control-bg);
+    border: 1px solid var(--settings-control-border);
+    border-radius: 6px;
   }
-  
+
   :global(.spin) {
-      animation: spin 1s linear infinite;
+    animation: spin 1s linear infinite;
   }
-  
+
   @keyframes spin {
-      100% { transform: rotate(360deg); }
+    100% {
+      transform: rotate(360deg);
+    }
   }
 </style>
