@@ -1,19 +1,19 @@
 <script lang="ts">
-  import { Github, Globe, Heart } from '@lucide/svelte';
-  import { open } from '@tauri-apps/plugin-shell';
-  import { getVersion } from '@tauri-apps/api/app';
-  import { onMount } from 'svelte';
-  import { createLogger } from '$lib/utils/logger';
+  import { Github, Globe, Heart } from "@lucide/svelte";
+  import { open } from "@tauri-apps/plugin-shell";
+  import { getVersion } from "@tauri-apps/api/app";
+  import { onMount } from "svelte";
+  import { createLogger } from "$lib/utils/logger";
 
-  const logger = createLogger('AboutSettings');
+  const logger = createLogger("AboutSettings");
 
   let version = $state("0.0.0");
- 
+
   onMount(async () => {
     try {
       version = await getVersion();
     } catch (e) {
-      logger.error('Failed to get version', { error: e });
+      logger.error("Failed to get version", { error: e });
     }
   });
 
@@ -21,7 +21,7 @@
     try {
       await open(url);
     } catch (e) {
-      logger.error('Failed to open URL', { url, error: e });
+      logger.error("Failed to open URL", { url, error: e });
     }
   }
 </script>
@@ -34,13 +34,16 @@
     <h2 class="app-name">Mua</h2>
     <p class="app-tagline">简洁、现代的轻量级下载工具</p>
     <div class="app-version">Version {version}</div>
-    
+
     <div class="action-grid">
-      <button class="action-tile" onclick={() => openUrl('https://github.com/beyoug/mua')}>
+      <button
+        class="action-tile"
+        onclick={() => openUrl("https://github.com/beyoug/mua")}
+      >
         <Github size={20} />
         <span>GitHub</span>
       </button>
-      <button class="action-tile" onclick={() => openUrl('https://mua.local')}>
+      <button class="action-tile" onclick={() => openUrl("https://mua.local")}>
         <Globe size={20} />
         <span>官网</span>
       </button>
@@ -119,7 +122,7 @@
   .app-version {
     font-size: 11px;
     color: var(--text-muted);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: "JetBrains Mono", monospace;
     margin-top: 12px;
     background: var(--settings-control-bg);
     border: 1px solid var(--settings-control-border);

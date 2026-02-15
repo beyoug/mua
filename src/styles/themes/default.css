@@ -43,31 +43,39 @@ html.theme-default {
   --nav-hover-border: rgba(74, 158, 255, 0.30);
   --nav-active-bg: rgba(74, 158, 255, 0.22);
   --nav-active-border: rgba(74, 158, 255, 0.42);
+  /* Hierarchy: Sidebar slightly darker to recede */
+  --bg-secondary: rgba(0, 0, 0, 0.2);
   --nav-active-text: var(--accent-text);
 
-  --settings-section-bg: rgba(15, 26, 46, 0.72);
-  --settings-section-border: rgba(74, 158, 255, 0.32);
+  /* Hierarchy: Sections as lighter distinct cards */
+  --settings-section-bg: transparent;
+  --settings-section-border: transparent;
+  /* Ensure removal */
   --settings-section-title: var(--accent-text);
-  --settings-section-title-bg: rgba(74, 158, 255, 0.24);
-  --settings-item-hover-bg: rgba(74, 158, 255, 0.14);
-  --settings-list-bg: rgba(12, 22, 40, 0.84);
-  --settings-list-border: rgba(74, 158, 255, 0.34);
-  --settings-section-shadow: 0 0 0 1px rgba(74, 158, 255, 0.22), var(--shadow-md);
+  --settings-section-title-bg: rgba(74, 158, 255, 0.15);
+  --settings-item-hover-bg: rgba(74, 158, 255, 0.1);
+  --settings-list-bg: rgba(12, 22, 40, 0.6);
+  /* Inner list background */
+  --settings-list-border: transparent;
+  --settings-section-shadow: none;
 
   --settings-control-bg: rgba(10, 20, 36, 0.72);
   --settings-control-border: rgba(74, 158, 255, 0.28);
-  --settings-control-bg-hover: rgba(74, 158, 255, 0.12);
-  --settings-control-border-hover: rgba(74, 158, 255, 0.40);
+  /* More subtle hover for borderless design */
+  --settings-control-bg-hover: rgba(74, 158, 255, 0.08);
+  --settings-control-border-hover: transparent;
 
   /* Glass Overrides - Dark */
-  /* Increase border opacity for better visibility */
-  --glass-bg: rgba(15, 23, 42, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.15);
-  --glass-blur: blur(20px);
-  --glass-saturate: saturate(120%);
-  --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  /* Enhanced Glassmorphism */
+  --glass-bg: rgba(15, 23, 42, 0.60);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  /* Faint highlight instead of border */
+  --glass-blur: blur(40px);
+  --glass-saturate: saturate(180%);
+  --glass-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 
-  --dialog-bg: rgba(15, 23, 42, 0.85);
+  --dialog-bg: rgba(15, 23, 42, 0.65);
+  /* More transparent */
   --dialog-overlay-bg: rgba(0, 0, 0, 0.6);
 }
 
@@ -96,11 +104,13 @@ html.light.theme-default {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%);
 
-  /* 浅色玻璃态 (Restored) */
-  --glass-bg: rgba(255, 255, 255, 0.45);
+  /* 浅色玻璃态 (Enhanced) */
+  --glass-bg: rgba(255, 255, 255, 0.65);
   --glass-border: rgba(255, 255, 255, 0.4);
-  --glass-blur: blur(24px);
-  --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
+  --glass-blur: blur(40px);
+  --glass-saturate: saturate(180%);
+  /* Higher saturation for premium look */
+  --glass-shadow: 0 10px 40px -5px rgba(0, 0, 0, 0.1);
 
   /* 边框颜色 */
   --border-color: rgba(56, 189, 248, 0.18);
@@ -110,7 +120,7 @@ html.light.theme-default {
   --border-strong: rgba(56, 189, 248, 0.3);
   --surface-hover: rgba(255, 255, 255, 0.4);
 
-  --dialog-bg: rgba(255, 255, 255, 0.8);
+  --dialog-bg: rgba(255, 255, 255, 0.65);
   --overlay-bg: rgba(255, 255, 255, 0.85);
 
   --input-bg: rgba(255, 255, 255, 0.7);
@@ -134,6 +144,14 @@ html.light.theme-default {
   --settings-control-border: rgba(56, 189, 248, 0.24);
   --settings-control-bg-hover: rgba(56, 189, 248, 0.10);
   --settings-control-border-hover: rgba(56, 189, 248, 0.34);
+
+  /* Light Mode Hierarchy */
+  --bg-secondary: rgba(0, 0, 0, 0.03);
+  --settings-section-bg: transparent;
+  --settings-list-bg: rgba(255, 255, 255, 0.6);
+  --settings-section-border: transparent;
+  --settings-list-border: transparent;
+  --settings-section-shadow: none;
 
   /* 遮罩 */
   --dialog-overlay-bg: rgba(15, 23, 42, 0.15);

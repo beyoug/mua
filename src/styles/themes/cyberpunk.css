@@ -52,23 +52,26 @@ html.theme-cyberpunk {
   --nav-active-border: rgba(34, 211, 238, 0.56);
   --nav-active-text: var(--accent-text);
 
-  --settings-section-bg: rgba(8, 20, 36, 0.78);
-  --settings-section-border: rgba(34, 211, 238, 0.40);
+  /* Cyberpunk Hierarchy */
+  --bg-secondary: rgba(0, 0, 0, 0.3);
+
+  --settings-section-bg: transparent;
+  --settings-section-border: transparent;
   --settings-section-title: var(--accent-text);
-  --settings-section-title-bg: rgba(34, 211, 238, 0.32);
-  --settings-item-hover-bg: rgba(34, 211, 238, 0.18);
-  --settings-list-bg: rgba(6, 16, 30, 0.86);
-  --settings-list-border: rgba(34, 211, 238, 0.42);
-  --settings-section-shadow: 0 0 0 1px rgba(34, 211, 238, 0.28), 0 0 18px rgba(34, 211, 238, 0.09), var(--shadow-md);
+  --settings-section-title-bg: rgba(34, 211, 238, 0.2);
+  --settings-item-hover-bg: rgba(34, 211, 238, 0.15);
+  --settings-list-bg: rgba(0, 0, 0, 0.4);
+  --settings-list-border: transparent;
+  --settings-section-shadow: none;
 
   /* Glass Overrides - Dark (High Contrast) */
-  --glass-bg: rgba(10, 15, 30, 0.75);
-  --glass-border: rgba(34, 211, 238, 0.3);
-  --glass-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
-  --glass-blur: blur(16px);
-  --glass-saturate: saturate(200%);
+  --glass-bg: rgba(10, 15, 30, 0.65);
+  --glass-border: rgba(34, 211, 238, 0.2);
+  --glass-shadow: 0 0 30px rgba(34, 211, 238, 0.1);
+  --glass-blur: blur(32px);
+  --glass-saturate: saturate(220%);
 
-  --dialog-bg: rgba(5, 10, 20, 0.9);
+  --dialog-bg: rgba(5, 10, 20, 0.75);
   --dialog-overlay-bg: rgba(0, 0, 0, 0.7);
 }
 
@@ -141,23 +144,25 @@ html.light.theme-cyberpunk {
   --nav-active-border: rgba(8, 145, 178, 0.44);
   --nav-active-text: var(--accent-text);
 
-  --settings-section-bg: rgba(240, 251, 255, 0.90);
-  --settings-section-border: rgba(8, 145, 178, 0.32);
+  --bg-secondary: rgba(8, 145, 178, 0.05);
+
+  --settings-section-bg: transparent;
+  --settings-section-border: transparent;
   --settings-section-title: var(--accent-text);
   --settings-section-title-bg: rgba(8, 145, 178, 0.24);
   --settings-item-hover-bg: rgba(8, 145, 178, 0.14);
   --settings-list-bg: rgba(255, 255, 255, 0.94);
-  --settings-list-border: rgba(8, 145, 178, 0.34);
-  --settings-section-shadow: 0 0 0 1px rgba(8, 145, 178, 0.22), var(--shadow-sm);
+  --settings-list-border: transparent;
+  --settings-section-shadow: none;
 
   /* Glass Overrides - Light (Lab Clean) */
-  --glass-bg: rgba(255, 255, 255, 0.8);
-  --glass-border: rgba(8, 145, 178, 0.2);
-  --glass-shadow: 0 4px 16px rgba(8, 145, 178, 0.1);
-  --glass-blur: blur(20px);
-  --glass-saturate: saturate(150%);
+  --glass-bg: rgba(255, 255, 255, 0.7);
+  --glass-border: rgba(8, 145, 178, 0.15);
+  --glass-shadow: 0 8px 32px rgba(8, 145, 178, 0.15);
+  --glass-blur: blur(32px);
+  --glass-saturate: saturate(180%);
 
-  --dialog-bg: rgba(255, 255, 255, 0.95);
+  --dialog-bg: rgba(255, 255, 255, 0.75);
   --dialog-overlay-bg: rgba(240, 249, 255, 0.5);
 }
 
