@@ -7,6 +7,36 @@ on:
       - 'v*'
 
 jobs:
+  quality-gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: setup node
+        uses: actions/setup-node@v4
+        with:
+          node-version: lts/*
+
+      - name: install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: latest
+
+      - name: install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: install frontend dependencies
+        run: pnpm install
+
+      - name: run frontend checks
+        run: pnpm check
+
+      - name: run rust checks
+        run: cargo check --manifest-path src-tauri/Cargo.toml
+
+      - name: run rust tests
+        run: cargo test --manifest-path src-tauri/Cargo.toml
+
   create-release-branch:
     runs-on: ubuntu-latest
     if: startsWith(github.ref, 'refs/tags/v')
@@ -30,7 +60,7 @@ jobs:
           fi
 
   publish:
-    needs: create-release-branch
+    needs: [quality-gate, create-release-branch]
     permissions:
       contents: write
     strategy:

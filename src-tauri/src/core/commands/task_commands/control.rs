@@ -74,7 +74,28 @@ pub async fn cancel_tasks(
         .iter()
         .map(|gid| aria2_client::remove(gid.clone()))
         .collect();
-    let _ = join_all(futures).await;
+    let results = join_all(futures).await;
+
+    let mut failed: Vec<String> = Vec::new();
+    for (idx, result) in results.into_iter().enumerate() {
+        if let Err(error) = result {
+            let gid = gids.get(idx).cloned().unwrap_or_else(|| "unknown".to_string());
+            failed.push(gid.clone());
+            crate::app_warn!(
+                "Core::TaskControl",
+                "cancel_batch_item_failed",
+                json!({ "gid": gid, "error": error.to_string() })
+            );
+        }
+    }
+
+    if !failed.is_empty() {
+        crate::app_warn!(
+            "Core::TaskControl",
+            "cancel_batch_partial_failure",
+            json!({ "failed_gids": failed })
+        );
+    }
 
     Ok(())
 }
@@ -140,7 +161,13 @@ async fn smart_resume_task(state: &TaskStore, gid: String) -> AppResult<String> 
             limit_opt.clone(),
         );
 
-        let _ = aria2_client::purge(gid.clone()).await;
+        if let Err(error) = aria2_client::purge(gid.clone()).await {
+            crate::app_warn!(
+                "Core::TaskControl",
+                "smart_resume_purge_failed",
+                json!({ "gid": gid.clone(), "error": error.to_string() })
+            );
+        }
 
         // 区分重下逻辑：URL (HTTP/Magnet) vs Local Torrent File
         let result = if task.url.starts_with("file://") {

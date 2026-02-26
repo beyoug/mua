@@ -64,7 +64,7 @@
 |------|------|------|
 | 构建框架 | Tauri | 2.0 |
 | 前端框架 | SvelteKit (SPA) | Svelte 5 |
-| 状态管理 | TanStack Query | v6 |
+| 状态管理 | Svelte Store + Service Layer | 内置 |
 | UI 组件 | shadcn-svelte | latest |
 | 样式 | Tailwind CSS | v4 |
 | 后端 | Rust | latest |

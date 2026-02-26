@@ -43,12 +43,9 @@ export function useAddTaskDialog(params: Params) {
     let isSubmitting = $state(false);
     let isSelectingFile = $state(false);
 
-    // 监听设置变更，如果 defaultSavePath 改变且当前 savePath 是旧的默认值（或占位符），则自动更新
     $effect(() => {
         const unsubscribe = appSettings.subscribe(settings => {
-            // 如果当前 savePath 是占位符 "..."，或者等于旧的 defaultSavePath (假设用户没改过)，则跟随更新
-            // 简单起见，如果 savePath 为 "..." 或空，且新的 defaultSavePath 有效，则覆盖
-            if ((savePath === '...' || !savePath) && settings.defaultSavePath && settings.defaultSavePath !== '...') {
+            if (!savePath && settings.defaultSavePath) {
                 savePath = settings.defaultSavePath;
             }
         });

@@ -8,7 +8,7 @@
   "permissions": [
     "core:default",
     "core:window:allow-start-dragging",
-    "shell:allow-open",
+    "shell:default",
     "dialog:default",
     {
       "identifier": "shell:allow-spawn",
@@ -21,18 +21,6 @@
       ]
     },
     "notification:default",
-    "process:default",
-    "fs:default",
-    {
-      "identifier": "fs:allow-read-text-file",
-      "allow": [
-        {
-          "path": "$HOME/**"
-        },
-        {
-          "path": "$DOWNLOAD/**"
-        }
-      ]
-    }
+    "process:default"
   ]
 }

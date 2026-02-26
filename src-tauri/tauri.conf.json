@@ -29,15 +29,7 @@
         "backgroundColor": "#00000000",
         "visible": true
       }
-    ],
-    "security": {
-      "csp": null
-    }
-  },
-  "plugins": {
-    "shell": {
-      "open": true
-    }
+    ]
   },
   "bundle": {
     "active": true,

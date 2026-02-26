@@ -14,7 +14,7 @@ const DEFAULT_CONFIG: AppConfig = {
     autoStart: false,
     maxConcurrentDownloads: 3,
     uaHistory: [],
-    defaultSavePath: '...', // 将在 loadAppSettings 时从后端动态获取
+    defaultSavePath: '',
     globalMaxDownloadLimit: '',
     globalMaxUploadLimit: '',
     theme: 'default',
@@ -55,8 +55,7 @@ export async function loadAppSettings() {
         if (config.dhtListenPort === '6881-6999') config.dhtListenPort = '6881';
         if (config.listenPort === '6881-6999') config.listenPort = '6881';
 
-        // 如果默认下载路径未设置或为占位符，尝试获取系统默认下载目录
-        if (!config.defaultSavePath || config.defaultSavePath === '...') {
+        if (!config.defaultSavePath) {
             try {
                 const systemDownloadDir = await downloadDir();
                 if (systemDownloadDir) {

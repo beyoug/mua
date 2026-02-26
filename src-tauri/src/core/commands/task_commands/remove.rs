@@ -5,6 +5,30 @@ use crate::utils;
 use futures::future::join_all;
 use serde_json::json;
 
+fn log_batch_errors(scope: &str, gids: &[String], results: Vec<Result<String, AppError>>) {
+    let mut failed: Vec<String> = Vec::new();
+
+    for (idx, result) in results.into_iter().enumerate() {
+        if let Err(error) = result {
+            let gid = gids.get(idx).cloned().unwrap_or_else(|| "unknown".to_string());
+            failed.push(gid.clone());
+            crate::app_warn!(
+                "Core::TaskRemove",
+                scope,
+                json!({ "gid": gid, "error": error.to_string() })
+            );
+        }
+    }
+
+    if !failed.is_empty() {
+        crate::app_warn!(
+            "Core::TaskRemove",
+            "batch_operation_partial_failure",
+            json!({ "scope": scope, "failed_gids": failed })
+        );
+    }
+}
+
 fn delete_task_files(save_path: &str, filename: &str) {
     let full_path = utils::get_full_path(save_path, filename);
     let resolved_path = utils::resolve_path(&full_path);
@@ -41,13 +65,15 @@ pub async fn remove_tasks(
         .iter()
         .map(|gid| aria2_client::remove(gid.clone()))
         .collect();
-    let _ = join_all(active_futures).await;
+    let active_results = join_all(active_futures).await;
+    log_batch_errors("remove_active_failed", &active_gids, active_results);
 
     let purge_futures: Vec<_> = gids
         .iter()
         .map(|gid| aria2_client::purge(gid.clone()))
         .collect();
-    let _ = join_all(purge_futures).await;
+    let purge_results = join_all(purge_futures).await;
+    log_batch_errors("purge_failed", &gids, purge_results);
 
     state.remove_tasks_batch(&gids);
     state.save();
@@ -87,10 +113,28 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
     let is_active = task_opt.as_ref().is_some_and(|t| t.state.is_active());
 
     if is_active {
-        let _ = aria2_client::remove(gid.clone()).await;
-        let _ = aria2_client::purge(gid.clone()).await;
+        if let Err(error) = aria2_client::remove(gid.clone()).await {
+            crate::app_warn!(
+                "Core::TaskRemove",
+                "remove_single_active_failed",
+                json!({ "gid": gid, "error": error.to_string() })
+            );
+        }
+        if let Err(error) = aria2_client::purge(gid.clone()).await {
+            crate::app_warn!(
+                "Core::TaskRemove",
+                "purge_single_active_failed",
+                json!({ "gid": gid, "error": error.to_string() })
+            );
+        }
     } else {
-        let _ = aria2_client::purge(gid.clone()).await;
+        if let Err(error) = aria2_client::purge(gid.clone()).await {
+            crate::app_warn!(
+                "Core::TaskRemove",
+                "purge_single_failed",
+                json!({ "gid": gid, "error": error.to_string() })
+            );
+        }
     }
 
     state.remove_task(&gid);
