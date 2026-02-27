@@ -111,7 +111,9 @@ impl AppError {
             return false;
         };
 
+        // 优先使用结构化 JSON 错误码判断
         if let Ok(value) = serde_json::from_str::<serde_json::Value>(message) {
+            // aria2 标准错误码 1 = "GID not found"
             if value.get("code").and_then(|v| v.as_i64()) == Some(1) {
                 return true;
             }
@@ -123,9 +125,13 @@ impl AppError {
             {
                 return true;
             }
+
+            // 结构化 JSON 但未匹配 → 非 "not found" 错误
+            return false;
         }
 
+        // 仅在非 JSON 消息时回退到字符串匹配
         let lower = message.to_lowercase();
-        lower.contains("not found") || lower.contains("error 1") || lower.contains("gid")
+        lower.contains("not found") || lower.contains("gid")
     }
 }

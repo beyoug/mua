@@ -27,7 +27,7 @@ pub fn run() {
         .manage(crate::aria2::sidecar::SidecarState {
             child: std::sync::Mutex::new(None),
             native_child: std::sync::Mutex::new(None),
-            recent_logs: std::sync::Mutex::new(Vec::new()),
+            recent_logs: std::sync::Mutex::new(std::collections::VecDeque::new()),
         })
         .manage(crate::aria2::sidecar::ShutdownState(
             std::sync::atomic::AtomicBool::new(false),
@@ -98,37 +98,37 @@ pub fn run() {
     };
 
     app.run(|app, event| match event {
-            tauri::RunEvent::Exit => {
-                // Signal shutdown to sidecar loop
-                if let Some(state) = app.try_state::<crate::aria2::sidecar::ShutdownState>() {
-                    state.0.store(true, std::sync::atomic::Ordering::SeqCst);
-                }
-
-                let (child, native_child) = {
-                    let state = app.state::<crate::aria2::sidecar::SidecarState>();
-                    (
-                        state.child.lock().ok().and_then(|mut c| c.take()),
-                        state.native_child.lock().ok().and_then(|mut c| c.take()),
-                    )
-                };
-
-                if let Some(child) = child {
-                    crate::app_info!("App::Lifecycle", "kill_builtin_sidecar_requested");
-                    let _ = child.kill();
-                }
-
-                if let Some(mut child) = native_child {
-                    crate::app_info!("App::Lifecycle", "kill_custom_sidecar_requested");
-                    let _ = child.kill();
-                }
+        tauri::RunEvent::Exit => {
+            // Signal shutdown to sidecar loop
+            if let Some(state) = app.try_state::<crate::aria2::sidecar::ShutdownState>() {
+                state.0.store(true, std::sync::atomic::Ordering::SeqCst);
             }
-            #[cfg(target_os = "macos")]
-            tauri::RunEvent::Reopen { .. } => {
-                if let Some(window) = app.get_webview_window("main") {
-                    let _ = window.show();
-                    let _ = window.set_focus();
-                }
+
+            let (child, native_child) = {
+                let state = app.state::<crate::aria2::sidecar::SidecarState>();
+                (
+                    state.child.lock().ok().and_then(|mut c| c.take()),
+                    state.native_child.lock().ok().and_then(|mut c| c.take()),
+                )
+            };
+
+            if let Some(child) = child {
+                crate::app_info!("App::Lifecycle", "kill_builtin_sidecar_requested");
+                let _ = child.kill();
             }
-            _ => {}
-        });
+
+            if let Some(mut child) = native_child {
+                crate::app_info!("App::Lifecycle", "kill_custom_sidecar_requested");
+                let _ = child.kill();
+            }
+        }
+        #[cfg(target_os = "macos")]
+        tauri::RunEvent::Reopen { .. } => {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }
+        _ => {}
+    });
 }

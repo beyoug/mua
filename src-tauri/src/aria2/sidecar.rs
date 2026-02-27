@@ -1,13 +1,14 @@
-use chrono::Local;
 use crate::core::events::{EVENT_ARIA2_SIDECAR_ERROR, EVENT_ARIA2_STDOUT};
+use chrono::Local;
 use serde_json::json;
+use std::collections::VecDeque;
 use std::sync::Mutex;
 use std::time::Duration;
 use tauri::{AppHandle, Emitter, Manager};
 use tauri_plugin_shell::process::CommandChild;
 use tauri_plugin_shell::process::CommandEvent;
 use tauri_plugin_shell::ShellExt;
- 
+
 const INFINITE_SEED_TIME: &str = "999999999";
 
 fn find_available_port(start: u16) -> Result<u16, String> {
@@ -31,13 +32,18 @@ fn find_available_port(start: u16) -> Result<u16, String> {
 pub struct SidecarState {
     pub child: Mutex<Option<CommandChild>>,
     pub native_child: Mutex<Option<std::process::Child>>,
-    pub recent_logs: Mutex<Vec<String>>,
+    pub recent_logs: Mutex<VecDeque<String>>,
 }
 
 pub struct ShutdownState(pub std::sync::atomic::AtomicBool);
 
 pub fn init_aria2_sidecar(app: AppHandle) {
     tauri::async_runtime::spawn(async move {
+        #[allow(unused_assignments)]
+        let mut retry_delay_secs: u64 = 5;
+        const MAX_RETRY_DELAY_SECS: u64 = 60;
+        const INITIAL_RETRY_DELAY_SECS: u64 = 5;
+
         loop {
             // 启动前检查是否正在关闭（防止启动过快）
             if let Some(state) = app.try_state::<ShutdownState>() {
@@ -168,7 +174,10 @@ pub fn init_aria2_sidecar(app: AppHandle) {
             ];
 
             if !global_max_upload_limit.is_empty() {
-                args.push(format!("--max-overall-upload-limit={}", global_max_upload_limit));
+                args.push(format!(
+                    "--max-overall-upload-limit={}",
+                    global_max_upload_limit
+                ));
             }
 
             let normalized_bt_trackers = crate::utils::normalize_bt_trackers(&bt_trackers);
@@ -242,7 +251,10 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         );
                         Some(std::process::Command::new(bin_path))
                     } else {
-                        crate::app_warn!("Aria2::Sidecar", "custom_binary_missing_fallback_builtin");
+                        crate::app_warn!(
+                            "Aria2::Sidecar",
+                            "custom_binary_missing_fallback_builtin"
+                        );
                         None
                     }
                 } else {
@@ -343,9 +355,12 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 json!({ "pid": child_pid, "port": port })
             );
 
+            // 启动成功，重置重试延迟
+            retry_delay_secs = INITIAL_RETRY_DELAY_SECS;
+
             // 监控进程
             let mut manually_exited = false;
-            let mut stderr_buffer: Vec<String> = Vec::new();
+            let mut stderr_buffer: VecDeque<String> = VecDeque::new();
 
             while let Some(event) = rx.recv().await {
                 match event {
@@ -378,9 +393,9 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         // 日志缓冲
                         if let Some(state) = app.try_state::<SidecarState>() {
                             if let Ok(mut logs) = state.recent_logs.lock() {
-                                logs.push(log_str.clone());
+                                logs.push_back(log_str.clone());
                                 if logs.len() > 100 {
-                                    logs.remove(0);
+                                    logs.pop_front();
                                 }
                             }
                         }
@@ -398,22 +413,18 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         let log = String::from_utf8_lossy(&line);
                         let now = Local::now().format("%H:%M:%S");
                         let log_str = format!("[{}] [ERROR] {}", now, log.trim());
-                        crate::app_warn!(
-                            "Aria2::Sidecar",
-                            "stderr",
-                            json!({ "line": log.trim() })
-                        );
-                        stderr_buffer.push(log.to_string());
+                        crate::app_warn!("Aria2::Sidecar", "stderr", json!({ "line": log.trim() }));
+                        stderr_buffer.push_back(log.to_string());
                         if stderr_buffer.len() > 20 {
-                            stderr_buffer.remove(0);
+                            stderr_buffer.pop_front();
                         }
 
                         // 日志缓冲
                         if let Some(state) = app.try_state::<SidecarState>() {
                             if let Ok(mut logs) = state.recent_logs.lock() {
-                                logs.push(log_str.clone());
+                                logs.push_back(log_str.clone());
                                 if logs.len() > 100 {
-                                    logs.remove(0);
+                                    logs.pop_front();
                                 }
                             }
                         }
@@ -423,7 +434,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                             app.try_state::<crate::aria2::sidecar::LogStreamEnabled>()
                         {
                             if state.0.load(std::sync::atomic::Ordering::Relaxed) {
-                                    let _ = app.emit(EVENT_ARIA2_STDOUT, log_str);
+                                let _ = app.emit(EVENT_ARIA2_STDOUT, log_str);
                             }
                         }
                     }
@@ -431,10 +442,7 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                         // 首先检查是否正在关闭
                         if let Some(state) = app.try_state::<ShutdownState>() {
                             if state.0.load(std::sync::atomic::Ordering::SeqCst) {
-                                crate::app_info!(
-                                    "Aria2::Sidecar",
-                                    "terminated_during_shutdown"
-                                );
+                                crate::app_info!("Aria2::Sidecar", "terminated_during_shutdown");
                                 manually_exited = true;
                                 break;
                             }
@@ -452,9 +460,10 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
                         if is_error {
                             crate::app_error!("Aria2::Sidecar", "unexpected_exit_emitting_event");
-                            let stderr = stderr_buffer.join("");
+                            let stderr: String =
+                                stderr_buffer.iter().cloned().collect::<Vec<_>>().join("");
                             let _ = app.emit(
-        EVENT_ARIA2_SIDECAR_ERROR,
+                                EVENT_ARIA2_SIDECAR_ERROR,
                                 serde_json::json!({
                                     "message": "Aria2 sidecar 意外退出",
                                     "code": payload.code,
@@ -483,12 +492,16 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                 }
             }
 
+            // 指数退避：每次失败后加倍，上限 60 秒
+            let delay = retry_delay_secs;
+            retry_delay_secs = (retry_delay_secs * 2).min(MAX_RETRY_DELAY_SECS);
+
             crate::app_info!(
                 "Aria2::Sidecar",
                 "restart_scheduled",
-                json!({ "delay_secs": 5 })
+                json!({ "delay_secs": delay, "next_delay_secs": retry_delay_secs })
             );
-            tokio::time::sleep(Duration::from_secs(5)).await;
+            tokio::time::sleep(Duration::from_secs(delay)).await;
         }
     });
 }

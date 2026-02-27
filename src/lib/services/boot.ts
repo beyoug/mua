@@ -21,7 +21,18 @@ interface Aria2SidecarErrorPayload {
 export async function bootApp() {
 
     try {
-        const preventContextMenu = (e: MouseEvent) => e.preventDefault();
+        const preventContextMenu = (e: MouseEvent) => {
+            // 允许输入框/文本域使用系统右键菜单（复制/粘贴）
+            const target = e.target as HTMLElement;
+            if (
+                target instanceof HTMLInputElement ||
+                target instanceof HTMLTextAreaElement ||
+                target.isContentEditable
+            ) {
+                return;
+            }
+            e.preventDefault();
+        };
         document.addEventListener('contextmenu', preventContextMenu);
 
         // 2. 状态映射：加载关键应用配置

@@ -71,7 +71,7 @@ pub fn normalize_bt_trackers(trackers: &str) -> String {
     normalized.join(",")
 }
 
-pub fn deduce_filename(filename: Option<String>, urls: &Vec<String>) -> String {
+pub fn deduce_filename(filename: Option<String>, urls: &[String]) -> String {
     if let Some(out) = filename {
         if !out.is_empty() {
             return out;
@@ -169,14 +169,9 @@ pub fn build_aria2_options(
 
     if let Some(out) = filename {
         if !out.is_empty() {
-            options.insert("out".to_string(), serde_json::Value::String(out.clone()));
-            out
-        } else {
-            "".to_string()
+            options.insert("out".to_string(), serde_json::Value::String(out));
         }
-    } else {
-        "".to_string()
-    };
+    }
 
     // Construct headers
     let mut header_list = Vec::new();

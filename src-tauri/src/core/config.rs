@@ -7,6 +7,9 @@ use tauri::{AppHandle, Manager};
 
 #[derive(Serialize, Deserialize, Debug, Clone)]
 pub struct AppConfig {
+    /// 配置文件版本号，用于未来迁移
+    #[serde(default = "default_config_version")]
+    pub version: u32,
     #[serde(rename = "rpcPort")]
     pub rpc_port: u16,
     #[serde(rename = "closeToTray")]
@@ -58,6 +61,13 @@ pub struct AppConfig {
     pub listen_port: String,
 }
 
+/// 当前配置版本号
+const CURRENT_CONFIG_VERSION: u32 = 1;
+
+fn default_config_version() -> u32 {
+    CURRENT_CONFIG_VERSION
+}
+
 fn default_seed_ratio() -> f64 {
     1.0
 }
@@ -107,6 +117,7 @@ fn default_color_mode() -> String {
 impl Default for AppConfig {
     fn default() -> Self {
         Self {
+            version: CURRENT_CONFIG_VERSION,
             rpc_port: 6800,
             close_to_tray: true,
             auto_resume: false,
@@ -208,6 +219,8 @@ pub fn save_config(app: &AppHandle, config: &AppConfig) -> crate::core::error::A
         crate::utils::atomic_write(&path, &json)?;
         Ok(())
     } else {
-        Err(crate::core::error::AppError::config("无法解析配置文件路径".to_string()))
+        Err(crate::core::error::AppError::config(
+            "无法解析配置文件路径".to_string(),
+        ))
     }
 }

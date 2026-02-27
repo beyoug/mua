@@ -251,15 +251,16 @@ class DownloadService {
                         state: 'waiting',
                         addedAt: formatAddedAt(),
                         savePath: config.savePath || '',
+                        errorMessage: '',
                         userAgent: config.userAgent,
                         referer: config.referer,
                         proxy: config.proxy,
                         maxDownloadLimit: config.maxDownloadLimit,
                         headers: config.headers
                             ? config.headers
-                                  .split(';')
-                                  .map((h) => h.trim())
-                                  .filter((h) => h !== '')
+                                .split(';')
+                                .map((h) => h.trim())
+                                .filter((h) => h !== '')
                             : []
                     });
                 }
@@ -312,13 +313,13 @@ class DownloadService {
                     tasks.map((task) =>
                         task.id === id
                             ? {
-                                  ...task,
-                                  id: newGid,
-                                  state: 'waiting',
-                                  progress: 0,
-                                  speed: 0,
-                                  remainingSecs: 0
-                              }
+                                ...task,
+                                id: newGid,
+                                state: 'waiting',
+                                progress: 0,
+                                speed: 0,
+                                remainingSecs: 0
+                            }
                             : task
                     )
                 );

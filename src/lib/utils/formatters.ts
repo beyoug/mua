@@ -6,7 +6,7 @@ import type { SpeedInfo } from '$lib/types/download';
  * @returns SpeedInfo 对象，如 { value: "12.50", unit: "MB/s" }
  */
 export function formatSpeed(bytesPerSecond: number): SpeedInfo {
-    if (bytesPerSecond === 0) return { value: '0', unit: 'B/s' };
+    if (bytesPerSecond <= 0) return { value: '0', unit: 'B/s' };
     const k = 1024;
     const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
     const i = Math.floor(Math.log(bytesPerSecond) / Math.log(k));
@@ -94,7 +94,7 @@ export function extractFilenameFromUrl(url: string): string {
  * @returns 格式化后的字符串，如 "1.50 MB"
  */
 export function formatBytes(bytes: number, decimals = 2): string {
-    if (!+bytes) return '0 Bytes';
+    if (!+bytes || bytes < 0) return '0 Bytes';
 
     const k = 1024;
     const dm = decimals < 0 ? 0 : decimals;

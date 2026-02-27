@@ -5,9 +5,9 @@ use serde_json::json;
 use std::collections::HashMap;
 use std::fs;
 use std::path::PathBuf;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::sync::Mutex;
-use std::time::{SystemTime, UNIX_EPOCH};
+use std::time::{Duration, SystemTime, UNIX_EPOCH};
 use tauri::{AppHandle, Manager};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -43,6 +43,28 @@ pub struct PersistedTask {
     pub trackers: Option<String>,
 }
 
+impl PersistedTask {
+    /// 状态迁移：并自动维护 completed_at 时间戳。
+    /// 返回 true 表示状态发生了变化。
+    pub fn transition_state(&mut self, new_state: TaskState) -> bool {
+        if self.state == new_state {
+            return false;
+        }
+        let old_state = self.state;
+        self.state = new_state;
+
+        if self.state.is_terminal() || self.state == TaskState::Paused {
+            if self.completed_at.is_none() || old_state != TaskState::Complete {
+                self.completed_at = Some(Local::now().to_rfc3339());
+            }
+        } else if self.state == TaskState::Active || self.state == TaskState::Waiting {
+            self.completed_at = None;
+        }
+
+        true
+    }
+}
+
 /// Minimum interval between save operations (ms)
 const SAVE_DEBOUNCE_MS: u64 = 1500;
 
@@ -50,6 +72,10 @@ pub struct TaskStore {
     pub tasks: Mutex<HashMap<String, PersistedTask>>,
     file_path: Mutex<Option<PathBuf>>,
     last_save_time: AtomicU64,
+    /// Trailing debounce: set to true when a save is skipped due to debounce
+    trailing_pending: AtomicBool,
+    /// Guard to prevent multiple trailing save threads
+    trailing_scheduled: AtomicBool,
 }
 
 impl TaskStore {
@@ -58,6 +84,8 @@ impl TaskStore {
             tasks: Mutex::new(HashMap::new()),
             file_path: Mutex::new(None),
             last_save_time: AtomicU64::new(0),
+            trailing_pending: AtomicBool::new(false),
+            trailing_scheduled: AtomicBool::new(false),
         }
     }
 
@@ -91,54 +119,65 @@ impl TaskStore {
             .unwrap_or(0);
         let last = self.last_save_time.load(Ordering::Relaxed);
         if now.saturating_sub(last) < SAVE_DEBOUNCE_MS {
+            // Mark dirty so a trailing save will pick up the final state
+            self.trailing_pending.store(true, Ordering::Release);
+
+            // Schedule a deferred trailing write if not already scheduled
+            if !self.trailing_scheduled.swap(true, Ordering::AcqRel) {
+                // Snapshot data eagerly for the deferred write
+                let snapshot = self.snapshot_for_write();
+                if let Some((path, list)) = snapshot {
+                    std::thread::spawn(move || {
+                        std::thread::sleep(Duration::from_millis(SAVE_DEBOUNCE_MS));
+                        Self::write_to_disk(path, list);
+                    });
+                }
+            }
             return;
         }
+        self.trailing_pending.store(false, Ordering::Release);
+        self.trailing_scheduled.store(false, Ordering::Release);
         self.last_save_time.store(now, Ordering::Relaxed);
+        self.save_inner();
+    }
 
-        // 1. Snapshot Path (Fast lock)
-        let path = if let Ok(path_opt) = self.file_path.lock() {
-            path_opt.clone()
-        } else {
-            None
-        };
+    /// Actual persistence logic (no debounce check)
+    fn save_inner(&self) {
+        if let Some((path, list)) = self.snapshot_for_write() {
+            // Offload IO to thread
+            std::thread::spawn(move || {
+                Self::write_to_disk(path, list);
+            });
+        }
+    }
 
-        if let Some(path) = path {
-            // 2. Snapshot Data (Fast lock)
-            let tasks = if let Ok(tasks_guard) = self.tasks.lock() {
-                Some(
-                    tasks_guard
-                        .values()
-                        .cloned()
-                        .collect::<Vec<PersistedTask>>(),
-                )
-            } else {
-                None
-            };
+    /// Snapshot current state for writing. Returns (path, sorted task list) or None.
+    fn snapshot_for_write(&self) -> Option<(PathBuf, Vec<PersistedTask>)> {
+        let path = self.file_path.lock().ok()?.clone()?;
+        let mut list: Vec<PersistedTask> = self.tasks.lock().ok()?.values().cloned().collect();
+        // Sort for stable JSON output
+        list.sort_by(|a, b| b.added_at.cmp(&a.added_at));
+        Some((path, list))
+    }
 
-            if let Some(mut list) = tasks {
-                // 3. Offload IO to thread
-                std::thread::spawn(move || {
-                    // Sort for stable JSON output
-                    list.sort_by(|a, b| b.added_at.cmp(&a.added_at));
-
-                    if let Ok(json) = serde_json::to_string_pretty(&list) {
-                        if let Err(e) = crate::utils::atomic_write(&path, &json) {
-                            crate::app_error!(
-                                "Core::Store",
-                                "tasks_save_failed",
-                                json!({ "path": path.to_string_lossy(), "error": e.to_string() })
-                            );
-                        }
-                    }
-                });
+    /// Write task list to disk (blocking, intended for background threads)
+    fn write_to_disk(path: PathBuf, list: Vec<PersistedTask>) {
+        if let Ok(json) = serde_json::to_string_pretty(&list) {
+            if let Err(e) = crate::utils::atomic_write(&path, &json) {
+                crate::app_error!(
+                    "Core::Store",
+                    "tasks_save_failed",
+                    json!({ "path": path.to_string_lossy(), "error": e.to_string() })
+                );
             }
         }
     }
 
     /// Force save without debounce (for critical operations like app exit)
     pub fn force_save(&self) {
+        self.trailing_pending.store(false, Ordering::Release);
         self.last_save_time.store(0, Ordering::Relaxed);
-        self.save();
+        self.save_inner();
     }
 
     pub fn add_task(&self, task: PersistedTask) {
@@ -158,19 +197,7 @@ impl TaskStore {
     pub fn update_task_state(&self, gid: &str, state: TaskState) {
         if let Ok(mut tasks) = self.tasks.lock() {
             if let Some(t) = tasks.get_mut(gid) {
-                if t.state != state {
-                    let old_state = t.state;
-                    t.state = state;
-
-                    // 同步记录时间戳逻辑
-                    if t.state.is_terminal() || t.state == TaskState::Paused {
-                        if t.completed_at.is_none() || old_state != TaskState::Complete {
-                            t.completed_at = Some(Local::now().to_rfc3339());
-                        }
-                    } else if t.state == TaskState::Active || t.state == TaskState::Waiting {
-                        t.completed_at = None;
-                    }
-                }
+                t.transition_state(state);
             }
         }
         self.save();
@@ -262,22 +289,9 @@ impl TaskStore {
     /// 批量更新任务状态（不触发 save，调用方需显式调用 save()）
     pub fn update_batch_state(&self, gids: &[String], state: TaskState) {
         if let Ok(mut tasks) = self.tasks.lock() {
-            let now = Local::now().to_rfc3339();
             for gid in gids {
                 if let Some(t) = tasks.get_mut(gid) {
-                    if t.state != state {
-                        let old_state = t.state;
-                        t.state = state;
-
-                        // 同步记录时间戳逻辑
-                        if t.state.is_terminal() || t.state == TaskState::Paused {
-                            if t.completed_at.is_none() || old_state != TaskState::Complete {
-                                t.completed_at = Some(now.clone());
-                            }
-                        } else if t.state == TaskState::Active || t.state == TaskState::Waiting {
-                            t.completed_at = None;
-                        }
-                    }
+                    t.transition_state(state);
                 }
             }
         }

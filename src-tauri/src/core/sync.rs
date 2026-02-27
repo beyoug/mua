@@ -21,6 +21,53 @@ fn calculate_remaining_secs(raw_speed: u64, total: u64, completed: u64) -> u64 {
     (total - completed) / raw_speed
 }
 
+use crate::core::store::PersistedTask;
+
+/// 将 Aria2Task 中的字段同步到 PersistedTask。
+/// 返回 true 表示有字段被更新（dirty）。
+fn sync_task_fields(task: &mut PersistedTask, at: &Aria2Task) -> bool {
+    let mut dirty = false;
+
+    if task.completed_length != at.completed_length {
+        task.completed_length = at.completed_length.clone();
+        dirty = true;
+    }
+
+    if task.total_length != at.total_length {
+        task.total_length = at.total_length.clone();
+        dirty = true;
+    }
+
+    if task.download_speed != at.download_speed {
+        task.download_speed = at.download_speed.clone();
+        dirty = true;
+    }
+
+    if let Some(msg) = &at.error_message {
+        if task.error_message != *msg {
+            task.error_message = msg.clone();
+            dirty = true;
+        }
+    }
+
+    // 始终从 Aria2 同步文件名以处理自动重命名（例如 file.1.mp4）
+    if let Some(file) = at.files.first() {
+        if !file.path.is_empty() {
+            let path = std::path::Path::new(&file.path);
+            if let Some(name) = path.file_name() {
+                if let Some(name_str) = name.to_str() {
+                    if task.filename != name_str {
+                        task.filename = name_str.to_string();
+                        dirty = true;
+                    }
+                }
+            }
+        }
+    }
+
+    dirty
+}
+
 // 前端 DTO - 只传输原始数值，格式化由前端负责
 #[derive(Debug, Clone, serde::Serialize, PartialEq)]
 pub struct FrontendTask {
@@ -91,21 +138,21 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
     let all_tasks = match aria2_client::get_all_tasks().await {
         Ok(t) => {
             // 检查是否刚从故障中恢复
-            if !LAST_CONNECTION_STATUS.load(Ordering::Relaxed) {
+            if !LAST_CONNECTION_STATUS.load(Ordering::Acquire) {
                 crate::app_info!("Core::Sync", "aria2_connection_restored");
-                LAST_CONNECTION_STATUS.store(true, Ordering::Relaxed);
+                LAST_CONNECTION_STATUS.store(true, Ordering::Release);
             }
             t
         }
         Err(e) => {
             // 检查这是否是新的故障
-            if LAST_CONNECTION_STATUS.load(Ordering::Relaxed) {
+            if LAST_CONNECTION_STATUS.load(Ordering::Acquire) {
                 crate::app_warn!(
                     "Core::Sync",
                     "aria2_connection_lost",
                     json!({ "error": e.to_string() })
                 );
-                LAST_CONNECTION_STATUS.store(false, Ordering::Relaxed);
+                LAST_CONNECTION_STATUS.store(false, Ordering::Release);
             }
             // 如果已经是 false，则保持沉默（静默模式）
 
@@ -121,7 +168,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
 
     let mut result: Vec<FrontendTask> = Vec::new();
     let mut total_dl = 0u64;
-    let total_ul = 0u64;
+    let mut total_ul = 0u64;
 
     // 跟踪是否需要将更改保存到磁盘
     let mut dirty = false;
@@ -148,60 +195,14 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
 
         // 如果状态发生变化，同步回 Store
         if task.state != mapped_state {
-            let old_state = task.state;
-            task.state = mapped_state;
+            task.transition_state(mapped_state);
             dirty = true;
-
-            // 记录进入终态或暂停的时间
-            if task.state.is_terminal() || task.state == TaskState::Paused {
-                // 如果是第一次进入该状态（针对 Pause/Error 等可重复进入的状态），或者是 Complete 状态
-                if task.completed_at.is_none() || old_state != TaskState::Complete {
-                    task.completed_at = Some(chrono::Local::now().to_rfc3339());
-                }
-            } else if task.state == TaskState::Active || task.state == TaskState::Waiting {
-                // 恢复活跃状态时，清除结束时间
-                task.completed_at = None;
-            }
         }
 
         // 如果存在 aria2 数据，则同步其他字段
         if let Some(at) = aria_task {
-            if task.completed_length != at.completed_length {
-                task.completed_length = at.completed_length.clone();
+            if sync_task_fields(task, at) {
                 dirty = true;
-            }
-
-            if task.total_length != at.total_length {
-                task.total_length = at.total_length.clone();
-                dirty = true;
-            }
-
-            if task.download_speed != at.download_speed {
-                task.download_speed = at.download_speed.clone();
-                dirty = true;
-            }
-
-            // 同步特定字段
-            if let Some(msg) = &at.error_message {
-                if task.error_message != *msg {
-                    task.error_message = msg.clone();
-                    dirty = true;
-                }
-            }
-
-            // 始终从 Aria2 同步文件名以处理自动重命名（例如 file.1.mp4）
-            if let Some(file) = at.files.get(0) {
-                if !file.path.is_empty() {
-                    let path = std::path::Path::new(&file.path);
-                    if let Some(name) = path.file_name() {
-                        if let Some(name_str) = name.to_str() {
-                            if task.filename != name_str {
-                                task.filename = name_str.to_string();
-                                dirty = true;
-                            }
-                        }
-                    }
-                }
             }
         } else if mapped_state != TaskState::Missing
             && mapped_state != TaskState::Error
@@ -226,45 +227,12 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
             {
                 Ok(aria_task) => {
                     let fallback_state = TaskState::from_aria2_status(&aria_task.status);
-                    if task.state != fallback_state {
-                        task.state = fallback_state;
+                    if task.transition_state(fallback_state) {
                         dirty = true;
                     }
 
-                    if task.total_length != aria_task.total_length {
-                        task.total_length = aria_task.total_length.clone();
+                    if sync_task_fields(task, &aria_task) {
                         dirty = true;
-                    }
-
-                    if task.completed_length != aria_task.completed_length {
-                        task.completed_length = aria_task.completed_length.clone();
-                        dirty = true;
-                    }
-
-                    if task.download_speed != aria_task.download_speed {
-                        task.download_speed = aria_task.download_speed.clone();
-                        dirty = true;
-                    }
-
-                    if let Some(msg) = &aria_task.error_message {
-                        if task.error_message != *msg {
-                            task.error_message = msg.clone();
-                            dirty = true;
-                        }
-                    }
-
-                    if let Some(file) = aria_task.files.get(0) {
-                        if !file.path.is_empty() {
-                            let path = std::path::Path::new(&file.path);
-                            if let Some(name) = path.file_name() {
-                                if let Some(name_str) = name.to_str() {
-                                    if task.filename != name_str {
-                                        task.filename = name_str.to_string();
-                                        dirty = true;
-                                    }
-                                }
-                            }
-                        }
                     }
                 }
                 Err(e) => {
@@ -296,6 +264,10 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
 
         if task.state == TaskState::Active {
             total_dl += raw_speed;
+            // 累加上传速度（从 aria2_map 获取）
+            if let Some(at) = aria2_map.get(&task.gid) {
+                total_ul += at.upload_speed.parse::<u64>().unwrap_or(0);
+            }
         }
 
         result.push(FrontendTask {
@@ -327,11 +299,7 @@ pub async fn sync_tasks(state: &TaskStore, app_handle: &AppHandle) -> AppResult<
 
     for (gid, _) in aria2_map.iter() {
         if !store_gids.contains(gid) {
-            crate::app_warn!(
-                "Core::Sync",
-                "orphan_task_detected",
-                json!({ "gid": gid })
-            );
+            crate::app_warn!("Core::Sync", "orphan_task_detected", json!({ "gid": gid }));
             // 生成清理任务，不阻塞同步过程
             let gid_clone = gid.clone();
             tauri::async_runtime::spawn(async move {
