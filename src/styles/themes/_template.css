@@ -1,0 +1,120 @@
+/* ============================================
+   Theme Template - 新主题开发模板
+   
+   使用方法：
+   1. 复制本文件，重命名为你要新增的主题名 (例如: my-theme.css)
+   2. 搜索并替换所有的 "TEMPLATE" 为你的主题 ID (对应 src/lib/services/theme/service.ts 中的 ThemeId)
+   3. 填充所有的颜色变量
+   4. 到 src/routes/layout.css 中导入本文件 (@import "../styles/themes/my-theme.css")
+   ============================================ */
+
+/* ===== 1. 色阶 (必须) ===== */
+/* 定义从轻到重的 10 个颜色梯度，供后续组件或辅助变量引用 */
+html.theme-TEMPLATE {
+    --theme-50: #...;
+    --theme-100: #...;
+    --theme-200: #...;
+    --theme-300: #...;
+    --theme-400: #...;
+    --theme-500: #...;
+    /* 通常作为深色模式主色调 */
+    --theme-600: #...;
+    /* 通常作为浅色模式主色调 */
+    --theme-700: #...;
+    --theme-800: #...;
+    --theme-900: #...;
+}
+
+/* ===== 2. 深色模式 (必须) ===== */
+html.theme-TEMPLATE {
+    /* --- 核心交互色 --- */
+    --accent-primary: var(--theme-500);
+    --accent-secondary: var(--theme-400);
+    --accent-hover: var(--theme-600);
+    --accent-active: var(--theme-700);
+
+    /* --- 主题特有发光/辅助色 --- */
+    --accent-glow: rgba(..., ..., ..., 0.5);
+    /* 例如发光阴影使用，需写 rgb 数字以支持透明度 */
+    --accent-subtle: rgba(..., ..., ..., 0.18);
+    /* 低强调度背景 */
+    --accent-text: var(--theme-400);
+    /* 主题调性的文字颜色 */
+    --accent-btn-text: #ffffff;
+    /* 按钮文字颜色，确保对比度 */
+
+    /* --- 通用组件色 --- */
+    --toggle-knob-c: #ffffff;
+    /* 开关按钮圆点颜色 */
+    --progress-stripe-c: rgba(255, 255, 255, 0.12);
+    /* 进度条条纹颜色 */
+    --accent-active-bg: var(--accent-subtle);
+    /* 选中态背景色 */
+
+    /* --- [可选] 玻璃态默认值覆盖 (Glass Overrides) --- */
+    /* 如果你不满意 glass.css 的默认值，取消注释并修改它们 */
+    /* --glass-bg: rgba(...); */
+    /* --glass-border: rgba(...); */
+    /* --glass-shadow: 0 8px 32px rgba(...); */
+    /* --glass-blur: blur(20px); */
+    /* --glass-saturate: saturate(120%); */
+
+    /* --- [可选] 弹窗专用覆盖 --- */
+    /* --dialog-bg: rgba(...); */
+    /* --dialog-overlay-bg: rgba(...); */
+}
+
+/* --- 深色模式全局背景 --- */
+html.theme-TEMPLATE body {
+    /* 定义深色模式的渐变背景 */
+    background:
+        radial-gradient(ellipse 80% 50% at 50% 0%, rgba(..., ..., ..., 0.15), transparent),
+        linear-gradient(180deg, #..., #...);
+}
+
+/* ===== 3. 浅色模式 (必须) ===== */
+html.light.theme-TEMPLATE {
+    /* --- 核心交互色 (浅色模式下通常需要比深色更深一点的基色保证对比度) --- */
+    --accent-primary: var(--theme-600);
+    --accent-secondary: var(--theme-500);
+    --accent-hover: var(--theme-700);
+    --accent-active: var(--theme-800);
+
+    /* --- 主题特有发光/辅助色 --- */
+    --accent-glow: rgba(..., ..., ..., 0.4);
+    --accent-subtle: rgba(..., ..., ..., 0.1);
+    --accent-text: var(--theme-600);
+    --accent-btn-text: #ffffff;
+
+    /* --- 通用组件色 --- */
+    --toggle-knob-c: #ffffff;
+    --progress-stripe-c: rgba(255, 255, 255, 0.12);
+    --progress-track-bg: rgba(..., ..., ..., 0.15);
+    /* 浅色独有，轨道背景 */
+    --accent-active-bg: var(--accent-subtle);
+
+    /* --- [可选] 玻璃态覆盖 - Light --- */
+    /* --glass-bg: rgba(255, 255, 255, 0.6); */
+    /* --glass-border: rgba(..., ..., ..., 0.2); */
+
+    /* --- [可选] 边框覆盖 (如果主题主色调不能很好兼容默认边框) --- */
+    /* --border-color: rgba(..., ..., ..., 0.18); */
+    /* --border-light: rgba(..., ..., ..., 0.1); */
+
+    /* --- [可选] 弹窗背景覆盖 --- */
+    /* --dialog-bg: rgba(255, 255, 255, 0.9); */
+    /* --overlay-bg: rgba(255, 255, 255, 0.85); */
+    /* --input-bg: rgba(255, 255, 255, 0.7); */
+    /* --dialog-overlay-bg: rgba(..., ..., ..., 0.15); */
+}
+
+/* --- 浅色模式全局背景 --- */
+html.light.theme-TEMPLATE body {
+    background:
+        radial-gradient(at 100% 0%, rgba(..., ..., ..., 0.1) 0px, transparent 50%),
+        linear-gradient(180deg, #..., #...);
+}
+
+/* ===== 4. 附加特效 (可选) ===== */
+/* 如果你需要为此主题添加特定的动画或通过 ::after 添加屏幕扫描线/网格等特效，可以在此编写 */
+/* html.theme-TEMPLATE button.primary { animation: custom-pulse 3s infinite; } */

@@ -1,7 +1,7 @@
 /**
  * theme.ts - 主题管理 Store
  * 支持：
- * - 三套主题色（深空、电光蓝、赛博紫）
+ * - 两套主题色（电光蓝、深空默认）
  * - 三种颜色模式（深色、浅色、自动）
  * - 持久化到 localStorage
  */
@@ -10,16 +10,7 @@ import { browser } from '$app/environment';
 import { appSettings, updateAppSettings } from '$lib/services/settings';
 import type { AppConfig } from '$lib/services/settings';
 
-// ============ 主题色 ============
-export type ThemeId = 'cyberpunk' | 'cyber-purple' | 'default';
-
-export interface Theme {
-	id: ThemeId;
-	name: string;
-	primary: string;
-	secondary: string;
-	glow: string;
-}
+import type { ThemeId, Theme, ColorMode } from '$lib/types/theme';
 
 export const themes: Record<ThemeId, Theme> = {
 	'default': {
@@ -35,19 +26,10 @@ export const themes: Record<ThemeId, Theme> = {
 		primary: '#22d3ee',
 		secondary: '#d946ef',
 		glow: 'rgba(34, 211, 238, 0.6)'
-	},
-	'cyber-purple': {
-		id: 'cyber-purple',
-		name: '赛博紫',
-		primary: '#c084fc',
-		secondary: '#a855f7',
-		glow: 'rgba(139, 92, 246, 0.4)'
 	}
 };
 
 // ============ 颜色模式 ============
-export type ColorMode = 'dark' | 'light' | 'auto';
-
 export const colorModes: { id: ColorMode; name: string }[] = [
 	{ id: 'auto', name: '跟随系统' },
 	{ id: 'light', name: '浅色' },

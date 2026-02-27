@@ -90,11 +90,11 @@ export function useTaskViewState(controller: TaskController) {
     });
 
     return {
-        filteredTasks,
-        pageTitle,
-        emptyStateText,
-        hasDownloading,
-        hasPaused,
-        hasRemovable
+        get filteredTasks() { return filteredTasks; },
+        get pageTitle() { return pageTitle; },
+        get emptyStateText() { return emptyStateText; },
+        get hasDownloading() { return hasDownloading; },
+        get hasPaused() { return hasPaused; },
+        get hasRemovable() { return hasRemovable; }
     };
 }

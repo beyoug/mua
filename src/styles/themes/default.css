@@ -19,19 +19,18 @@ html.theme-default {
 /* ===== 深色模式 ===== */
 html.theme-default {
   /* 蓝色配色 (Blue) */
-  --accent-primary: #4A9EFF;
-  --accent-secondary: #70B4FF;
-  --accent-hover: #2E7FEB;
-  --accent-active: #1D6AD8;
+  --accent-primary: var(--theme-500);
+  --accent-secondary: var(--theme-400);
+  --accent-hover: var(--theme-600);
+  --accent-active: var(--theme-700);
   --accent-glow: rgba(74, 158, 255, 0.5);
+  /* 暂留rgba以控制透明度 */
   --accent-subtle: rgba(74, 158, 255, 0.18);
-  --accent-text: #70B4FF;
+  --accent-text: var(--theme-400);
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
   --accent-active-bg: var(--accent-subtle);
-  --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
-
   --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
 
   /* Glass Overrides - Dark */
@@ -55,7 +54,11 @@ html.theme-default body {
 
 /* ===== 浅色模式 ===== */
 html.light.theme-default {
-  /* 天蓝色 (Sky Blue) */
+  /* 天蓝色 (Sky Blue) - 这里复用了原有 sky blue 相关的十六进制代码的值，将其映射到了相关的系统色或者直接保留如果原有设计要求 */
+  /* 在 default 主题浅色模式下，原代码其实并没有使用顶部的 .theme-default slate 色系，而是使用 sky blue 系列。 */
+  /* 为了与 cyber-purple 保持统一风格（深浅复用相同的色系），但兼顾原有设计（原设计深色是蓝，浅色是天蓝）， */
+  /* 这里我们保留它作为天空蓝的特有问题，如果我们要"统一"，最佳方式是新增浅色色阶或直接统一使用深色定义的色阶，考虑到原有设计是有意为之，仅修改为一致的表现形式 */
+
   --accent-primary: #38bdf8;
   --accent-secondary: #7dd3fc;
   --accent-hover: #0ea5e9;

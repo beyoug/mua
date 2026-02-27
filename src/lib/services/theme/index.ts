@@ -5,8 +5,11 @@ export {
     colorModes,
     particlesEnabled,
     systemPrefersDark,
-    effectiveColorMode,
-    type ThemeId,
-    type ColorMode,
-    type Theme
+    effectiveColorMode
 } from './service';
+
+export type {
+    ThemeId,
+    ColorMode,
+    Theme
+} from '$lib/types/theme';

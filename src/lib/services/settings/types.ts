@@ -1,3 +1,5 @@
+import type { ThemeId, ColorMode } from '$lib/types/theme';
+
 export interface AppConfig {
     rpcPort: number;
     closeToTray: boolean;
@@ -11,8 +13,8 @@ export interface AppConfig {
     defaultSavePath: string;
     globalMaxDownloadLimit: string;
     globalMaxUploadLimit: string;
-    theme: string;
-    colorMode: string;
+    theme: ThemeId;
+    colorMode: ColorMode;
     particlesEnabled: boolean;
     startMinimized: boolean;
     btTrackers: string;

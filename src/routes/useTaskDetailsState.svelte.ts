@@ -22,8 +22,8 @@ export function useTaskDetailsState() {
     }
 
     return {
-        detailsTask,
-        showDetailsModal,
+        get detailsTask() { return detailsTask; },
+        get showDetailsModal() { return showDetailsModal; },
         openDetails,
         closeDetails
     };
