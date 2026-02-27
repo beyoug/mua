@@ -22,9 +22,9 @@ html.theme-nexus {
   --accent-secondary: #8f7dff;
   --accent-hover: #78d6ff;
   --accent-active: #a29bff;
-  --accent-glow: rgba(94, 203, 255, 0.62);
-  --accent-subtle: rgba(94, 203, 255, 0.16);
-  --accent-dim: rgba(94, 203, 255, 0.28);
+  --accent-glow: rgba(94, 203, 255, 0.5);
+  --accent-subtle: rgba(94, 203, 255, 0.13);
+  --accent-dim: rgba(94, 203, 255, 0.24);
   --accent-text: #9fe2ff;
   --accent-btn-text: #04121f;
   --toggle-knob-c: #ffffff;
@@ -32,13 +32,16 @@ html.theme-nexus {
   --progress-track-bg: rgba(94, 203, 255, 0.16);
   --accent-active-bg: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 
-  --surface-hover: rgba(94, 203, 255, 0.08);
-  --surface-active: rgba(94, 203, 255, 0.13);
+  --surface-hover: rgba(94, 203, 255, 0.1);
+  --surface-active: rgba(94, 203, 255, 0.16);
   --input-bg: rgba(7, 16, 32, 0.7);
-  --border-subtle: transparent;
-  --border-normal: transparent;
-  --border-strong: transparent;
-  --border-color: transparent;
+  --border-subtle: rgba(125, 166, 225, 0.16);
+  --border-normal: rgba(125, 166, 225, 0.24);
+  --border-strong: rgba(125, 166, 225, 0.34);
+  --border-color: rgba(125, 166, 225, 0.2);
+
+  --text-secondary: rgba(224, 236, 255, 0.78);
+  --text-tertiary: rgba(190, 206, 234, 0.62);
 
   --glass-bg: rgba(8, 16, 32, 0.72);
   --glass-border: transparent;
@@ -68,9 +71,9 @@ html.light.theme-nexus {
   --accent-secondary: #6c62f0;
   --accent-hover: #1b7fff;
   --accent-active: #5a51dd;
-  --accent-glow: rgba(47, 147, 255, 0.34);
-  --accent-subtle: rgba(47, 147, 255, 0.1);
-  --accent-dim: rgba(47, 147, 255, 0.2);
+  --accent-glow: rgba(47, 147, 255, 0.28);
+  --accent-subtle: rgba(47, 147, 255, 0.08);
+  --accent-dim: rgba(47, 147, 255, 0.16);
   --accent-text: #236fd6;
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
@@ -81,10 +84,13 @@ html.light.theme-nexus {
   --surface-hover: rgba(47, 147, 255, 0.1);
   --surface-active: rgba(47, 147, 255, 0.16);
   --input-bg: rgba(255, 255, 255, 0.82);
-  --border-subtle: transparent;
-  --border-normal: transparent;
-  --border-strong: transparent;
-  --border-color: transparent;
+  --border-subtle: rgba(20, 46, 96, 0.1);
+  --border-normal: rgba(20, 46, 96, 0.16);
+  --border-strong: rgba(20, 46, 96, 0.24);
+  --border-color: rgba(20, 46, 96, 0.12);
+
+  --text-secondary: rgba(18, 36, 78, 0.76);
+  --text-tertiary: rgba(18, 36, 78, 0.6);
 
   --glass-bg: rgba(255, 255, 255, 0.72);
   --glass-border: transparent;
@@ -111,11 +117,11 @@ html.light.theme-nexus body {
 /* subtle command-bar-like highlight for selected nav/item states */
 html.theme-nexus .nav-item.active,
 html.theme-nexus .mode-card.active {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 24%, transparent);
 }
 
 html.theme-nexus .nav-item.active {
-  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   color: var(--accent-text);
 }
 
@@ -162,7 +168,7 @@ html.theme-nexus .modal-overlay {
 html.theme-nexus .panel,
 html.theme-nexus .modal-container {
   border-color: var(--border-normal);
-  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 7%, transparent);
 }
 
 html.theme-nexus .panel .content-header,
@@ -190,7 +196,7 @@ html.theme-nexus .file-item {
 
 html.theme-nexus .download-card {
   border-color: var(--border-normal);
-  box-shadow: 0 5px 16px rgba(4, 12, 30, 0.18);
+  box-shadow: 0 4px 12px rgba(4, 12, 30, 0.14);
   transition: transform var(--motion-base) var(--motion-ease),
     box-shadow var(--motion-base) var(--motion-ease),
     border-color var(--motion-fast) var(--motion-ease);
@@ -198,7 +204,7 @@ html.theme-nexus .download-card {
 
 html.theme-nexus .download-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 8px 18px rgba(2, 10, 26, 0.22), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  box-shadow: 0 6px 16px rgba(2, 10, 26, 0.18), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
 html.theme-nexus .download-card.completed {
@@ -233,15 +239,17 @@ html.theme-nexus .btn-primary,
 html.theme-nexus .btn-confirm {
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 86%, white), var(--accent-secondary));
   color: var(--accent-btn-text);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent-glow) 72%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent-glow) 52%, transparent);
   border: 1px solid transparent;
+  font-size: 13px;
+  font-weight: 600;
 }
 
 html.theme-nexus .btn-primary:hover:not(:disabled),
 html.theme-nexus .btn-confirm:hover:not(:disabled) {
   filter: none;
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent-glow) 78%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 62%, transparent);
 }
 
 html.theme-nexus .btn-secondary,
@@ -254,6 +262,8 @@ html.theme-nexus .btn-text {
   background: color-mix(in srgb, var(--surface-hover) 88%, transparent);
   border-color: var(--border-normal);
   color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 html.theme-nexus .btn-secondary:hover,
@@ -360,12 +370,13 @@ html.theme-nexus .modal-tabs {
   background: color-mix(in srgb, var(--input-bg) 90%, transparent);
   border: 1px solid var(--border-subtle);
   box-shadow: none;
+  padding: 2px;
 }
 
 html.theme-nexus .active-indicator {
   background: color-mix(in srgb, var(--surface-active) 90%, transparent);
   border-color: transparent;
-  box-shadow: 0 4px 14px rgba(4, 12, 30, 0.28);
+  box-shadow: 0 3px 10px rgba(4, 12, 30, 0.22);
 }
 
 html.theme-nexus .tab-btn {
@@ -387,6 +398,8 @@ html.theme-nexus .detail-value-box:hover {
 
 html.theme-nexus .status-pill {
   border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 html.theme-nexus .item-copy-btn {
@@ -472,7 +485,8 @@ html.theme-nexus .info-box {
 html.theme-nexus .tooltip-text {
   background: color-mix(in srgb, var(--dialog-bg) 92%, transparent);
   border-color: var(--border-normal);
-  box-shadow: 0 12px 28px rgba(3, 11, 28, 0.38);
+  box-shadow: 0 9px 22px rgba(3, 11, 28, 0.28);
+  font-size: 12px;
 }
 
 html.theme-nexus .about-card,
@@ -489,7 +503,7 @@ html.theme-nexus .action-tile {
 html.theme-nexus .action-tile:hover {
   background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   border-color: transparent;
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-glow) 42%, transparent);
+  box-shadow: 0 7px 18px color-mix(in srgb, var(--accent-glow) 32%, transparent);
 }
 
 html.theme-nexus .app-version {
@@ -522,7 +536,8 @@ html.theme-nexus .stats-panel {
 
 html.theme-nexus .stat-count {
   color: var(--accent-text);
-  opacity: 0.92;
+  opacity: 0.96;
+  font-weight: 600;
 }
 
 html.theme-nexus .checkbox-label {

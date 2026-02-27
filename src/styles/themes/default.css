@@ -25,9 +25,9 @@ html.theme-default {
   --accent-active: var(--theme-700);
   --accent-glow: rgba(74, 158, 255, 0.5);
   /* 暂留rgba以控制透明度 */
-  --accent-subtle: rgba(74, 158, 255, 0.18);
-  --accent-dim: rgba(74, 158, 255, 0.28);
-  --accent-text: var(--theme-400);
+  --accent-subtle: rgba(74, 158, 255, 0.14);
+  --accent-dim: rgba(74, 158, 255, 0.24);
+  --accent-text: var(--theme-300);
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
   --progress-stripe-c: rgba(255, 255, 255, 0.12);
@@ -40,9 +40,15 @@ html.theme-default {
   --border-normal: transparent;
   --border-strong: transparent;
 
+  --text-secondary: rgba(226, 232, 240, 0.78);
+  --text-tertiary: rgba(203, 213, 225, 0.62);
+  --surface-hover: rgba(148, 163, 184, 0.12);
+  --surface-active: rgba(148, 163, 184, 0.18);
+  --input-bg: rgba(15, 23, 42, 0.58);
+
   /* Glass Overrides - Dark */
   /* Increase border opacity for better visibility */
-  --glass-bg: rgba(15, 23, 42, 0.65);
+  --glass-bg: rgba(15, 23, 42, 0.68);
   --glass-border: transparent;
   --glass-blur: blur(20px);
   --glass-saturate: saturate(120%);
@@ -71,8 +77,8 @@ html.light.theme-default {
   --accent-hover: #0ea5e9;
   --accent-active: #0284c7;
   --accent-glow: rgba(56, 189, 248, 0.4);
-  --accent-subtle: rgba(56, 189, 248, 0.1);
-  --accent-dim: rgba(56, 189, 248, 0.22);
+  --accent-subtle: rgba(56, 189, 248, 0.08);
+  --accent-dim: rgba(56, 189, 248, 0.18);
   --accent-text: #0284c7;
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
@@ -83,7 +89,7 @@ html.light.theme-default {
   --bg-gradient: radial-gradient(circle at top right, rgba(56, 189, 248, 0.15), transparent 40%);
 
   /* 浅色玻璃态 (Restored) */
-  --glass-bg: rgba(255, 255, 255, 0.45);
+  --glass-bg: rgba(255, 255, 255, 0.52);
   --glass-border: transparent;
   --glass-blur: blur(24px);
   --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
@@ -94,6 +100,8 @@ html.light.theme-default {
   --border-subtle: transparent;
   --border-normal: transparent;
   --border-strong: transparent;
+  --text-secondary: rgba(15, 23, 42, 0.74);
+  --text-tertiary: rgba(15, 23, 42, 0.6);
   --surface-hover: rgba(255, 255, 255, 0.48);
   --surface-active: rgba(255, 255, 255, 0.58);
 
@@ -115,11 +123,11 @@ html.light.theme-default body {
 
 html.theme-default .nav-item.active,
 html.theme-default .mode-card.active {
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 26%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent);
 }
 
 html.theme-default .nav-item.active {
-  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
   color: var(--accent-text);
 }
 
@@ -161,7 +169,7 @@ html.theme-default .modal-container .ua-dropdown-trigger:focus-within {
 html.theme-default .panel,
 html.theme-default .modal-container {
   border-color: var(--border-normal);
-  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 8%, transparent);
+  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 6%, transparent);
 }
 
 html.theme-default .panel .content-header,
@@ -177,13 +185,13 @@ html.theme-default .modal-footer {
 
 html.theme-default .download-card {
   border-color: var(--border-normal);
-  box-shadow: 0 4px 14px rgba(5, 20, 48, 0.14);
+  box-shadow: 0 3px 10px rgba(5, 20, 48, 0.12);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 140ms ease;
 }
 
 html.theme-default .download-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(5, 20, 48, 0.18), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  box-shadow: 0 5px 14px rgba(5, 20, 48, 0.16), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 8%, transparent);
 }
 
 html.theme-default .download-card .action-btn {
@@ -209,13 +217,15 @@ html.theme-default .btn-confirm {
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 88%, white), var(--accent-secondary));
   color: var(--accent-btn-text);
   border: 1px solid var(--border-normal);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 56%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent-glow) 44%, transparent);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 html.theme-default .btn-primary:hover:not(:disabled),
 html.theme-default .btn-confirm:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-glow) 66%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 54%, transparent);
 }
 
 html.theme-default .btn-secondary,
@@ -228,6 +238,8 @@ html.theme-default .btn-text {
   background: color-mix(in srgb, var(--surface-hover) 90%, transparent);
   border-color: var(--border-normal);
   color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 html.theme-default .btn-secondary:hover,
@@ -265,6 +277,7 @@ html.theme-default .input-wrapper select,
 html.theme-default .text-input {
   background: color-mix(in srgb, var(--input-bg) 96%, transparent);
   border-color: var(--border-normal);
+  font-size: 13px;
 }
 
 html.theme-default .path-selector:hover,
@@ -357,7 +370,7 @@ html.theme-default .action-tile {
 html.theme-default .action-tile:hover {
   background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
   border-color: var(--border-normal);
-  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 34%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent-glow) 28%, transparent);
 }
 
 html.theme-default .add-btn,
@@ -397,7 +410,8 @@ html.theme-default .stats-panel {
 
 html.theme-default .stat-count {
   color: var(--accent-text);
-  opacity: 0.92;
+  opacity: 0.96;
+  font-weight: 600;
 }
 
 html.theme-default .info-box {
@@ -409,7 +423,8 @@ html.theme-default .info-box {
 html.theme-default .tooltip-text {
   background: color-mix(in srgb, var(--dialog-bg) 92%, transparent);
   border-color: var(--border-normal);
-  box-shadow: 0 10px 24px rgba(4, 18, 42, 0.3);
+  box-shadow: 0 8px 18px rgba(4, 18, 42, 0.24);
+  font-size: 12px;
 }
 
 html.theme-default .menu-item {
@@ -441,12 +456,13 @@ html.theme-default .modal-tabs {
   background: color-mix(in srgb, var(--input-bg) 90%, transparent);
   border: 1px solid var(--border-subtle);
   box-shadow: none;
+  padding: 2px;
 }
 
 html.theme-default .active-indicator {
   background: color-mix(in srgb, var(--surface-active) 90%, transparent);
   border-color: var(--border-normal);
-  box-shadow: 0 4px 12px rgba(5, 22, 52, 0.24);
+  box-shadow: 0 3px 10px rgba(5, 22, 52, 0.2);
 }
 
 html.theme-default .tab-btn {
@@ -455,6 +471,8 @@ html.theme-default .tab-btn {
 
 html.theme-default .status-pill {
   border: 1px solid transparent;
+  font-size: 11px;
+  font-weight: 600;
 }
 
 html.theme-default .app-version {

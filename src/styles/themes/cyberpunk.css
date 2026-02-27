@@ -28,10 +28,10 @@ html.theme-cyberpunk {
   /* Cyan-500 */
   --accent-active: #c026d3;
   /* Fuchsia-600 */
-  --accent-glow: rgba(34, 211, 238, 0.75);
+  --accent-glow: rgba(34, 211, 238, 0.58);
   /* 增强辉光强度 */
-  --accent-subtle: rgba(217, 70, 239, 0.2);
-  --accent-dim: rgba(34, 211, 238, 0.28);
+  --accent-subtle: rgba(217, 70, 239, 0.15);
+  --accent-dim: rgba(34, 211, 238, 0.24);
   --accent-text: #22d3ee;
   --accent-btn-text: #0f172a;
   --toggle-knob-c: #ffffff;
@@ -40,13 +40,16 @@ html.theme-cyberpunk {
   /* 移除原有的简单渐变，改用 Grid 背景 */
   --bg-gradient: none;
 
-  --surface-hover: rgba(34, 211, 238, 0.08);
-  --surface-active: rgba(34, 211, 238, 0.14);
+  --surface-hover: rgba(34, 211, 238, 0.1);
+  --surface-active: rgba(34, 211, 238, 0.16);
   --input-bg: rgba(8, 12, 24, 0.72);
   --border-subtle: rgba(34, 211, 238, 0.14);
   --border-normal: rgba(34, 211, 238, 0.22);
   --border-strong: rgba(34, 211, 238, 0.34);
   --border-color: var(--border-normal);
+
+  --text-secondary: rgba(224, 240, 248, 0.78);
+  --text-tertiary: rgba(180, 204, 224, 0.62);
 
   /* Glass Overrides - Dark (High Contrast) */
   --glass-bg: rgba(10, 15, 30, 0.75);
@@ -106,9 +109,9 @@ html.light.theme-cyberpunk {
   /* Fuchsia-600 */
   --accent-hover: #0e7490;
   --accent-active: #a21caf;
-  --accent-glow: rgba(8, 145, 178, 0.4);
-  --accent-subtle: rgba(217, 70, 239, 0.1);
-  --accent-dim: rgba(8, 145, 178, 0.24);
+  --accent-glow: rgba(8, 145, 178, 0.3);
+  --accent-subtle: rgba(217, 70, 239, 0.08);
+  --accent-dim: rgba(8, 145, 178, 0.2);
   --accent-text: #0891b2;
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
@@ -123,6 +126,9 @@ html.light.theme-cyberpunk {
   --border-normal: rgba(8, 145, 178, 0.22);
   --border-strong: rgba(8, 145, 178, 0.32);
   --border-color: var(--border-normal);
+
+  --text-secondary: rgba(15, 72, 92, 0.76);
+  --text-tertiary: rgba(15, 72, 92, 0.6);
 
   /* Glass Overrides - Light (Lab Clean) */
   --glass-bg: rgba(255, 255, 255, 0.8);
@@ -193,7 +199,7 @@ html.theme-cyberpunk .modal-overlay {
 html.theme-cyberpunk .panel,
 html.theme-cyberpunk .modal-container {
   border-color: color-mix(in srgb, var(--glass-border) 88%, var(--accent-subtle));
-  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 8%, transparent);
 }
 
 html.theme-cyberpunk .panel .content-header,
@@ -209,9 +215,9 @@ html.theme-cyberpunk .modal-footer {
 
 html.theme-cyberpunk .nav-item.active,
 html.theme-cyberpunk .mode-card.active {
-  background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
   color: var(--accent-text);
-  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 24%, transparent);
 }
 
 html.theme-cyberpunk .add-btn,
@@ -238,7 +244,8 @@ html.theme-cyberpunk .stats-panel {
 
 html.theme-cyberpunk .stat-count {
   color: var(--accent-text);
-  opacity: 0.92;
+  opacity: 0.96;
+  font-weight: 600;
 }
 
 html.theme-cyberpunk .btn-primary,
@@ -246,13 +253,15 @@ html.theme-cyberpunk .btn-confirm {
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 84%, white), var(--accent-secondary));
   color: var(--accent-btn-text);
   border: 1px solid color-mix(in srgb, var(--accent-primary) 36%, transparent);
-  box-shadow: 0 8px 22px color-mix(in srgb, var(--accent-glow) 70%, transparent);
+  box-shadow: 0 6px 16px color-mix(in srgb, var(--accent-glow) 52%, transparent);
+  font-size: 13px;
+  font-weight: 600;
 }
 
 html.theme-cyberpunk .btn-primary:hover:not(:disabled),
 html.theme-cyberpunk .btn-confirm:hover:not(:disabled) {
   transform: translateY(-1px);
-  box-shadow: 0 12px 28px color-mix(in srgb, var(--accent-glow) 78%, transparent);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 62%, transparent);
 }
 
 html.theme-cyberpunk .btn-secondary,
@@ -265,6 +274,8 @@ html.theme-cyberpunk .btn-text {
   background: color-mix(in srgb, var(--surface-hover) 90%, transparent);
   border-color: var(--border-normal);
   color: var(--text-secondary);
+  font-size: 13px;
+  font-weight: 500;
 }
 
 html.theme-cyberpunk .btn-secondary:hover,
@@ -345,13 +356,13 @@ html.theme-cyberpunk .ua-custom-input.error:focus {
 
 html.theme-cyberpunk .download-card {
   border-color: color-mix(in srgb, var(--glass-border) 90%, var(--accent-subtle));
-  box-shadow: 0 8px 22px rgba(2, 8, 20, 0.3);
+  box-shadow: 0 4px 12px rgba(2, 8, 20, 0.16);
   transition: transform 180ms ease, box-shadow 180ms ease, border-color 140ms ease;
 }
 
 html.theme-cyberpunk .download-card:hover {
   transform: translateY(-1px);
-  box-shadow: 0 10px 24px rgba(2, 8, 20, 0.34), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+  box-shadow: 0 6px 16px rgba(2, 8, 20, 0.2), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
 html.theme-cyberpunk .download-card .icon-wrapper {
@@ -381,12 +392,13 @@ html.theme-cyberpunk .modal-tabs {
   background: color-mix(in srgb, var(--input-bg) 90%, transparent);
   border: 1px solid var(--border-subtle);
   box-shadow: none;
+  padding: 2px;
 }
 
 html.theme-cyberpunk .active-indicator {
   background: color-mix(in srgb, var(--surface-active) 90%, transparent);
   border-color: color-mix(in srgb, var(--accent-primary) 34%, transparent);
-  box-shadow: 0 4px 14px rgba(2, 10, 24, 0.32);
+  box-shadow: 0 3px 10px rgba(2, 10, 24, 0.24);
 }
 
 html.theme-cyberpunk .detail-value-box {
@@ -410,6 +422,8 @@ html.theme-cyberpunk .item-copy-btn:hover {
 
 html.theme-cyberpunk .status-pill {
   border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+  font-size: 11px;
+  font-weight: 600;
 }
 
 html.theme-cyberpunk .menu-item,
