@@ -30,6 +30,19 @@
   --surface-active: rgba(255, 255, 255, 0.1);
   --bg-hover: var(--surface-hover);
 
+  /* 主题色兜底（防止主题文件缺失 token） */
+  --accent-primary: #4a9eff;
+  --accent-secondary: #70b4ff;
+  --accent-hover: #2e7feb;
+  --accent-active: #1d6ad8;
+  --accent-glow: rgba(74, 158, 255, 0.45);
+  --accent-subtle: rgba(74, 158, 255, 0.16);
+  --accent-text: #70b4ff;
+  --accent-btn-text: #ffffff;
+  --accent-active-bg: var(--accent-subtle);
+  --accent-dim: color-mix(in srgb, var(--accent-primary) 35%, transparent);
+  --progress-track-bg: var(--border-subtle);
+
   /* 输入框背景 - 深色模式下稍微深一点，增加层次感 */
   --input-bg: rgba(0, 0, 0, 0.2);
 
@@ -84,6 +97,19 @@ html.light {
   --surface-hover: rgba(15, 23, 42, 0.06);
   --surface-active: rgba(15, 23, 42, 0.1);
   --bg-hover: var(--surface-hover);
+
+  /* 主题色兜底（浅色） */
+  --accent-primary: #0ea5e9;
+  --accent-secondary: #38bdf8;
+  --accent-hover: #0284c7;
+  --accent-active: #0369a1;
+  --accent-glow: rgba(14, 165, 233, 0.35);
+  --accent-subtle: rgba(14, 165, 233, 0.12);
+  --accent-text: #0284c7;
+  --accent-btn-text: #ffffff;
+  --accent-active-bg: var(--accent-subtle);
+  --accent-dim: color-mix(in srgb, var(--accent-primary) 28%, transparent);
+  --progress-track-bg: var(--border-subtle);
 
   /* 输入框背景 - 浅色模式下为半透明白 */
   --input-bg: rgba(255, 255, 255, 0.6);

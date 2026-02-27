@@ -31,6 +31,7 @@ html.theme-cyberpunk {
   --accent-glow: rgba(34, 211, 238, 0.75);
   /* 增强辉光强度 */
   --accent-subtle: rgba(217, 70, 239, 0.2);
+  --accent-dim: rgba(34, 211, 238, 0.28);
   --accent-text: #22d3ee;
   --accent-btn-text: #0f172a;
   --toggle-knob-c: #ffffff;
@@ -99,6 +100,7 @@ html.light.theme-cyberpunk {
   --accent-active: #a21caf;
   --accent-glow: rgba(8, 145, 178, 0.4);
   --accent-subtle: rgba(217, 70, 239, 0.1);
+  --accent-dim: rgba(8, 145, 178, 0.24);
   --accent-text: #0891b2;
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;

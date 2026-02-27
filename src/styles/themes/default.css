@@ -26,6 +26,7 @@ html.theme-default {
   --accent-glow: rgba(74, 158, 255, 0.5);
   /* 暂留rgba以控制透明度 */
   --accent-subtle: rgba(74, 158, 255, 0.18);
+  --accent-dim: rgba(74, 158, 255, 0.28);
   --accent-text: var(--theme-400);
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;
@@ -65,6 +66,7 @@ html.light.theme-default {
   --accent-active: #0284c7;
   --accent-glow: rgba(56, 189, 248, 0.4);
   --accent-subtle: rgba(56, 189, 248, 0.1);
+  --accent-dim: rgba(56, 189, 248, 0.22);
   --accent-text: #0284c7;
   --accent-btn-text: #ffffff;
   --toggle-knob-c: #ffffff;

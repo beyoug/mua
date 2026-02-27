@@ -63,20 +63,11 @@ function updateColorCache() {
   colorCacheTime = now;
   
   const style = getComputedStyle(document.documentElement);
-  const isMinimalTheme = document.documentElement.classList.contains('theme-minimal');
-  const isLightMode = document.documentElement.classList.contains('light');
-  
-  if (isMinimalTheme) {
-    // 极简模式：使用柔和的中性灰色
-    cachedColors = isLightMode 
-      ? { primary: 'rgba(120, 120, 130, 1)', glow: 'rgba(120, 120, 130, 0.25)' }
-      : { primary: 'rgba(160, 160, 170, 1)', glow: 'rgba(160, 160, 170, 0.2)' };
-  } else {
-    cachedColors = {
-      primary: style.getPropertyValue('--accent-primary').trim() || '#3B82F6',
-      glow: style.getPropertyValue('--accent-glow').trim() || 'rgba(59, 130, 246, 0.4)'
-    };
-  }
+
+  cachedColors = {
+    primary: style.getPropertyValue('--accent-primary').trim() || '#3B82F6',
+    glow: style.getPropertyValue('--accent-glow').trim() || 'rgba(59, 130, 246, 0.4)'
+  };
 }
 
 // 从池中获取粒子
@@ -323,8 +314,4 @@ onDestroy(() => {
   }
 }
 
-/* 极简主题：隐藏背景光晕 */
-:global(html.theme-minimal) .glow {
-  display: none;
-}
 </style>

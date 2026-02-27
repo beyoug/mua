@@ -10,7 +10,15 @@ import { browser } from '$app/environment';
 import { appSettings, updateAppSettings } from '$lib/services/settings';
 import type { AppConfig } from '$lib/services/settings';
 
-import type { ThemeId, Theme, ColorMode } from '$lib/types/theme';
+import {
+    COLOR_MODES,
+    THEME_IDS,
+    coerceColorMode,
+    coerceThemeId,
+    type ThemeId,
+    type Theme,
+    type ColorMode
+} from '$lib/types/theme';
 
 export const themes: Record<ThemeId, Theme> = {
 	'default': {
@@ -30,11 +38,24 @@ export const themes: Record<ThemeId, Theme> = {
 };
 
 // ============ 颜色模式 ============
-export const colorModes: { id: ColorMode; name: string }[] = [
+export const colorModes: ReadonlyArray<{ id: ColorMode; name: string }> = [
 	{ id: 'auto', name: '跟随系统' },
 	{ id: 'light', name: '浅色' },
 	{ id: 'dark', name: '深色' }
 ];
+
+const themeClassNames = THEME_IDS.map((id) => `theme-${id}` as const);
+const requiredThemeVars = [
+    '--accent-primary',
+    '--accent-secondary',
+    '--accent-hover',
+    '--accent-active',
+    '--accent-glow',
+    '--accent-subtle',
+    '--accent-dim',
+    '--glass-bg',
+    '--dialog-overlay-bg'
+] as const;
 
 // ============ 获取状态的辅助逻辑 ============
 
@@ -56,12 +77,12 @@ async function updateConfigKey<K extends keyof AppConfig>(
 // ============ Theme Store (Derived from AppSettings) ============
 
 export const currentTheme = {
-	subscribe: derived(appSettings, $s => $s.theme as ThemeId).subscribe,
+	subscribe: derived(appSettings, $s => coerceThemeId($s.theme)).subscribe,
 	set: (val: ThemeId) => updateConfigKey('theme', val)
 };
 
 export const colorMode = {
-	subscribe: derived(appSettings, $s => $s.colorMode as ColorMode).subscribe,
+	subscribe: derived(appSettings, $s => coerceColorMode($s.colorMode)).subscribe,
 	set: (val: ColorMode) => updateConfigKey('colorMode', val)
 };
 
@@ -96,10 +117,40 @@ export const systemPrefersDark = readable(true, (set) => {
 export const effectiveColorMode = derived(
 	[appSettings, systemPrefersDark],
 	([$appSettings, $systemPrefersDark]) => {
-		const mode = $appSettings.colorMode as ColorMode;
+		const mode = coerceColorMode($appSettings.colorMode);
 		if (mode === 'auto') {
 			return $systemPrefersDark ? 'dark' : 'light';
 		}
 		return mode;
 	}
 );
+
+export function resolveThemeState(settings: Pick<AppConfig, 'theme' | 'colorMode'>, systemDark: boolean): {
+    themeId: ThemeId;
+    mode: Exclude<ColorMode, 'auto'>;
+} {
+    const themeId = coerceThemeId(settings.theme);
+    const colorMode = coerceColorMode(settings.colorMode);
+    const mode = colorMode === 'auto' ? (systemDark ? 'dark' : 'light') : colorMode;
+    return { themeId, mode };
+}
+
+export function applyThemeToDocument(state: {
+    themeId: ThemeId;
+    mode: Exclude<ColorMode, 'auto'>;
+}): void {
+    if (!browser) return;
+
+    const el = document.documentElement;
+    el.classList.remove(...themeClassNames, 'light', 'dark');
+    el.classList.add(`theme-${state.themeId}`, state.mode);
+    el.style.colorScheme = state.mode;
+
+    if (import.meta.env.DEV) {
+        const style = getComputedStyle(el);
+        const missing = requiredThemeVars.filter((token) => style.getPropertyValue(token).trim() === '');
+        if (missing.length > 0) {
+            console.warn(`[Theme] Missing tokens for ${state.themeId}/${state.mode}:`, missing.join(', '));
+        }
+    }
+}

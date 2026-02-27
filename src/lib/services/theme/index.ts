@@ -1,4 +1,6 @@
 export {
+    applyThemeToDocument,
+    resolveThemeState,
     currentTheme,
     themes,
     colorMode,
