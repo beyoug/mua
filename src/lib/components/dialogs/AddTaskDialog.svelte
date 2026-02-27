@@ -156,6 +156,11 @@
         color: var(--text-primary);
     }
 
+    .back-link:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
+    }
+
     .breadcrumb {
         display: flex;
         align-items: center;

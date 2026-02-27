@@ -56,6 +56,7 @@
         width: 100%;
         justify-content: space-between;
         align-items: center;
+        gap: 12px;
     }
 
     .advanced-btn-wrapper {
@@ -72,14 +73,16 @@
     .btn-primary {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 10px 20px;
+        justify-content: center;
+        gap: 6px;
+        padding: 8px 14px;
+        min-height: 34px;
         background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
         color: white;
         border: none;
-        border-radius: 10px;
-        font-size: 14px;
-        font-weight: 600;
+        border-radius: 8px;
+        font-size: 13px;
+        font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
         box-shadow: 0 4px 12px var(--accent-glow);
@@ -90,16 +93,26 @@
         filter: brightness(1.1);
     }
 
+    .btn-primary:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    }
+
     .btn-primary:disabled {
-        opacity: 0.5;
+        opacity: 0.55;
         cursor: not-allowed;
+        transform: none;
+        filter: none;
+        box-shadow: none;
     }
 
     .btn-ghost {
         display: flex;
         align-items: center;
+        justify-content: center;
         gap: 6px;
         padding: 8px 14px;
+        min-height: 34px;
         background: transparent;
         border: 1px dashed var(--border-color);
         color: var(--text-muted);
@@ -115,9 +128,15 @@
         background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
     }
 
+    .btn-ghost:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    }
+
     .btn-ghost:disabled {
-        opacity: 0.4;
+        opacity: 0.55;
         cursor: not-allowed;
         pointer-events: none;
+        box-shadow: none;
     }
 </style>

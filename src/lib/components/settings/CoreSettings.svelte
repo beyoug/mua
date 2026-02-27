@@ -138,8 +138,8 @@
             </button>
           </div>
           <div class="side-actions">
-            <button class="mini-btn" onclick={copySecret} title="复制"><Copy size={14} /></button>
-            <button class="mini-btn" onclick={generateSecret} title="重新生成"><RefreshCw size={14} /></button>
+            <button class="mini-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={copySecret} title="复制"><Copy size={14} /></button>
+            <button class="mini-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={generateSecret} title="重新生成"><RefreshCw size={14} /></button>
           </div>
         </div>
       </div>
@@ -157,9 +157,9 @@
                  {#if aria2Version}
                      <span class="version-text">{aria2Version.version}</span>
                      {#if aria2Version.is_custom}
-                        <span class="badge warning">自定义</span>
+                         <span class="badge warning ui-badge">自定义</span>
                      {:else}
-                        <span class="badge gray">内置</span>
+                         <span class="badge gray ui-badge">内置</span>
                      {/if}
                  {:else}
                      <span class="loading-text">检测中...</span>
@@ -187,7 +187,7 @@
                  <span class="slider"></span>
                </label>
                
-               <button class="mini-btn" onclick={restartApp} title="重启应用">
+                <button class="mini-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={restartApp} title="重启应用">
                    <RotateCcw size={14} />
                </button>
            </div>
@@ -222,9 +222,9 @@
       
       <div class="config-actions">
         {#if $aria2Config}
-          <div class="badge success">已加载自定义配置</div>
+          <div class="badge success ui-badge">已加载自定义配置</div>
         {:else}
-          <div class="badge gray">使用内置默认配置</div>
+          <div class="badge gray ui-badge">使用内置默认配置</div>
         {/if}
         <button class="secondary-btn" onclick={importAria2Config} disabled={$isImporting}>
           <FileUp size={14} />
@@ -246,6 +246,16 @@
     color: var(--text-primary);
     font-size: 12px;
     text-align: center;
+  }
+
+  .inner-input-field:focus-visible,
+  .secret-box input:focus-visible,
+  .small-save-btn:focus-visible,
+  .secondary-btn:focus-visible,
+  .icon-toggle:focus-visible,
+  .mini-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 
   .input-actions {
@@ -301,6 +311,12 @@
     display: flex;
   }
 
+  .icon-toggle:hover {
+    color: var(--text-primary);
+    background: var(--surface-hover);
+    border-radius: 6px;
+  }
+
   .side-actions {
     display: flex;
     gap: 4px;
@@ -309,20 +325,6 @@
   .mini-btn {
     width: 34px;
     height: 34px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
-    border-radius: 8px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .mini-btn:hover {
-    color: var(--text-primary);
-    background: var(--surface-active);
   }
 
   /* Import Card */
@@ -356,6 +358,7 @@
     color: var(--text-muted);
     word-break: break-all;
     margin-top: 2px;
+    opacity: 0.82;
   }
 
   .config-actions {
@@ -369,13 +372,13 @@
   .badge {
     padding: 4px 8px;
     border-radius: 4px;
-    font-size: 10px;
+    font-size: 11px;
     font-weight: 600;
   }
 
-  .badge.success { background: rgba(16, 185, 129, 0.1); color: #10b981; }
+  .badge.success { background: color-mix(in srgb, var(--semantic-success) 10%, transparent); color: var(--semantic-success); }
   .badge.gray { background: var(--surface-active); color: var(--text-muted); }
-  .badge.warning { background: rgba(245, 158, 11, 0.1); color: #f59e0b; }
+  .badge.warning { background: color-mix(in srgb, var(--semantic-warning) 10%, transparent); color: var(--semantic-warning); }
 
   .secondary-btn {
     display: flex;
@@ -394,6 +397,17 @@
 
   .secondary-btn:hover {
     background: var(--surface-active);
+  }
+
+  .secondary-btn:disabled,
+  .small-save-btn:disabled,
+  .mini-btn:disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+    transform: none;
+    filter: none;
+    box-shadow: none;
+    pointer-events: none;
   }
   
   /* Kernel Card */

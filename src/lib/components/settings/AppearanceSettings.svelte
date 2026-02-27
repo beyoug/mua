@@ -123,6 +123,12 @@
     background: var(--surface-hover);
   }
 
+  .theme-card:focus-visible,
+  .mode-card:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  }
+
   .theme-preview {
     width: 38px;
     height: 38px;
@@ -192,7 +198,7 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: rgba(255, 255, 255, 0.05);
+    background: var(--surface-hover);
     border-radius: 8px;
   }
 

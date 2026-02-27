@@ -196,7 +196,7 @@
                 <FolderOpen size={13} />
                 <span>保存位置</span>
             </div>
-            <button class="path-selector" onclick={selectFolder}>
+            <button class="path-selector ui-field" onclick={selectFolder}>
                 <span class="path-text">{savePath}</span>
                 <FolderOpen size={14} />
             </button>
@@ -208,11 +208,11 @@
                 <Network size={13} />
                 <span>Trackers</span>
                 <div class="tracker-btns">
-                    <button class="mini-action" onclick={importGlobalTrackers} title="从全局设置导入">
+                    <button class="mini-action ui-mini-action ui-btn-focus ui-disabled" onclick={importGlobalTrackers} title="从全局设置导入">
                         <Import size={12} />
                         <span>导入全局</span>
                     </button>
-                    <button class="mini-action" onclick={fetchTrackers} disabled={isFetchingTrackers}>
+                    <button class="mini-action ui-mini-action ui-btn-focus ui-disabled" onclick={fetchTrackers} disabled={isFetchingTrackers}>
                         {#if isFetchingTrackers}
                                     <RefreshCw size={12} style="animation: spin 1s linear infinite;" />
                         {:else}
@@ -228,11 +228,11 @@
                     <div class="preview-header">
                         <span>发现 {publicTrackers.length} 个 Tracker</span>
                         <div class="preview-btns">
-                            <button class="mini-btn primary" onclick={appendTrackers}>
+                            <button class="mini-btn ui-btn-mini ui-btn-primary ui-btn-focus ui-disabled primary" onclick={appendTrackers}>
                                 <Plus size={12} />
                                 追加
                             </button>
-                            <button class="mini-btn" onclick={() => showTrackerPreview = false}>
+                            <button class="mini-btn ui-btn-mini ui-btn-secondary ui-btn-focus ui-disabled" onclick={() => showTrackerPreview = false}>
                                 取消
                             </button>
                         </div>
@@ -247,7 +247,7 @@
             {/if}
 
             <textarea
-                class="tracker-textarea"
+                class="tracker-textarea ui-field"
                 bind:value={trackers}
                 placeholder="每行一个 Tracker URL&#10;udp://tracker.opentrackr.org:1337/announce"
                 spellcheck="false"
@@ -258,8 +258,8 @@
 
     {#snippet footer()}
         <div class="footer-layout">
-            <button class="btn-cancel" onclick={onCancel}>取消</button>
-            <button class="btn-confirm" onclick={handleConfirm}>
+            <button class="btn-cancel ui-btn-footer ui-btn-secondary ui-btn-focus ui-disabled" onclick={onCancel}>取消</button>
+            <button class="btn-confirm ui-btn-footer ui-btn-primary ui-btn-focus ui-disabled" onclick={handleConfirm}>
                 <Download size={14} />
                 <span>开始下载</span>
             </button>
@@ -380,28 +380,7 @@
     }
 
     .mini-action {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 3px 8px;
-        background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
-        border-radius: 6px;
-        color: var(--text-secondary);
         font-size: 11px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .mini-action:hover:not(:disabled) {
-        background: var(--surface-active);
-        color: var(--text-primary);
-        border-color: var(--accent-primary);
-    }
-
-    .mini-action:disabled {
-        opacity: 0.5;
-        cursor: not-allowed;
     }
 
     /* 路径选择器 */
@@ -410,13 +389,8 @@
         align-items: center;
         justify-content: space-between;
         padding: 10px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 10px;
-        color: var(--text-primary);
         font-size: 13px;
         cursor: pointer;
-        transition: all 0.2s;
         text-align: left;
     }
 
@@ -453,28 +427,8 @@
         gap: 6px;
     }
 
-    .mini-btn {
-        display: flex;
-        align-items: center;
-        gap: 4px;
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 10px;
-        border: 1px solid var(--border-subtle);
-        background: var(--surface-hover);
-        color: var(--text-secondary);
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
     .mini-btn.primary {
-        background: var(--accent-primary);
         color: white;
-        border-color: transparent;
-    }
-
-    .mini-btn.primary:hover {
-        filter: brightness(1.1);
     }
 
     .preview-content {
@@ -494,21 +448,10 @@
         width: 100%;
         height: 100px;
         padding: 10px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 10px;
-        color: var(--text-primary);
         font-size: 12px;
         font-family: monospace;
-        outline: none;
         resize: vertical;
-        transition: all 0.2s;
         line-height: 1.5;
-    }
-
-    .tracker-textarea:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
     /* Footer */
@@ -519,47 +462,12 @@
         gap: 10px;
     }
 
-    .btn-cancel {
-        padding: 8px 16px;
-        background: transparent;
-        border: 1px solid var(--border-color);
-        color: var(--text-secondary);
-        border-radius: 10px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .btn-cancel:hover {
-        background: var(--surface-hover);
-        color: var(--text-primary);
-    }
-
     .btn-confirm {
         display: flex;
         align-items: center;
-        gap: 8px;
-        padding: 8px 18px;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+        justify-content: center;
+        gap: 6px;
         color: white;
-        border: none;
-        border-radius: 10px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 4px 12px var(--accent-glow);
-    }
-
-    .btn-confirm:hover:not(:disabled) {
-        transform: translateY(-1px);
-        filter: brightness(1.1);
-    }
-
-    .btn-confirm:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-        box-shadow: none;
     }
 
     @keyframes spin {

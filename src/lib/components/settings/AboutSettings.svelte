@@ -148,11 +148,21 @@
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   }
 
+  .action-tile span {
+    font-size: 12px;
+    font-weight: 500;
+  }
+
   .action-tile:hover {
     background: var(--surface-active);
     color: var(--text-primary);
     border-color: var(--border-strong);
     transform: translateY(-2px);
+  }
+
+  .action-tile:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 
   .settings-section {
@@ -196,10 +206,10 @@
     font-size: 11px;
     color: var(--text-muted);
     margin-top: 10px;
-    opacity: 0.6;
+    opacity: 0.74;
   }
 
   .heart-icon {
-    color: #ef4444;
+    color: var(--semantic-danger);
   }
 </style>

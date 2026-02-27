@@ -110,3 +110,10 @@
     </div>
   </section>
 </div>
+
+<style>
+  :global(.switch input:focus-visible + .slider) {
+    outline: none;
+    box-shadow: var(--focus-ring);
+  }
+</style>

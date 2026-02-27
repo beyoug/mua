@@ -263,8 +263,8 @@
 	}
 
 	.icon-wrapper.error {
-		background: rgba(239, 68, 68, 0.15);
-		color: #f87171;
+		background: color-mix(in srgb, var(--semantic-danger) 16%, transparent);
+		color: var(--semantic-danger);
 	}
 
 	.icon-wrapper.cancelled {
@@ -298,6 +298,10 @@
 		opacity: 1;
 	}
 
+	.download-card:focus-within .actions {
+		opacity: 1;
+	}
+
 	.action-btn {
 		display: flex;
 		align-items: center;
@@ -320,6 +324,11 @@
 		box-shadow: 0 0 8px var(--accent-glow);
 	}
 
+	.action-btn:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+	}
+
 	.action-btn.resume:hover {
 		background: var(--accent-active-bg);
 		color: var(--accent-text);
@@ -327,9 +336,9 @@
 	}
 
 	.action-btn.cancel:hover {
-		background: rgba(239, 68, 68, 0.15);
-		color: #f87171;
-		border-color: rgba(239, 68, 68, 0.3);
+		background: color-mix(in srgb, var(--semantic-danger) 14%, transparent);
+		color: var(--semantic-danger);
+		border-color: color-mix(in srgb, var(--semantic-danger) 34%, transparent);
 	}
 
 	.card-footer {
@@ -391,6 +400,11 @@
 	.checkbox:hover {
 		border-color: rgba(255, 255, 255, 0.4);
         background: rgba(255, 255, 255, 0.05);
+	}
+
+	.checkbox:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
 	}
 
 	.checkbox.checked {

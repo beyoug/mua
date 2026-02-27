@@ -81,7 +81,7 @@
 	}
 
 	.status-indicator.complete {
-		color: var(--semantic-success, #10b981);
+		color: var(--semantic-success);
 	}
 
 	.status-indicator.waiting {
@@ -93,11 +93,11 @@
 	}
 
 	.status-indicator.error {
-		color: var(--semantic-danger, #ef4444);
+		color: var(--semantic-danger);
 	}
 
 	.status-indicator.missing {
-		color: #d97706;
+		color: var(--semantic-warning);
 		opacity: 0.85;
 	}
 

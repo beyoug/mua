@@ -57,24 +57,24 @@
 	<div class="header-actions" onmousedown={(e) => e.stopPropagation()}>
 		{#if !isSelectionMode}
 			{#if hasDownloading}
-				<button class="icon-btn" onclick={onGlobalPause} title="全部暂停">
+				<button class="icon-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={onGlobalPause} title="全部暂停">
 					<Pause size={18} fill="currentColor" />
 				</button>
 			{:else if hasPaused}
-				<button class="icon-btn" onclick={onGlobalResume} title="全部开始">
+				<button class="icon-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={onGlobalResume} title="全部开始">
 					<Play size={18} fill="currentColor" />
 				</button>
 			{/if}
 		{/if}
 
 		{#if isSelectionMode}
-			<button class="icon-btn" onclick={onExitSelection} title="退出选择">
+			<button class="icon-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={onExitSelection} title="退出选择">
 				<X size={18} />
 			</button>
 		{/if}
 
 		{#if hasRemovable || taskCount > 0}
-			<button class="icon-btn danger" onclick={onTrashClick} title={trashTooltip()}>
+			<button class="icon-btn ui-btn-icon ui-btn-focus ui-disabled danger" onclick={onTrashClick} title={trashTooltip()}>
 				<Trash2 size={18} />
 			</button>
 		{/if}
@@ -129,28 +129,19 @@
 	}
 
 	.icon-btn {
-		width: 32px;
-		height: 32px;
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: transparent;
-		border: 1px solid var(--border-color);
-		border-radius: 8px;
-		color: var(--text-muted);
-		cursor: pointer;
-		transition: all 0.2s ease;
-	}
+        width: 32px;
+        height: 32px;
+        border-color: var(--border-color);
+    }
 
 	.icon-btn:hover {
-		background: var(--border-light);
-		color: var(--text-primary);
-		border-color: var(--text-muted);
-	}
+        background: var(--border-light);
+        border-color: var(--text-muted);
+    }
 
 	.icon-btn.danger:hover {
-		background: rgba(220, 38, 38, 0.1);
-		color: #ef4444;
-		border-color: #fca5a5;
+		background: color-mix(in srgb, var(--semantic-danger) 12%, transparent);
+		color: var(--semantic-danger);
+		border-color: color-mix(in srgb, var(--semantic-danger) 34%, transparent);
 	}
 </style>

@@ -76,10 +76,10 @@
   <div class="header-row">
       <div class="title-group">
           <h4 class="section-title">实时日志</h4>
-          <span class="badge">Performance Cost</span>
+          <span class="badge ui-badge warning">Performance Cost</span>
       </div>
       <div class="controls">
-          <button class="icon-btn" onclick={clearLogs} title="清空日志">
+          <button class="icon-btn ui-btn-icon ui-btn-focus ui-disabled" onclick={clearLogs} title="清空日志">
               <Eraser size={14} />
           </button>
           <label class="switch">
@@ -132,12 +132,12 @@
     }
     
     .badge {
-        font-size: 10px;
+        font-size: 11px;
         color: var(--semantic-warning);
-        background: rgba(245, 158, 11, 0.1);
+        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
         padding: 2px 6px;
         border-radius: 4px;
-        border: 1px solid rgba(245, 158, 11, 0.2);
+        border: 1px solid color-mix(in srgb, var(--semantic-warning) 28%, transparent);
     }
 
     .settings-section {
@@ -159,24 +159,13 @@
     }
 
     .icon-btn {
-        background: transparent;
-        border: none;
-        color: var(--text-muted);
-        cursor: pointer;
-        padding: 4px;
-        border-radius: 4px;
-        transition: all 0.2s;
-        display: flex;
-    }
-
-    .icon-btn:hover {
-        background: var(--surface-hover);
-        color: var(--text-primary);
+        width: 30px;
+        height: 30px;
     }
 
     .terminal-window {
         flex: 1;
-        background: #1e1e1e;
+        background: color-mix(in srgb, var(--dialog-bg) 84%, #000000);
         border-radius: 8px;
         border: 1px solid var(--border-color);
         padding: 12px;
@@ -193,7 +182,7 @@
     .terminal-logs {
         flex: 1;
         overflow: auto;
-        color: #d4d4d4;
+        color: color-mix(in srgb, var(--text-primary) 86%, #ffffff);
         white-space: pre;
     }
     
@@ -206,7 +195,7 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        color: #666;
+        color: var(--text-muted);
     }
 
     .blink {

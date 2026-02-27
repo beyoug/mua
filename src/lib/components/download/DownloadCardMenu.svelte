@@ -146,6 +146,11 @@
 		color: var(--accent-primary);
 	}
 
+	.menu-item:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+	}
+
 	.menu-item:disabled {
 		opacity: 0.5;
 		cursor: not-allowed;
@@ -156,7 +161,7 @@
 	}
 
 	.menu-item.danger:hover {
-		background: rgba(239, 68, 68, 0.1);
+		background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
 	}
 
 	.menu-divider {

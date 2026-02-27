@@ -220,6 +220,13 @@
 		color: var(--text-primary);
 	}
 
+	.add-btn:focus-visible,
+	.settings-btn:focus-visible,
+	.nav-item:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+	}
+
 	.nav-menu {
 		display: flex;
 		flex-direction: column;
@@ -327,7 +334,7 @@
 		width: 100%;
 		padding: 9px 12px;
 		background: transparent;
-		border: none;
+		border: 1px dashed var(--border-color);
 		border-radius: 10px;
 		color: var(--text-secondary);
 		font-size: 13px;

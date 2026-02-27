@@ -207,6 +207,11 @@
     color: var(--text-primary);
   }
 
+  .nav-item:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  }
+
   .nav-item.active {
     background: var(--accent-active-bg);
     color: var(--accent-primary);
@@ -253,6 +258,11 @@
   .close-btn:hover {
     background: var(--input-bg);
     color: var(--text-primary);
+  }
+
+  .close-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 
   .content-body {
@@ -377,5 +387,10 @@
 
   :global(input:checked + .slider:before) {
     transform: translateX(16px);
+  }
+
+  :global(.switch input:focus-visible + .slider) {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 </style>

@@ -58,7 +58,7 @@
     {#snippet header()}
         <div class="confirm-header">
             <div class="icon-wrapper">
-                <Trash2 size={20} color="#ef4444" />
+        <Trash2 size={20} color="var(--semantic-danger)" />
             </div>
             <h3 class="modal-title">{title}</h3>
         </div>
@@ -76,8 +76,8 @@
     </div>
 
 	{#snippet footer()}
-		<button class="btn-secondary" onclick={onClose} disabled={isSubmitting}>取消</button>
-		<button class="btn-danger" onclick={handleConfirm} disabled={isSubmitting}>
+		<button class="btn-secondary ui-btn-footer ui-btn-secondary ui-btn-focus ui-disabled" onclick={onClose} disabled={isSubmitting}>取消</button>
+		<button class="btn-danger ui-btn-footer ui-btn-danger ui-btn-focus ui-disabled" onclick={handleConfirm} disabled={isSubmitting}>
 			{confirmText}
 		</button>
 	{/snippet}
@@ -94,7 +94,7 @@
         width: 36px;
         height: 36px;
         border-radius: 10px;
-        background: rgba(239, 68, 68, 0.1);
+        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
         display: flex;
         align-items: center;
         justify-content: center;
@@ -147,45 +147,4 @@
         font-weight: 400;
     }
 
-	.btn-secondary {
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid var(--border-color);
-        background: transparent;
-        color: var(--text-primary);
-	}
-
-	.btn-secondary:disabled,
-	.btn-danger:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
-		transform: none;
-	}
-
-    .btn-secondary:hover {
-        background: var(--surface-hover);
-    }
-
-    .btn-danger {
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: none;
-        background: #ef4444;
-        color: white;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25);
-    }
-
-    .btn-danger:hover {
-        background: #dc2626;
-        transform: translateY(-1px);
-        box-shadow: 0 6px 16px rgba(239, 68, 68, 0.35);
-    }
 </style>

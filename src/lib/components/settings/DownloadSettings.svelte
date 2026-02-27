@@ -95,6 +95,11 @@
     color: var(--text-primary);
   }
 
+  .path-btn:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  }
+
   .inner-input {
     display: flex;
     align-items: center;
@@ -110,6 +115,11 @@
     color: var(--text-primary);
     font-size: 12px;
     text-align: center;
+  }
+
+  .inner-input input:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 
   .inner-input.group input {

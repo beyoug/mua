@@ -88,6 +88,7 @@
                 onUrlInput();
             }}
             onblur={onUrlBlur}
+            class="ui-field"
             class:error={!!validationError}
         ></textarea>
     </div>
@@ -97,7 +98,7 @@
             <FolderOpen size={14} />
             <span>保存位置</span>
         </label>
-        <button class="path-selector" onclick={onSelectFolder}>
+        <button class="path-selector ui-field" onclick={onSelectFolder}>
             <span class="path-text" title={savePath}
                 >{displayPath || savePath}</span
             >
@@ -112,7 +113,7 @@
         </label>
         <input
             type="text"
-            class="text-input"
+            class="text-input ui-field"
             placeholder="留空则使用默认文件名"
             value={filename}
             oninput={(event) =>
@@ -164,31 +165,24 @@
     input,
     .path-selector {
         padding: 12px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 10px;
-        color: var(--text-primary);
         font-size: 14px;
-        outline: none;
-        transition: all 0.2s ease;
-    }
-
-    textarea:focus,
-    input:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px
-            color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
     textarea {
         height: 100px;
         resize: none;
-        white-space: nowrap;
-        overflow-x: auto;
+        white-space: pre-wrap;
+        overflow-wrap: anywhere;
+        overflow-x: hidden;
     }
 
     textarea.error {
         border-color: var(--semantic-danger);
+    }
+
+    textarea.error:focus {
+        border-color: var(--semantic-danger);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-danger) 18%, transparent);
     }
 
     .path-selector {
@@ -201,6 +195,14 @@
 
     .path-selector:hover {
         border-color: var(--accent-primary);
+    }
+
+    .path-selector:focus-visible,
+    .btn-xs-secondary:focus-visible,
+    textarea:focus-visible,
+    input:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
     }
 
     .path-text {

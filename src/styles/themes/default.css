@@ -34,10 +34,16 @@ html.theme-default {
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: radial-gradient(ellipse at top, rgba(74, 158, 255, 0.18), transparent);
 
+  --border-color: transparent;
+  --border-light: transparent;
+  --border-subtle: transparent;
+  --border-normal: transparent;
+  --border-strong: transparent;
+
   /* Glass Overrides - Dark */
   /* Increase border opacity for better visibility */
   --glass-bg: rgba(15, 23, 42, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.15);
+  --glass-border: transparent;
   --glass-blur: blur(20px);
   --glass-saturate: saturate(120%);
   --glass-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
@@ -78,22 +84,23 @@ html.light.theme-default {
 
   /* 浅色玻璃态 (Restored) */
   --glass-bg: rgba(255, 255, 255, 0.45);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --glass-border: transparent;
   --glass-blur: blur(24px);
   --glass-shadow: 0 4px 16px -1px rgba(0, 0, 0, 0.05);
 
   /* 边框颜色 */
-  --border-color: rgba(56, 189, 248, 0.18);
-  --border-light: rgba(56, 189, 248, 0.1);
-  --border-subtle: rgba(56, 189, 248, 0.08);
-  --border-normal: rgba(56, 189, 248, 0.18);
-  --border-strong: rgba(56, 189, 248, 0.3);
-  --surface-hover: rgba(255, 255, 255, 0.4);
+  --border-color: transparent;
+  --border-light: transparent;
+  --border-subtle: transparent;
+  --border-normal: transparent;
+  --border-strong: transparent;
+  --surface-hover: rgba(255, 255, 255, 0.48);
+  --surface-active: rgba(255, 255, 255, 0.58);
 
   --dialog-bg: rgba(255, 255, 255, 0.8);
   --overlay-bg: rgba(255, 255, 255, 0.85);
 
-  --input-bg: rgba(255, 255, 255, 0.7);
+  --input-bg: rgba(255, 255, 255, 0.76);
 
   /* 遮罩 */
   --dialog-overlay-bg: rgba(15, 23, 42, 0.15);
@@ -104,4 +111,402 @@ html.light.theme-default body {
   background:
     radial-gradient(at 100% 0%, rgba(56, 189, 248, 0.3) 0px, transparent 50%),
     linear-gradient(180deg, #bfdbfe 0%, #eff6ff 100%);
+}
+
+html.theme-default .nav-item.active,
+html.theme-default .mode-card.active {
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 26%, transparent);
+}
+
+html.theme-default .nav-item.active {
+  background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+  color: var(--accent-text);
+}
+
+html.theme-default .panel-sidebar {
+  background: color-mix(in srgb, var(--glass-bg) 82%, transparent);
+  border-left-color: var(--border-normal);
+}
+
+html.theme-default .setting-list,
+html.theme-default .theme-grid {
+  background: color-mix(in srgb, var(--input-bg) 92%, transparent);
+  border-color: var(--border-normal);
+}
+
+html.theme-default .setting-item:hover:not(.disabled),
+html.theme-default .theme-card:hover,
+html.theme-default .mode-card:hover {
+  background: var(--surface-active);
+}
+
+html.theme-default .modal-container .form-group textarea,
+html.theme-default .modal-container .form-group input,
+html.theme-default .modal-container .path-selector,
+html.theme-default .modal-container .form-row input,
+html.theme-default .modal-container .form-row textarea,
+html.theme-default .modal-container .input-group {
+  border-color: var(--border-normal);
+  background: color-mix(in srgb, var(--input-bg) 96%, transparent);
+}
+
+html.theme-default .modal-container textarea:focus,
+html.theme-default .modal-container input:focus,
+html.theme-default .modal-container .input-group:focus-within,
+html.theme-default .modal-container .ua-dropdown-trigger:focus-within {
+  border-color: var(--border-normal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+}
+
+html.theme-default .panel,
+html.theme-default .modal-container {
+  border-color: var(--border-normal);
+  box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 8%, transparent);
+}
+
+html.theme-default .panel .content-header,
+html.theme-default .modal-header {
+  border-bottom: 1px solid var(--border-normal);
+}
+
+html.theme-default .panel .modal-footer,
+html.theme-default .modal-footer {
+  border-top: 1px solid var(--border-normal);
+  background: transparent;
+}
+
+html.theme-default .download-card {
+  border-color: var(--border-normal);
+  box-shadow: 0 4px 14px rgba(5, 20, 48, 0.14);
+  transition: transform 180ms ease, box-shadow 180ms ease, border-color 140ms ease;
+}
+
+html.theme-default .download-card:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(5, 20, 48, 0.18), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+html.theme-default .download-card .action-btn {
+  background: color-mix(in srgb, var(--surface-hover) 92%, transparent);
+  border-color: var(--border-normal);
+}
+
+html.theme-default .download-card .action-btn:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+}
+
+html.theme-default .download-card .checkbox {
+  border-color: var(--border-normal);
+  background: color-mix(in srgb, var(--input-bg) 90%, transparent);
+}
+
+html.theme-default .download-card .checkbox.checked {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 16%, transparent), 0 0 8px var(--accent-glow);
+}
+
+html.theme-default .btn-primary,
+html.theme-default .btn-confirm {
+  background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 88%, white), var(--accent-secondary));
+  color: var(--accent-btn-text);
+  border: 1px solid var(--border-normal);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 56%, transparent);
+}
+
+html.theme-default .btn-primary:hover:not(:disabled),
+html.theme-default .btn-confirm:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-glow) 66%, transparent);
+}
+
+html.theme-default .btn-secondary,
+html.theme-default .btn-cancel,
+html.theme-default .btn-ghost,
+html.theme-default .btn-xs-secondary,
+html.theme-default .mini-action,
+html.theme-default .mini-btn,
+html.theme-default .btn-text {
+  background: color-mix(in srgb, var(--surface-hover) 90%, transparent);
+  border-color: var(--border-normal);
+  color: var(--text-secondary);
+}
+
+html.theme-default .btn-secondary:hover,
+html.theme-default .btn-cancel:hover,
+html.theme-default .btn-ghost:hover,
+html.theme-default .btn-xs-secondary:hover,
+html.theme-default .mini-action:hover:not(:disabled),
+html.theme-default .mini-btn:hover,
+html.theme-default .btn-text:hover {
+  color: var(--text-primary);
+  border-color: var(--border-normal);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+html.theme-default .modal-container .advanced-btn-wrapper .btn-ghost {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+}
+
+html.theme-default .modal-container .advanced-btn-wrapper .btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 42%, transparent);
+}
+
+html.theme-default .path-selector,
+html.theme-default .ua-dropdown-trigger,
+html.theme-default .ua-custom-input,
+html.theme-default .tracker-textarea,
+html.theme-default .grouped-select,
+html.theme-default .grouped-input,
+html.theme-default .inner-input,
+html.theme-default .inner-input-field,
+html.theme-default .input-wrapper input,
+html.theme-default .input-wrapper textarea,
+html.theme-default .input-wrapper select,
+html.theme-default .text-input {
+  background: color-mix(in srgb, var(--input-bg) 96%, transparent);
+  border-color: var(--border-normal);
+}
+
+html.theme-default .path-selector:hover,
+html.theme-default .ua-dropdown-trigger:hover,
+html.theme-default .input-group:hover,
+html.theme-default .inner-input:hover,
+html.theme-default .input-wrapper:hover {
+  border-color: var(--border-normal);
+}
+
+html.theme-default .modal-container .ua-custom-input.error,
+html.theme-default .ua-custom-input.error {
+  border-color: var(--semantic-danger);
+  background: color-mix(in srgb, var(--semantic-danger) 6%, var(--input-bg));
+}
+
+html.theme-default input:focus,
+html.theme-default textarea:focus,
+html.theme-default select:focus,
+html.theme-default .ua-custom-input:focus,
+html.theme-default .grouped-select:focus,
+html.theme-default .inner-input:focus-within,
+html.theme-default .input-wrapper:focus-within {
+  outline: none;
+  border-color: var(--border-normal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+}
+
+html.theme-default .modal-container .ua-custom-input.error:focus,
+html.theme-default .ua-custom-input.error:focus {
+  border-color: var(--semantic-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-danger) 18%, transparent);
+}
+
+html.theme-default .ua-dropdown-content,
+html.theme-default .dropdown-menu {
+  background: color-mix(in srgb, var(--dialog-bg) 90%, transparent);
+  border-color: var(--border-normal);
+  box-shadow: 0 14px 28px rgba(3, 18, 44, 0.32);
+}
+
+html.theme-default .ua-option:hover,
+html.theme-default .menu-item:hover,
+html.theme-default .file-item:hover {
+  background: color-mix(in srgb, var(--accent-primary) 9%, transparent);
+}
+
+html.theme-default .ua-option.active,
+html.theme-default .file-item.selected {
+  background: color-mix(in srgb, var(--accent-primary) 13%, transparent);
+}
+
+html.theme-default .detail-value-box {
+  background: color-mix(in srgb, var(--input-bg) 94%, transparent);
+  border-color: var(--border-subtle);
+  transition: background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
+}
+
+html.theme-default .detail-value-box:hover {
+  background: color-mix(in srgb, var(--surface-hover) 92%, transparent);
+  border-color: var(--border-normal);
+}
+
+html.theme-default .item-copy-btn {
+  background: color-mix(in srgb, var(--surface-hover) 92%, transparent);
+  border-color: var(--border-normal);
+}
+
+html.theme-default .item-copy-btn:hover {
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+html.theme-default .tracker-preview,
+html.theme-default .kernel-card,
+html.theme-default .import-card,
+html.theme-default .about-card,
+html.theme-default .settings-section,
+html.theme-default .credits-list,
+html.theme-default .credit-item,
+html.theme-default .action-tile {
+  border-color: var(--border-normal);
+}
+
+html.theme-default .tracker-preview,
+html.theme-default .preview-content,
+html.theme-default .action-tile {
+  background: color-mix(in srgb, var(--surface-active) 86%, transparent);
+}
+
+html.theme-default .action-tile:hover {
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  border-color: var(--border-normal);
+  box-shadow: 0 8px 20px color-mix(in srgb, var(--accent-glow) 34%, transparent);
+}
+
+html.theme-default .add-btn,
+html.theme-default .settings-btn,
+html.theme-default .checkbox-label {
+  border-color: transparent;
+  background: color-mix(in srgb, var(--surface-hover) 90%, transparent);
+  color: var(--text-secondary);
+}
+
+html.theme-default .add-btn,
+html.theme-default .settings-btn {
+  border-color: color-mix(in srgb, var(--accent-primary) 30%, transparent);
+  border-style: dashed;
+}
+
+html.theme-default .add-btn:hover,
+html.theme-default .settings-btn:hover,
+html.theme-default .checkbox-label:hover {
+  color: var(--text-primary);
+  border-color: var(--border-normal);
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+}
+
+html.theme-default .add-btn:hover,
+html.theme-default .settings-btn:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 42%, transparent);
+  border-style: dashed;
+}
+
+html.theme-default .stats-panel {
+  border: 1px solid var(--border-subtle);
+  border-radius: 12px;
+  padding: 10px 12px;
+  background: transparent;
+}
+
+html.theme-default .stat-count {
+  color: var(--accent-text);
+  opacity: 0.92;
+}
+
+html.theme-default .info-box {
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  border-color: var(--border-normal);
+  color: var(--text-secondary);
+}
+
+html.theme-default .tooltip-text {
+  background: color-mix(in srgb, var(--dialog-bg) 92%, transparent);
+  border-color: var(--border-normal);
+  box-shadow: 0 10px 24px rgba(4, 18, 42, 0.3);
+}
+
+html.theme-default .menu-item {
+  color: var(--text-secondary);
+}
+
+html.theme-default .menu-item:hover {
+  color: var(--text-primary);
+}
+
+html.theme-default .menu-item.danger,
+html.theme-default .btn-danger {
+  color: var(--semantic-danger);
+  border-color: transparent;
+  background: color-mix(in srgb, var(--semantic-danger) 9%, transparent);
+}
+
+html.theme-default .menu-item.danger:hover,
+html.theme-default .btn-danger:hover {
+  background: color-mix(in srgb, var(--semantic-danger) 14%, transparent);
+  border-color: transparent;
+}
+
+html.theme-default .btn-danger {
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--semantic-danger) 24%, transparent);
+}
+
+html.theme-default .modal-tabs {
+  background: color-mix(in srgb, var(--input-bg) 90%, transparent);
+  border: 1px solid var(--border-subtle);
+  box-shadow: none;
+}
+
+html.theme-default .active-indicator {
+  background: color-mix(in srgb, var(--surface-active) 90%, transparent);
+  border-color: var(--border-normal);
+  box-shadow: 0 4px 12px rgba(5, 22, 52, 0.24);
+}
+
+html.theme-default .tab-btn {
+  transition: color 140ms ease;
+}
+
+html.theme-default .status-pill {
+  border: 1px solid transparent;
+}
+
+html.theme-default .app-version {
+  background: color-mix(in srgb, var(--surface-active) 88%, transparent);
+  border: 1px solid var(--border-subtle);
+}
+
+html.theme-default .port-input-inline,
+html.theme-default .path-btn,
+html.theme-default .inner-input input,
+html.theme-default .unit,
+html.theme-default .textarea-wrapper textarea {
+  background: color-mix(in srgb, var(--input-bg) 95%, transparent);
+  border-color: var(--border-normal);
+  color: var(--text-primary);
+}
+
+html.theme-default .port-input-inline:hover,
+html.theme-default .path-btn:hover,
+html.theme-default .input-wrapper.group:hover,
+html.theme-default .inner-input:hover {
+  border-color: var(--border-normal);
+}
+
+html.theme-default .port-input-inline:focus-within,
+html.theme-default .inner-input input:focus,
+html.theme-default .textarea-wrapper textarea:focus {
+  border-color: var(--border-normal);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 16%, transparent);
+}
+
+html.theme-default .port-btn {
+  background: color-mix(in srgb, var(--surface-hover) 90%, transparent);
+  color: var(--text-secondary);
+}
+
+html.theme-default .port-btn:hover {
+  background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+  color: var(--text-primary);
+}
+
+html.theme-default .inline-restart-hint {
+  background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
+  border-color: transparent;
+  color: var(--semantic-warning);
+}
+
+html.theme-default .text-relaunch-btn {
+  background: color-mix(in srgb, var(--semantic-warning) 84%, #ffffff);
+  color: #111827;
+}
+
+html.theme-default .text-relaunch-btn:hover {
+  background: var(--semantic-warning);
 }

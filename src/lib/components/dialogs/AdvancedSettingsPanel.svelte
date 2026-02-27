@@ -76,7 +76,7 @@
                 <Link size={14} />
                 <span>Referer</span>
             </label>
-            <input type="text" placeholder="https://example.com" value={referer} oninput={(e) => onRefererChange(e.currentTarget.value)} />
+            <input class="ui-field" type="text" placeholder="https://example.com" value={referer} oninput={(e) => onRefererChange(e.currentTarget.value)} />
         </div>
 
         <!-- 自定义 Header -->
@@ -90,7 +90,7 @@
                 value={headers}
                 oninput={(e) => onHeadersChange(e.currentTarget.value)}
                 rows="2"
-                class="headers-textarea"
+                class="headers-textarea ui-field"
             ></textarea>
         </div>
 
@@ -100,7 +100,7 @@
                 <Shield size={14} />
                 <span>代理服务器</span>
             </label>
-            <input type="text" placeholder="[user:pass@]host:port (支持 http/socks5)" value={proxy} oninput={(e) => onProxyChange(e.currentTarget.value)} />
+            <input class="ui-field" type="text" placeholder="[user:pass@]host:port (支持 http/socks5)" value={proxy} oninput={(e) => onProxyChange(e.currentTarget.value)} />
         </div>
 
         <!-- 速度限制 -->
@@ -109,18 +109,18 @@
                 <Gauge size={14} />
                 <span>速度限制</span>
             </label>
-            <div class="input-group">
+            <div class="input-group ui-input-group">
                 <input 
                     type="number" 
                     min="0" 
                     placeholder="0" 
-                    class="grouped-input"
+                    class="grouped-input ui-field"
                     value={maxDownloadLimitValue}
                     oninput={(e) => onLimitValueChange(e.currentTarget.value)}
                 />
                 <div class="input-divider"></div>
                 <div class="select-wrapper">
-                    <select class="grouped-select" value={maxDownloadLimitUnit} onchange={(e) => onLimitUnitChange(e.currentTarget.value)}>
+                    <select class="grouped-select ui-field" value={maxDownloadLimitUnit} onchange={(e) => onLimitUnitChange(e.currentTarget.value)}>
                         <option value="M">MB/s</option>
                         <option value="K">KB/s</option>
                     </select>
@@ -165,31 +165,12 @@
     .form-row input,
     .form-row textarea {
         padding: 12px 14px;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 10px;
-        color: var(--text-primary);
-        font-size: 14px;
-        outline: none;
-        transition: all 0.2s ease;
-    }
-
-    .form-row input:focus,
-    .form-row textarea:focus {
-        border-color: var(--accent-primary);
-        background: var(--surface-hover);
     }
 
     .headers-textarea {
         width: 100%;
         padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        color: var(--text-primary);
         font-size: 13px;
-        outline: none;
-        transition: all 0.2s;
         resize: vertical;
         min-height: 80px;
         font-family: var(--font-mono, monospace);
@@ -197,18 +178,7 @@
     }
 
     .input-group {
-        display: flex;
-        align-items: stretch;
-        background: var(--input-bg, rgba(255, 255, 255, 0.05));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
-        border-radius: 12px;
         overflow: hidden;
-        transition: all 0.2s ease;
-    }
-
-    .input-group:focus-within {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 15%, transparent);
     }
 
     .grouped-input {

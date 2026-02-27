@@ -206,7 +206,7 @@
                     <div class="timeline-narrative">
                         <div class="detail-value-box narrative-row" class:error={downloadState === 'error'}>
                             <div class="timeline-segment">
-                                <div class="status-pill status-start">
+                                <div class="status-pill ui-pill status-start">
                                     <div class="status-dot"></div>
                                     <span>开始</span>
                                 </div>
@@ -215,7 +215,7 @@
                             </div>
 
                             <div class="timeline-segment">
-                                <div class="status-pill status-{downloadState}">
+                                <div class="status-pill ui-pill status-{downloadState}">
                                     {#if downloadState === 'active'}
                                         <div class="status-dot pulsing"></div>
                                     {:else if downloadState === 'complete'}
@@ -345,7 +345,7 @@
     </div>
 
     {#snippet footer()}
-        <button class="btn-secondary" onclick={onClose}>关闭</button>
+        <button class="btn-secondary ui-btn-footer ui-btn-secondary ui-btn-focus ui-disabled" onclick={onClose}>关闭</button>
     {/snippet}
 </BaseModal>
 
@@ -476,8 +476,8 @@
     }
 
     .detail-value-box.error {
-        background: rgba(239, 68, 68, 0.05);
-        border-color: rgba(239, 68, 68, 0.2);
+        background: color-mix(in srgb, var(--semantic-danger) 8%, transparent);
+        border-color: color-mix(in srgb, var(--semantic-danger) 28%, transparent);
     }
 
     .value-text {
@@ -586,14 +586,7 @@
     }
 
     .status-pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 5px;
-        padding: 3px 8px;
         font-size: 11px;
-        font-weight: 600;
-        border-radius: 12px;
-        white-space: nowrap;
     }
 
     .status-dot {
@@ -629,8 +622,8 @@
     }
 
     .status-pill.status-error {
-        background: color-mix(in srgb, var(--semantic-danger, #ef4444) 10%, transparent);
-        color: var(--semantic-danger, #ef4444);
+        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+        color: var(--semantic-danger);
     }
 
     .status-pill.status-removed {
@@ -710,18 +703,18 @@
     }
 
     .error-reason-box {
-        background: rgba(239, 68, 68, 0.08) !important;
-        border-color: rgba(239, 68, 68, 0.2) !important;
+        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent) !important;
+        border-color: color-mix(in srgb, var(--semantic-danger) 28%, transparent) !important;
         padding: 10px 12px !important;
     }
 
     .error-icon {
-        color: var(--semantic-danger, #ef4444);
+        color: var(--semantic-danger);
         flex-shrink: 0;
     }
 
     .error-msg {
-        color: var(--semantic-danger, #ef4444) !important;
+        color: var(--semantic-danger) !important;
         font-weight: 500;
         font-size: 12px;
     }
@@ -736,17 +729,4 @@
         gap: 12px;
     }
 
-    .btn-secondary {
-        padding: 8px 18px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        border: 1px solid var(--border-color);
-        background: transparent;
-        color: var(--text-primary);
-    }
-
-    .btn-secondary:hover { background: var(--surface-hover); }
 </style>

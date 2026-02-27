@@ -181,6 +181,11 @@
 		color: var(--text-primary);
 	}
 
+	.close-btn:focus-visible {
+		outline: none;
+		box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+	}
+
 	.modal-body {
 		flex: 1;
 		overflow-y: auto;

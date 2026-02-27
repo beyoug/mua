@@ -170,7 +170,7 @@
           </div>
 
           {#if isDhtPortChanged}
-            <div class="inline-restart-hint" transition:fade={{ duration: 150 }}>
+            <div class="inline-restart-hint ui-status-card warning" transition:fade={{ duration: 150 }}>
                 <RefreshCw size={12} />
                 <span>端口已改，需重启生效</span>
                 <button class="text-relaunch-btn" onclick={() => relaunch()}>立即重启</button>
@@ -218,7 +218,7 @@
           </div>
 
           {#if isListenPortChanged}
-            <div class="inline-restart-hint" transition:fade={{ duration: 150 }}>
+            <div class="inline-restart-hint ui-status-card warning" transition:fade={{ duration: 150 }}>
                 <RefreshCw size={12} />
                 <span>端口已改，需重启生效</span>
                 <button class="text-relaunch-btn" onclick={() => relaunch()}>立即重启</button>
@@ -332,11 +332,11 @@
                 <div class="preview-header">
                     <span>发现 {publicTrackers.length} 个新服务器</span>
                     <div class="preview-btns">
-                        <button class="mini-btn append" onclick={appendTrackers}>
+                        <button class="mini-btn ui-btn-mini ui-btn-primary ui-btn-focus ui-disabled append" onclick={appendTrackers}>
                             <Plus size={12} />
                             追加
                         </button>
-                        <button class="mini-btn cancel" onclick={() => showTrackerPreview = false}>
+                        <button class="mini-btn ui-btn-mini ui-btn-secondary ui-btn-focus ui-disabled cancel" onclick={() => showTrackerPreview = false}>
                             取消
                         </button>
                     </div>
@@ -364,7 +364,7 @@
   </div>
 
     <!-- 提示 -->
-    <div class="info-box">
+    <div class="info-box ui-status-card info">
         <HelpCircle size={14} />
         <span>提示：修改 BT 配置将会尝试实时应用到当前 Aria2 实例。</span>
     </div>
@@ -399,6 +399,11 @@
     box-shadow: 0 0 0 2px var(--accent-glow);
   }
 
+  textarea:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  }
+
   .input-wrapper input {
     background: var(--surface-hover);
     border: 1px solid var(--border-subtle);
@@ -416,6 +421,11 @@
     border-color: var(--accent-primary);
     background: var(--input-bg);
     box-shadow: 0 0 0 2px var(--accent-glow);
+  }
+
+  .input-wrapper input:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
 
   .setting-control {
@@ -516,6 +526,15 @@
       color: var(--text-primary);
   }
 
+  .port-btn:focus-visible,
+  .action-btn:focus-visible,
+  .mini-btn:focus-visible,
+  .text-relaunch-btn:focus-visible,
+  .tooltip-trigger:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+  }
+
   .port-btn:active {
       transform: translateY(1px);
   }
@@ -552,8 +571,8 @@
       align-items: center;
       gap: 8px;
       padding: 12px 14px;
-      background: rgba(59, 130, 246, 0.08); /* Blue tint */
-      border: 1px solid rgba(59, 130, 246, 0.15);
+      background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent);
       border-radius: 10px;
       color: var(--text-secondary);
       font-size: 12px;
@@ -567,17 +586,17 @@
       gap: 6px;
       margin-top: 8px;
       padding: 6px 10px;
-      background: rgba(245, 158, 11, 0.1);
-      border: 1px solid rgba(245, 158, 11, 0.2);
+      background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--semantic-warning) 28%, transparent);
       border-radius: 6px;
-      color: #f59e0b;
+      color: var(--semantic-warning);
       font-size: 11px;
       width: fit-content;
   }
 
   .text-relaunch-btn {
-      background: #f59e0b;
-      color: #000;
+      background: color-mix(in srgb, var(--semantic-warning) 84%, #ffffff);
+      color: #111827;
       border: none;
       padding: 2px 8px;
       border-radius: 4px;
@@ -589,7 +608,7 @@
   }
 
   .text-relaunch-btn:hover {
-      background: #d97706;
+      background: var(--semantic-warning);
       transform: scale(1.02);
   }
 
@@ -627,7 +646,7 @@
       font-weight: normal;
       line-height: 1.4;
       border: 1px solid var(--border-subtle);
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+      box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow-color) 20%, transparent);
       pointer-events: none;
   }
 
@@ -646,12 +665,13 @@
       display: flex;
       align-items: center;
       gap: 6px;
-      padding: 4px 10px;
+      padding: 6px 12px;
+      min-height: 30px;
       background: var(--surface-hover);
       border: 1px solid var(--border-subtle);
-      border-radius: 6px;
+      border-radius: 8px;
       color: var(--text-secondary);
-      font-size: 11px;
+      font-size: 12px;
       cursor: pointer;
       transition: all 0.2s;
   }
@@ -663,8 +683,12 @@
   }
 
   .action-btn:disabled {
-      opacity: 0.6;
+      opacity: 0.55;
       cursor: not-allowed;
+      transform: none;
+      filter: none;
+      box-shadow: none;
+      pointer-events: none;
   }
 
   .tracker-preview-box {
@@ -691,19 +715,10 @@
   }
 
   .mini-btn {
-      display: flex;
-      align-items: center;
       gap: 4px;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 10px;
-      border: 1px solid transparent;
-      cursor: pointer;
-      transition: all 0.2s;
   }
 
   .mini-btn.append {
-      background: var(--accent-primary);
       color: white;
   }
 
@@ -712,7 +727,6 @@
   }
 
   .mini-btn.cancel {
-      background: var(--surface-hover);
       border-color: var(--border-subtle);
       color: var(--text-secondary);
   }
@@ -730,7 +744,7 @@
       max-height: 80px;
       overflow-y: auto;
       padding: 6px;
-      background: rgba(0, 0, 0, 0.1);
+      background: color-mix(in srgb, var(--input-bg) 90%, transparent);
       border-radius: 4px;
   }
 

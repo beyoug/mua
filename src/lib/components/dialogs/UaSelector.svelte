@@ -100,7 +100,7 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
 
 <div class="ua-manager" use:clickOutside={() => (isDropdownOpen = false)}>
     <button
-        class="ua-dropdown-trigger"
+        class="ua-dropdown-trigger ui-field"
         class:open={isDropdownOpen}
         onclick={() => (isDropdownOpen = !isDropdownOpen)}
     >
@@ -152,7 +152,7 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
     {#if selectedValue === "custom"}
         <input
             type="text"
-            class="ua-custom-input"
+            class="ua-custom-input ui-field"
             class:error={isCustomUaInvalid}
             placeholder="输入自定义 User Agent"
             value={customValue}
@@ -174,14 +174,17 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         align-items: center;
         justify-content: space-between;
         padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
+        background: transparent;
         color: var(--text-primary);
         cursor: pointer;
     }
     .ua-dropdown-trigger:hover {
         border-color: var(--accent-primary);
+    }
+
+    .ua-dropdown-trigger:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
     }
     .ua-dropdown-trigger :global(.chevron) {
         transition: transform 0.2s;
@@ -245,35 +248,32 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
     }
     .ua-delete-btn:hover {
         color: var(--semantic-danger);
-        background: rgba(239, 68, 68, 0.1);
+        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+    }
+
+    .ua-select-btn:focus-visible,
+    .ua-delete-btn:focus-visible {
+        outline: none;
+        box-shadow: var(--focus-ring);
     }
 
     .ua-custom-input {
         margin-top: 8px;
         width: 100%;
         padding: 10px 14px;
-        background: var(--input-bg);
-        border: 1px solid var(--border-color);
-        border-radius: 10px;
-        color: var(--text-primary);
         font-size: 13px;
-        outline: none;
-        transition: all 0.2s;
     }
 
     .ua-custom-input:focus {
-        border-color: var(--accent-primary);
-        box-shadow: 0 0 0 2px
-            color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        box-shadow: var(--focus-ring);
     }
 
     .ua-custom-input.error {
         border-color: var(--semantic-danger);
-        background: color-mix(in srgb, var(--semantic-danger) 4%, var(--input-bg));
+        background: color-mix(in srgb, var(--semantic-danger) 6%, var(--input-bg));
     }
 
     .ua-custom-input.error:focus {
-        box-shadow: 0 0 0 2px
-            color-mix(in srgb, var(--semantic-danger) 15%, transparent);
+        box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-danger) 20%, transparent);
     }
 </style>

@@ -35,13 +35,13 @@ html.theme-nexus {
   --surface-hover: rgba(94, 203, 255, 0.08);
   --surface-active: rgba(94, 203, 255, 0.13);
   --input-bg: rgba(7, 16, 32, 0.7);
-  --border-subtle: rgba(127, 158, 210, 0.18);
-  --border-normal: rgba(127, 158, 210, 0.28);
-  --border-strong: rgba(127, 158, 210, 0.4);
-  --border-color: var(--border-normal);
+  --border-subtle: transparent;
+  --border-normal: transparent;
+  --border-strong: transparent;
+  --border-color: transparent;
 
   --glass-bg: rgba(8, 16, 32, 0.72);
-  --glass-border: rgba(150, 182, 255, 0.24);
+  --glass-border: transparent;
   --glass-blur: blur(18px);
   --glass-saturate: saturate(145%);
   --glass-shadow: 0 10px 36px rgba(0, 0, 0, 0.45);
@@ -78,16 +78,16 @@ html.light.theme-nexus {
   --progress-track-bg: rgba(47, 147, 255, 0.16);
   --accent-active-bg: color-mix(in srgb, var(--accent-primary) 10%, white);
 
-  --surface-hover: rgba(47, 147, 255, 0.075);
-  --surface-active: rgba(47, 147, 255, 0.13);
-  --input-bg: rgba(255, 255, 255, 0.78);
-  --border-subtle: rgba(67, 106, 171, 0.14);
-  --border-normal: rgba(67, 106, 171, 0.22);
-  --border-strong: rgba(67, 106, 171, 0.32);
-  --border-color: var(--border-normal);
+  --surface-hover: rgba(47, 147, 255, 0.1);
+  --surface-active: rgba(47, 147, 255, 0.16);
+  --input-bg: rgba(255, 255, 255, 0.82);
+  --border-subtle: transparent;
+  --border-normal: transparent;
+  --border-strong: transparent;
+  --border-color: transparent;
 
   --glass-bg: rgba(255, 255, 255, 0.72);
-  --glass-border: rgba(84, 122, 196, 0.24);
+  --glass-border: transparent;
   --glass-blur: blur(20px);
   --glass-saturate: saturate(160%);
   --glass-shadow: 0 8px 26px rgba(38, 82, 154, 0.12);
@@ -149,8 +149,8 @@ html.theme-nexus .modal-container .input-group {
 html.theme-nexus .modal-container textarea:focus,
 html.theme-nexus .modal-container input:focus,
 html.theme-nexus .modal-container .input-group:focus-within,
-html.theme-nexus .modal-container .ua-select-trigger:focus-within {
-  border-color: var(--accent-primary);
+html.theme-nexus .modal-container .ua-dropdown-trigger:focus-within {
+  border-color: transparent;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
 }
 
@@ -161,7 +161,7 @@ html.theme-nexus .modal-overlay {
 
 html.theme-nexus .panel,
 html.theme-nexus .modal-container {
-  border-color: color-mix(in srgb, var(--glass-border) 92%, var(--accent-subtle));
+  border-color: var(--border-normal);
   box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
 }
 
@@ -173,7 +173,7 @@ html.theme-nexus .modal-header {
 html.theme-nexus .panel .modal-footer,
 html.theme-nexus .modal-footer {
   border-top: 1px solid var(--border-normal);
-  background: color-mix(in srgb, var(--input-bg) 92%, transparent);
+  background: transparent;
 }
 
 html.theme-nexus .nav-item,
@@ -189,8 +189,8 @@ html.theme-nexus .file-item {
 }
 
 html.theme-nexus .download-card {
-  border-color: color-mix(in srgb, var(--glass-border) 90%, var(--accent-subtle));
-  box-shadow: 0 10px 30px rgba(4, 12, 30, 0.35);
+  border-color: var(--border-normal);
+  box-shadow: 0 5px 16px rgba(4, 12, 30, 0.18);
   transition: transform var(--motion-base) var(--motion-ease),
     box-shadow var(--motion-base) var(--motion-ease),
     border-color var(--motion-fast) var(--motion-ease);
@@ -198,11 +198,11 @@ html.theme-nexus .download-card {
 
 html.theme-nexus .download-card:hover {
   transform: translateY(-2px);
-  box-shadow: 0 16px 34px rgba(2, 10, 26, 0.42), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+  box-shadow: 0 8px 18px rgba(2, 10, 26, 0.22), 0 0 0 1px color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
 html.theme-nexus .download-card.completed {
-  border-color: color-mix(in srgb, var(--semantic-success) 40%, var(--border-normal));
+  border-color: transparent;
 }
 
 html.theme-nexus .download-card .icon-wrapper {
@@ -234,7 +234,7 @@ html.theme-nexus .btn-confirm {
   background: linear-gradient(135deg, color-mix(in srgb, var(--accent-primary) 86%, white), var(--accent-secondary));
   color: var(--accent-btn-text);
   box-shadow: 0 8px 22px color-mix(in srgb, var(--accent-glow) 72%, transparent);
-  border: 1px solid color-mix(in srgb, var(--accent-primary) 40%, transparent);
+  border: 1px solid transparent;
 }
 
 html.theme-nexus .btn-primary:hover:not(:disabled),
@@ -264,21 +264,30 @@ html.theme-nexus .mini-action:hover:not(:disabled),
 html.theme-nexus .mini-btn:hover,
 html.theme-nexus .btn-text:hover {
   color: var(--text-primary);
-  border-color: var(--accent-primary);
+  border-color: transparent;
   background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+}
+
+html.theme-nexus .modal-container .advanced-btn-wrapper .btn-ghost {
+  border-style: dashed;
+  border-color: color-mix(in srgb, var(--accent-primary) 34%, transparent);
+}
+
+html.theme-nexus .modal-container .advanced-btn-wrapper .btn-ghost:hover {
+  border-color: color-mix(in srgb, var(--accent-primary) 46%, transparent);
 }
 
 html.theme-nexus .btn-danger,
 html.theme-nexus .menu-item.danger {
   color: var(--semantic-danger);
-  border-color: color-mix(in srgb, var(--semantic-danger) 30%, transparent);
+  border-color: transparent;
   background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
 }
 
 html.theme-nexus .btn-danger:hover,
 html.theme-nexus .menu-item.danger:hover {
   background: color-mix(in srgb, var(--semantic-danger) 16%, transparent);
-  border-color: color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+  border-color: transparent;
 }
 
 html.theme-nexus .path-selector,
@@ -302,7 +311,13 @@ html.theme-nexus .ua-dropdown-trigger:hover,
 html.theme-nexus .input-group:hover,
 html.theme-nexus .inner-input:hover,
 html.theme-nexus .input-wrapper:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 62%, var(--border-normal));
+  border-color: transparent;
+}
+
+html.theme-nexus .modal-container .ua-custom-input.error,
+html.theme-nexus .ua-custom-input.error {
+  border-color: var(--semantic-danger);
+  background: color-mix(in srgb, var(--semantic-danger) 6%, var(--input-bg));
 }
 
 html.theme-nexus input:focus,
@@ -313,8 +328,14 @@ html.theme-nexus .grouped-select:focus,
 html.theme-nexus .inner-input:focus-within,
 html.theme-nexus .input-wrapper:focus-within {
   outline: none;
-  border-color: var(--accent-primary);
+  border-color: transparent;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
+}
+
+html.theme-nexus .modal-container .ua-custom-input.error:focus,
+html.theme-nexus .ua-custom-input.error:focus {
+  border-color: var(--semantic-danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-danger) 18%, transparent);
 }
 
 html.theme-nexus .ua-dropdown-content,
@@ -343,7 +364,7 @@ html.theme-nexus .modal-tabs {
 
 html.theme-nexus .active-indicator {
   background: color-mix(in srgb, var(--surface-active) 90%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 32%, transparent);
+  border-color: transparent;
   box-shadow: 0 4px 14px rgba(4, 12, 30, 0.28);
 }
 
@@ -365,7 +386,7 @@ html.theme-nexus .detail-value-box:hover {
 }
 
 html.theme-nexus .status-pill {
-  border: 1px solid color-mix(in srgb, currentColor 26%, transparent);
+  border: 1px solid transparent;
 }
 
 html.theme-nexus .item-copy-btn {
@@ -405,14 +426,14 @@ html.theme-nexus .port-input-inline:hover,
 html.theme-nexus .path-btn:hover,
 html.theme-nexus .input-wrapper.group:hover,
 html.theme-nexus .inner-input:hover {
-  border-color: color-mix(in srgb, var(--accent-primary) 58%, var(--border-normal));
+  border-color: transparent;
 }
 
 html.theme-nexus .port-input-inline:focus-within,
 html.theme-nexus .input-wrapper input:focus,
 html.theme-nexus .inner-input input:focus,
 html.theme-nexus .textarea-wrapper textarea:focus {
-  border-color: var(--accent-primary);
+  border-color: transparent;
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 18%, transparent);
 }
 
@@ -428,7 +449,7 @@ html.theme-nexus .port-btn:hover {
 
 html.theme-nexus .inline-restart-hint {
   background: color-mix(in srgb, var(--semantic-warning) 12%, transparent);
-  border-color: color-mix(in srgb, var(--semantic-warning) 34%, transparent);
+  border-color: transparent;
   color: var(--semantic-warning);
 }
 
@@ -444,7 +465,7 @@ html.theme-nexus .text-relaunch-btn:hover {
 
 html.theme-nexus .info-box {
   background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 24%, transparent);
+  border-color: transparent;
   color: var(--text-secondary);
 }
 
@@ -467,7 +488,7 @@ html.theme-nexus .action-tile {
 
 html.theme-nexus .action-tile:hover {
   background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 46%, var(--border-normal));
+  border-color: transparent;
   box-shadow: 0 10px 24px color-mix(in srgb, var(--accent-glow) 42%, transparent);
 }
 
@@ -478,7 +499,8 @@ html.theme-nexus .app-version {
 
 html.theme-nexus .add-btn,
 html.theme-nexus .settings-btn {
-  border-color: var(--border-normal);
+  border-color: color-mix(in srgb, var(--accent-primary) 34%, transparent);
+  border-style: dashed;
   background: color-mix(in srgb, var(--surface-hover) 88%, transparent);
   color: var(--text-secondary);
 }
@@ -486,7 +508,8 @@ html.theme-nexus .settings-btn {
 html.theme-nexus .add-btn:hover,
 html.theme-nexus .settings-btn:hover {
   color: var(--text-primary);
-  border-color: var(--accent-primary);
+  border-color: color-mix(in srgb, var(--accent-primary) 46%, transparent);
+  border-style: dashed;
   background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
 }
 
@@ -494,7 +517,7 @@ html.theme-nexus .stats-panel {
   border: 1px solid var(--border-subtle);
   border-radius: 12px;
   padding: 10px 12px;
-  background: color-mix(in srgb, var(--input-bg) 90%, transparent);
+  background: transparent;
 }
 
 html.theme-nexus .stat-count {
@@ -509,12 +532,12 @@ html.theme-nexus .checkbox-label {
 
 html.theme-nexus .checkbox-label:hover {
   background: color-mix(in srgb, var(--surface-active) 90%, transparent);
-  border-color: color-mix(in srgb, var(--accent-primary) 40%, var(--border-normal));
+  border-color: transparent;
 }
 
 html.theme-nexus .btn-danger {
   background: linear-gradient(135deg, color-mix(in srgb, var(--semantic-danger) 92%, #ffffff), var(--semantic-danger));
-  border: 1px solid color-mix(in srgb, var(--semantic-danger) 45%, transparent);
+  border: 1px solid transparent;
   box-shadow: 0 8px 20px color-mix(in srgb, var(--semantic-danger) 30%, transparent);
 }
 

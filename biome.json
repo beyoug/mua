@@ -1,0 +1,44 @@
+{
+  "$schema": "https://biomejs.dev/schemas/2.4.4/schema.json",
+  "files": {
+    "includes": [
+      "**",
+      "!**/*.svelte"
+    ]
+  },
+  "linter": {
+    "enabled": true,
+    "rules": {
+      "recommended": true
+    }
+  },
+  "assist": {
+    "enabled": true,
+    "actions": {
+      "source": {
+        "organizeImports": "on"
+      }
+    }
+  },
+  "overrides": [
+    {
+      "includes": [
+        "**/*.svelte"
+      ],
+      "linter": {
+        "enabled": false
+      },
+      "assist": {
+        "enabled": false,
+        "actions": {
+          "source": {
+            "organizeImports": "off"
+          }
+        }
+      },
+      "formatter": {
+        "enabled": false
+      }
+    }
+  ]
+}
