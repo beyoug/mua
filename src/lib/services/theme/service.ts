@@ -34,6 +34,13 @@ export const themes: Record<ThemeId, Theme> = {
 		primary: '#22d3ee',
 		secondary: '#d946ef',
 		glow: 'rgba(34, 211, 238, 0.6)'
+	},
+	'nexus': {
+		id: 'nexus',
+		name: 'Nexus',
+		primary: '#5ecbff',
+		secondary: '#8f7dff',
+		glow: 'rgba(94, 203, 255, 0.62)'
 	}
 };
 

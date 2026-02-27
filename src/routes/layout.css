@@ -8,6 +8,7 @@
 @import "../styles/glass.css";
 @import "../styles/themes/cyberpunk.css";
 @import "../styles/themes/default.css";
+@import "../styles/themes/nexus.css";
 
 /* noinspection CssInvalidAtRule */
 @custom-variant dark (&:is(.dark *));

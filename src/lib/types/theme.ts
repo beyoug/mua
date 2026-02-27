@@ -1,4 +1,4 @@
-export const THEME_IDS = ['default', 'cyberpunk'] as const;
+export const THEME_IDS = ['default', 'cyberpunk', 'nexus'] as const;
 export type ThemeId = (typeof THEME_IDS)[number];
 
 export const COLOR_MODES = ['dark', 'light', 'auto'] as const;
