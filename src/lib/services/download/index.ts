@@ -97,7 +97,3 @@ export function hasDownloadingTasks(tasks: DownloadTask[]): boolean {
 export function hasPausedTasks(tasks: DownloadTask[]): boolean {
     return tasks.some((task) => isPausedTask(task.state));
 }
-
-if (typeof window !== 'undefined') {
-    void downloadService.initializeSync();
-}

@@ -466,6 +466,12 @@ class DownloadService {
             removeTaskRecord(id, deleteFile).catch((e) => {
                 this.logger.error('Failed to remove task record', { taskId: id, deleteFile, error: e });
                 this.clearPendingLock(id);
+                this.forceResync().catch((resyncError) => {
+                    this.logger.error('Failed to resync after remove task record failure', {
+                        taskId: id,
+                        error: resyncError
+                    });
+                });
             });
 
             return tasks.filter((task) => task.id !== id);
@@ -484,7 +490,9 @@ class DownloadService {
 
     async cancelTasks(ids: Set<string>): Promise<void> {
         const idArray = Array.from(ids);
-        ids.forEach((id) => this.addPendingLock(id));
+        ids.forEach((id) => {
+            this.addPendingLock(id);
+        });
 
         try {
             await cancelTasksCmd(idArray);
@@ -495,7 +503,9 @@ class DownloadService {
             );
         } catch (e) {
             this.logger.error('Failed to cancel tasks batch', { taskIds: idArray, error: e });
-            ids.forEach((id) => this.clearPendingLock(id));
+            ids.forEach((id) => {
+                this.clearPendingLock(id);
+            });
         }
     }
 
@@ -519,7 +529,9 @@ class DownloadService {
             await pauseAllTasks();
         } catch (e) {
             this.logger.error('Failed to pause all tasks', { taskIds: affectedIds, error: e });
-            affectedIds.forEach((id) => this.clearPendingLock(id));
+            affectedIds.forEach((id) => {
+                this.clearPendingLock(id);
+            });
             this.setTasks(snapshot);
         }
     }
@@ -542,7 +554,9 @@ class DownloadService {
             await resumeAllTasks();
         } catch (e) {
             this.logger.error('Failed to resume all tasks', { taskIds: affectedIds, error: e });
-            affectedIds.forEach((id) => this.clearPendingLock(id));
+            affectedIds.forEach((id) => {
+                this.clearPendingLock(id);
+            });
             this.setTasks(snapshot);
         }
     }

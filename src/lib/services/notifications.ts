@@ -15,6 +15,51 @@ const logger = createLogger('Notifications');
 let unsubscribeFn: (() => void) | null = null;
 let previousStates = new Map<string, string>();
 let initialized = false;
+let permissionStatus: 'unknown' | 'granted' | 'denied' = 'unknown';
+let permissionPromptAttempted = false;
+let permissionCheckInFlight: Promise<boolean> | null = null;
+
+async function resolveNotificationPermission(): Promise<boolean> {
+    if (permissionStatus === 'granted') {
+        return true;
+    }
+
+    const alreadyGranted = await isPermissionGranted();
+    if (alreadyGranted) {
+        permissionStatus = 'granted';
+        return true;
+    }
+
+    if (permissionPromptAttempted) {
+        permissionStatus = 'denied';
+        return false;
+    }
+
+    permissionPromptAttempted = true;
+    const permission = await requestPermission();
+    const granted = permission === 'granted';
+    permissionStatus = granted ? 'granted' : 'denied';
+    return granted;
+}
+
+async function ensureNotificationPermission(): Promise<boolean> {
+    if (permissionStatus === 'granted') {
+        return true;
+    }
+
+    if (permissionStatus === 'denied') {
+        return false;
+    }
+
+    if (permissionCheckInFlight) {
+        return permissionCheckInFlight;
+    }
+
+    permissionCheckInFlight = resolveNotificationPermission().finally(() => {
+        permissionCheckInFlight = null;
+    });
+    return permissionCheckInFlight;
+}
 
 /**
  * 初始化通知监听器
@@ -62,6 +107,9 @@ export function cleanupNotifications(): void {
     }
     previousStates.clear();
     initialized = false;
+    permissionStatus = 'unknown';
+    permissionPromptAttempted = false;
+    permissionCheckInFlight = null;
 }
 
 /**
@@ -69,11 +117,7 @@ export function cleanupNotifications(): void {
  */
 async function showCompletionNotification(task: DownloadTask): Promise<void> {
     try {
-        let permissionGranted = await isPermissionGranted();
-        if (!permissionGranted) {
-            const permission = await requestPermission();
-            permissionGranted = permission === 'granted';
-        }
+        const permissionGranted = await ensureNotificationPermission();
 
         if (permissionGranted) {
             sendNotification({

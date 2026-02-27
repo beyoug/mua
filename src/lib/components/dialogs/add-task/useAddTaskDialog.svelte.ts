@@ -1,4 +1,3 @@
-import { open as openDialog } from '@tauri-apps/plugin-dialog';
 import { get } from 'svelte/store';
 import { appSettings, updateAppSettings } from '$lib/services/settings';
 import { isMagnetUrl, isValidDownloadUrl } from '$lib';
@@ -12,6 +11,7 @@ import {
     type AdvancedSettingsState
 } from './utils';
 import { createLogger } from '$lib/utils/logger';
+import { pickSingleDirectory, pickSingleFile } from '$lib/utils/dialog';
 
 const logger = createLogger('AddTaskDialog');
 
@@ -143,12 +143,8 @@ export function useAddTaskDialog(params: Params) {
 
     async function selectFolder() {
         try {
-            const selected = await openDialog({
-                directory: true,
-                multiple: false,
-                title: '选择下载目录'
-            });
-            if (typeof selected === 'string') savePath = selected;
+            const path = await pickSingleDirectory('选择下载目录');
+            if (path) savePath = path;
         } catch (e) {
             logger.error('Failed to select download directory', { error: e });
         }
@@ -158,14 +154,9 @@ export function useAddTaskDialog(params: Params) {
         if (isSelectingFile) return;
         isSelectingFile = true;
         try {
-            const selected = await openDialog({
-                multiple: false,
-                filters: [{ name: 'Torrent Files', extensions: ['torrent'] }],
-                title: '选择种子文件'
-            });
-
-            if (typeof selected === 'string') {
-                onTorrentSelect(selected);
+            const path = await pickSingleFile('选择种子文件', [{ name: 'Torrent Files', extensions: ['torrent'] }]);
+            if (path) {
+                onTorrentSelect(path);
             }
         } catch (e) {
             logger.error('Failed to select torrent file', { error: e });

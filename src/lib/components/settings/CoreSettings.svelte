@@ -5,9 +5,10 @@
     import { onMount } from 'svelte';
     import { importAria2Binary, getAria2KernelVersionInfo } from '$lib/services/aria2';
     import type { Aria2VersionInfo } from '$lib/types/download';
-    import { open as openDialog } from '@tauri-apps/plugin-dialog';
     import { relaunch } from '@tauri-apps/plugin-process';
     import { createLogger } from '$lib/utils/logger';
+    import { pickSingleFile } from '$lib/utils/dialog';
+    import { confirmAction, showErrorFeedback, showSuccessFeedback } from '$lib/services/feedback';
 
     const logger = createLogger('CoreSettings');
 
@@ -15,19 +16,6 @@
     let showSecret = $state(false);
     let aria2Version = $state<Aria2VersionInfo | null>(null);
     let isImportingKernel = $state(false);
-
-    type DialogSelection = string | { path?: string } | Array<string | { path?: string }> | null;
-
-    function resolveDialogPath(selection: DialogSelection): string | null {
-        if (!selection) return null;
-        if (typeof selection === 'string') return selection;
-        if (Array.isArray(selection)) {
-            const first = selection[0];
-            if (!first) return null;
-            return typeof first === 'string' ? first : first.path ?? null;
-        }
-        return selection.path ?? null;
-    }
 
     onMount(() => {
         loadVersionInfo();
@@ -44,31 +32,27 @@
     async function importKernel() {
         isImportingKernel = true;
         try {
-            const selected = await openDialog({
-                filters: [{
-                    name: 'Executable',
-                    extensions: window.navigator.userAgent.includes('Win') ? ['exe'] : []
-                }],
-                multiple: false
-            });
-
-            const path = resolveDialogPath(selected as DialogSelection);
+            const path = await pickSingleFile('选择 Aria2 内核', [{
+                name: 'Executable',
+                extensions: window.navigator.userAgent.includes('Win') ? ['exe'] : []
+            }]);
             if (path) {
                 const version = await importAria2Binary(path);
-                alert(`内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
+                await showSuccessFeedback('导入成功', `内核导入成功！\n版本: ${version}\n请手动开启"启用自定义内核"开关并重启应用以生效。`);
                 await saveSettings();
                 await loadVersionInfo();
             }
         } catch (e) {
             logger.error('Failed to import custom aria2 binary', { error: e });
-            alert('导入失败: ' + e);
+            await showErrorFeedback('导入失败', e);
         } finally {
             isImportingKernel = false;
         }
     }
 
     async function restartApp() {
-        if (confirm('确定要重启应用以应用更改吗？')) {
+        const confirmed = await confirmAction('确定要重启应用以应用更改吗？', { title: '重启应用' });
+        if (confirmed) {
             await relaunch();
         }
     }
@@ -90,10 +74,14 @@
         }
     }
 
-    function generateSecret() {
-        if (confirm('重新生成密钥将导致当前连接断开，且需要重启应用生效。确定要继续吗？')) {
+    async function generateSecret() {
+        const confirmed = await confirmAction(
+            '重新生成密钥将导致当前连接断开，且需要重启应用生效。确定要继续吗？',
+            { title: '重新生成密钥' }
+        );
+        if (confirmed) {
              $appSettings.rpcSecret = crypto.randomUUID();
-             saveSettings();
+             await saveSettings();
              isDirty = false;
         }
     }

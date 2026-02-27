@@ -1,20 +1,16 @@
 <script lang="ts">
   import { FolderOpen } from '@lucide/svelte';
-  import { open as openDialog } from '@tauri-apps/plugin-dialog';
   import { appSettings, updateAppSettings } from '$lib/services/settings';
   import { createLogger } from '$lib/utils/logger';
+  import { pickSingleDirectory } from '$lib/utils/dialog';
 
   const logger = createLogger('DownloadSettings');
 
   async function selectFolder() {
     try {
-      const selected = await openDialog({
-        directory: true,
-        multiple: false,
-        title: '选择默认下载目录'
-      });
-      if (selected) {
-        await updateAppSettings({ defaultSavePath: selected as string });
+      const path = await pickSingleDirectory('选择默认下载目录');
+      if (path) {
+        await updateAppSettings({ defaultSavePath: path });
       }
     } catch (e) {
       logger.error('Failed to select default download folder', { error: e });

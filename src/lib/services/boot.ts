@@ -1,9 +1,10 @@
 import { listen } from '@tauri-apps/api/event';
-import { message } from '@tauri-apps/plugin-dialog';
 import { loadAppSettings } from '$lib/services/settings';
+import { downloadService } from '$lib/services/download';
 import { initNotifications, cleanupNotifications } from '$lib/services/notifications';
 import { createLogger } from '$lib/utils/logger';
 import { EVENT_ARIA2_SIDECAR_ERROR } from '$lib/api/events';
+import { showFeedback } from '$lib/services/feedback';
 
 const logger = createLogger('Boot');
 
@@ -38,14 +39,17 @@ export async function bootApp() {
         // 2. 状态映射：加载关键应用配置
         await loadAppSettings();
 
-        // 3. 服务激活：初始化通知系统
+        // 3. 启动下载同步服务
+        await downloadService.initializeSync();
+
+        // 4. 服务激活：初始化通知系统
         await initNotifications();
 
-        // 4. 事件订阅：链路监控
+        // 5. 事件订阅：链路监控
         const unlistenSidecar = await listen<Aria2SidecarErrorPayload>(EVENT_ARIA2_SIDECAR_ERROR, async (event) => {
             const payload = event.payload;
             logger.error('Received sidecar error event', { payload });
-            await message(
+            await showFeedback(
                 `Aria2 Service Error: ${payload.message ?? 'Unknown error'}\n\nCode: ${payload.code ?? '-'}\nSignal: ${payload.signal ?? '-'}\n\nLog:\n${payload.stderr ?? ''}`,
                 {
                     title: 'Aria2 Sidecar Error',

@@ -4,13 +4,13 @@
 -->
 <script lang="ts">
     import { Magnet, FolderOpen, Download, Network, RefreshCw, Plus, Import, Loader2 } from '@lucide/svelte';
-    import { open as openDialog } from '@tauri-apps/plugin-dialog';
     import { fade } from 'svelte/transition';
     import type { TorrentInfo } from '$lib/types/torrent';
     import { fetchTrackers as fetchTrackersService } from '$lib/services/aria2';
     import { formatBytes } from '$lib';
     import { appSettings, updateAppSettings } from '$lib/services/settings';
     import { createLogger } from '$lib/utils/logger';
+    import { pickSingleDirectory } from '$lib/utils/dialog';
     import BaseModal from '../common/BaseModal.svelte';
     import TorrentFileSelector from './TorrentFileSelector.svelte';
 
@@ -58,12 +58,8 @@
 
     async function selectFolder() {
         try {
-            const selected = await openDialog({
-                directory: true,
-                defaultPath: savePath,
-                title: '选择保存位置'
-            });
-            if (selected) savePath = selected as string;
+            const path = await pickSingleDirectory('选择保存位置', savePath);
+            if (path) savePath = path;
         } catch (e) {
             logger.warn('Failed to select torrent save directory', { error: e });
         }

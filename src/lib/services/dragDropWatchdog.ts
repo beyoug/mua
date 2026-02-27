@@ -21,6 +21,7 @@ export function createDragDropWatchdog(
         if (timer) return;
         timer = setInterval(() => {
             if (Date.now() - lastDragTime > timeoutMs) {
+                stop();
                 onTimeout();
             }
         }, tickMs);
