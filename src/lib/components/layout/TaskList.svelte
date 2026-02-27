@@ -208,7 +208,7 @@
 	.empty-icon {
 		width: 96px;
 		height: 96px;
-		background: var(--bg-sidebar);
+		background: var(--surface-hover);
 		border: 1px solid var(--border-color);
 		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
 		border-radius: 32px;

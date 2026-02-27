@@ -526,9 +526,9 @@
     }
 
     .extension-badge.unknown {
-        color: var(--warning-color, #f59e0b);
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        border-color: color-mix(in srgb, var(--warning-color, #f59e0b) 20%, transparent);
+        color: var(--semantic-warning);
+        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
+        border-color: color-mix(in srgb, var(--semantic-warning) 20%, transparent);
     }
 
     .identity-box {
@@ -624,8 +624,8 @@
     }
 
     .status-pill.status-paused {
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        color: var(--warning-color, #f59e0b);
+        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
+        color: var(--semantic-warning);
     }
 
     .status-pill.status-error {

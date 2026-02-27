@@ -77,7 +77,7 @@
 	}
 
 	.status-indicator.paused {
-		color: var(--warning-color, #f59e0b);
+		color: var(--semantic-warning);
 	}
 
 	.status-indicator.complete {

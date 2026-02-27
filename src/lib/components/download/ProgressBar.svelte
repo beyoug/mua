@@ -70,11 +70,11 @@
 	}
 
 	.progress-fill.paused {
-		background: var(--warning-color);
+		background: var(--semantic-warning);
 	}
 
 	.progress-fill.error {
-		background: var(--danger-color);
+		background: var(--semantic-danger);
 	}
 
 	.stripes {

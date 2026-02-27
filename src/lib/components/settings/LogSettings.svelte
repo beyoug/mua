@@ -133,7 +133,7 @@
     
     .badge {
         font-size: 10px;
-        color: var(--warning-color, #f59e0b);
+        color: var(--semantic-warning);
         background: rgba(245, 158, 11, 0.1);
         padding: 2px 6px;
         border-radius: 4px;

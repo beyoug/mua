@@ -152,7 +152,7 @@
 	}
 
 	.menu-item.danger {
-		color: var(--danger-color);
+		color: var(--semantic-danger);
 	}
 
 	.menu-item.danger:hover {

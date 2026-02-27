@@ -40,6 +40,14 @@ html.theme-cyberpunk {
   /* 移除原有的简单渐变，改用 Grid 背景 */
   --bg-gradient: none;
 
+  --surface-hover: rgba(34, 211, 238, 0.08);
+  --surface-active: rgba(34, 211, 238, 0.14);
+  --input-bg: rgba(8, 12, 24, 0.72);
+  --border-subtle: rgba(34, 211, 238, 0.14);
+  --border-normal: rgba(34, 211, 238, 0.22);
+  --border-strong: rgba(34, 211, 238, 0.34);
+  --border-color: var(--border-normal);
+
   /* Glass Overrides - Dark (High Contrast) */
   --glass-bg: rgba(10, 15, 30, 0.75);
   --glass-border: rgba(34, 211, 238, 0.3);
@@ -107,6 +115,14 @@ html.light.theme-cyberpunk {
   --progress-stripe-c: rgba(255, 255, 255, 0.15);
   --accent-active-bg: var(--accent-subtle);
   --bg-gradient: none;
+
+  --surface-hover: rgba(8, 145, 178, 0.08);
+  --surface-active: rgba(8, 145, 178, 0.14);
+  --input-bg: rgba(255, 255, 255, 0.78);
+  --border-subtle: rgba(8, 145, 178, 0.14);
+  --border-normal: rgba(8, 145, 178, 0.22);
+  --border-strong: rgba(8, 145, 178, 0.32);
+  --border-color: var(--border-normal);
 
   /* Glass Overrides - Light (Lab Clean) */
   --glass-bg: rgba(255, 255, 255, 0.8);

@@ -258,6 +258,13 @@
 		border-left-color: var(--accent-primary); /* 活跃状态使用主题色左边框 */
 	}
 
+	:global(html.light.theme-default) .nav-item.active {
+		background: color-mix(in srgb, var(--accent-primary) 14%, white);
+		color: var(--accent-active);
+		border-left-color: var(--accent-active);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 28%, transparent);
+	}
+
 	.divider {
 		height: 1px;
 		background: var(--border-normal); /* 简约细线分割 */

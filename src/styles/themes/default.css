@@ -4,16 +4,16 @@
 
 /* ===== 色阶 ===== */
 html.theme-default {
-  --theme-50: #f8fafc;
-  --theme-100: #f1f5f9;
-  --theme-200: #e2e8f0;
-  --theme-300: #cbd5e1;
-  --theme-400: #94a3b8;
-  --theme-500: #64748b;
-  --theme-600: #475569;
-  --theme-700: #334155;
-  --theme-800: #1e293b;
-  --theme-900: #0f172a;
+  --theme-50: #eff6ff;
+  --theme-100: #dbeafe;
+  --theme-200: #bfdbfe;
+  --theme-300: #93c5fd;
+  --theme-400: #70b4ff;
+  --theme-500: #4a9eff;
+  --theme-600: #2e7feb;
+  --theme-700: #1d6ad8;
+  --theme-800: #1e40af;
+  --theme-900: #1e3a8a;
 }
 
 /* ===== 深色模式 ===== */

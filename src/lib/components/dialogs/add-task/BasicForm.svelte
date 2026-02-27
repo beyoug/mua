@@ -157,7 +157,7 @@
         align-items: center;
         gap: 4px;
         font-size: 12px;
-        color: var(--danger-color);
+        color: var(--semantic-danger);
     }
 
     textarea,
@@ -188,7 +188,7 @@
     }
 
     textarea.error {
-        border-color: var(--danger-color);
+        border-color: var(--semantic-danger);
     }
 
     .path-selector {
@@ -214,7 +214,7 @@
         align-items: center;
         gap: 4px;
         padding: 4px 8px;
-        background: var(--bg-tertiary);
+        background: var(--surface-hover);
         border: 1px solid var(--border-color);
         color: var(--text-secondary);
         border-radius: 6px;
@@ -225,8 +225,8 @@
 
     .btn-xs-secondary:hover {
         background: var(--bg-hover);
-        color: var(--primary-color);
-        border-color: var(--primary-color);
+        color: var(--accent-primary);
+        border-color: var(--accent-primary);
     }
 
     @keyframes spin {

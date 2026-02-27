@@ -310,10 +310,10 @@
 
     .parse-warning {
         padding: 12px 14px;
-        background: color-mix(in srgb, var(--warning-color, #f59e0b) 10%, transparent);
-        border: 1px solid color-mix(in srgb, var(--warning-color, #f59e0b) 30%, transparent);
+        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
+        border: 1px solid color-mix(in srgb, var(--semantic-warning) 30%, transparent);
         border-radius: 10px;
-        color: var(--warning-color, #f59e0b);
+        color: var(--semantic-warning);
         display: flex;
         flex-direction: column;
         gap: 4px;

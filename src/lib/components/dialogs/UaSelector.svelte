@@ -244,7 +244,7 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         border-radius: 4px;
     }
     .ua-delete-btn:hover {
-        color: var(--danger-color);
+        color: var(--semantic-danger);
         background: rgba(239, 68, 68, 0.1);
     }
 
@@ -268,12 +268,12 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
     }
 
     .ua-custom-input.error {
-        border-color: var(--danger-color);
-        background: color-mix(in srgb, var(--danger-color) 4%, var(--input-bg));
+        border-color: var(--semantic-danger);
+        background: color-mix(in srgb, var(--semantic-danger) 4%, var(--input-bg));
     }
 
     .ua-custom-input.error:focus {
         box-shadow: 0 0 0 2px
-            color-mix(in srgb, var(--danger-color) 15%, transparent);
+            color-mix(in srgb, var(--semantic-danger) 15%, transparent);
     }
 </style>

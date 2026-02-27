@@ -25,7 +25,7 @@
   .error-page {
     padding: 2rem;
     color: var(--text-primary, #333);
-    background: var(--bg-primary, #fff);
+    background: var(--bg-base, #fff);
     height: 100vh;
     overflow: auto;
   }

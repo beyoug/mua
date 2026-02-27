@@ -259,7 +259,7 @@
 
 	.icon-wrapper.completed {
 		background: var(--semantic-success-bg);
-		color: var(--success-color);
+		color: var(--semantic-success);
 	}
 
 	.icon-wrapper.error {
@@ -269,7 +269,7 @@
 
 	.icon-wrapper.cancelled {
 		background: var(--semantic-danger-bg, rgba(239, 68, 68, 0.1));
-		color: var(--danger-color);
+		color: var(--semantic-danger);
 	}
 
 	.filename {

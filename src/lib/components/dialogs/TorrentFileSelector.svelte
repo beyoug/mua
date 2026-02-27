@@ -128,7 +128,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
 
 <style>
   .torrent-selector {
-    background: var(--bg-secondary);
+    background: var(--surface-hover);
     border-radius: 8px;
     border: 1px solid var(--border-color);
     margin-top: 12px;
@@ -143,7 +143,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
     justify-content: space-between;
     align-items: center;
     padding: 12px 16px;
-    background: var(--bg-tertiary);
+    background: var(--surface-active);
     border-bottom: 1px solid var(--border-color);
   }
 
@@ -166,7 +166,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   .btn-text {
     background: none;
     border: none;
-    color: var(--primary-color);
+    color: var(--accent-primary);
     font-size: 12px;
     cursor: pointer;
     padding: 4px 8px;
@@ -208,12 +208,12 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
     display: flex;
     align-items: center;
     justify-content: center;
-    background: var(--bg-primary);
+    background: transparent;
   }
 
   .file-item.selected .checkbox {
-    border-color: var(--primary-color);
-    background: var(--primary-color); /* Solid background for better visibility */
+    border-color: var(--accent-primary);
+    background: var(--accent-primary); /* Solid background for better visibility */
   }
 
   .file-info {
@@ -241,7 +241,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
       width: 100%;
       padding: 8px;
       margin-top: 4px;
-      background: var(--bg-tertiary);
+      background: var(--surface-active);
       border: 1px dashed var(--border-color);
       color: var(--text-secondary);
       font-size: 12px;
@@ -250,8 +250,8 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
       transition: all 0.2s;
   }
   .load-more-btn:hover {
-      background: var(--bg-secondary);
+      background: var(--surface-hover);
       color: var(--text-primary);
-      border-color: var(--primary-color);
+      border-color: var(--accent-primary);
   }
 </style>

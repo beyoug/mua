@@ -474,7 +474,7 @@
       font-size: 10px;
       color: var(--text-tertiary);
       padding: 8px 12px;
-      background: var(--surface-ground);
+      background: var(--surface-hover);
       border-radius: 6px;
   }
   

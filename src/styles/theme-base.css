@@ -56,10 +56,6 @@
   --semantic-success: #10b981;
   --semantic-success-bg: rgba(16, 185, 129, 0.15);
   --semantic-success-border: rgba(16, 185, 129, 0.3);
-  /* 兼容旧变量 */
-  --danger-color: var(--semantic-danger);
-  --warning-color: var(--semantic-warning);
-  --success-color: var(--semantic-success);
 
   /* 选区颜色 */
   --selection-bg: var(--accent-subtle);
@@ -124,10 +120,6 @@ html.light {
   --semantic-success: #059669;
   --semantic-success-bg: rgba(5, 150, 105, 0.08);
   --semantic-success-border: rgba(5, 150, 105, 0.2);
-  /* 兼容旧变量 */
-  --danger-color: var(--semantic-danger);
-  --warning-color: var(--semantic-warning);
-  --success-color: var(--semantic-success);
 
   /* 选区颜色 */
   --selection-bg: var(--accent-primary);
