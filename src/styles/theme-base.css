@@ -24,6 +24,10 @@
 		color-mix(in srgb, var(--accent-primary) 22%, transparent);
 	--focus-ring-danger: 0 0 0 3px
 		color-mix(in srgb, var(--semantic-danger) 20%, transparent);
+	--hover-ring-soft: 0 0 0 2px
+		color-mix(in srgb, var(--accent-primary) 10%, transparent);
+	--hover-ring-medium: 0 0 0 2px
+		color-mix(in srgb, var(--accent-primary) 12%, transparent);
 
 	/* 背景层级 - 完全透明 */
 	--bg-base: transparent;

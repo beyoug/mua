@@ -172,7 +172,7 @@
         border-radius: 8px;
         border: none;
         padding: 12px;
-        font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
+        font-family: var(--font-mono);
         font-size: 11px;
         line-height: 1.4;
         overflow: hidden;

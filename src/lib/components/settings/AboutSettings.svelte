@@ -140,7 +140,7 @@
   .app-version {
     font-size: 11px;
     color: var(--text-tertiary);
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
     margin-top: 2px;
     background: var(--surface-hover);
     padding: 2px 9px;

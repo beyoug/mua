@@ -206,14 +206,15 @@
 		z-index: 1;
 	}
 
-	.download-card.menu-open {
-		z-index: 100 !important;
-	}
-
 	.download-card:hover {
 		transform: translateY(-1px);
 		box-shadow: var(--glass-shadow), 0 6px 18px rgba(2, 16, 42, 0.2);
 		z-index: 10;
+	}
+
+	.download-card.menu-open,
+	.download-card.menu-open:hover {
+		z-index: 100;
 	}
 
 	.download-card.completed {

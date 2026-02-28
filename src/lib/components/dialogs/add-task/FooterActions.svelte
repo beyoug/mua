@@ -90,7 +90,7 @@
         transform: none;
         filter: none;
         box-shadow:
-            0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+            var(--hover-ring-medium),
             0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 28%, transparent);
     }
 
@@ -118,7 +118,7 @@
         border-color: color-mix(in srgb, var(--accent-primary) 38%, transparent);
         color: var(--text-primary);
         box-shadow:
-            0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+            var(--hover-ring-medium),
             0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 24%, transparent);
         transform: none;
     }

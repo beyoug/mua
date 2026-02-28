@@ -201,7 +201,7 @@
 
     .path-selector:hover {
         background: var(--control-bg-hover);
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        box-shadow: var(--hover-ring-soft);
     }
 
     .path-selector:focus-visible,

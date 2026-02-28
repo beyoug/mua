@@ -137,7 +137,7 @@
 		color: var(--semantic-danger);
 		font-size: 11px;
 		opacity: 0.9;
-		font-family: var(--font-base, var(--font-mono));
+		font-family: var(--font-base);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;

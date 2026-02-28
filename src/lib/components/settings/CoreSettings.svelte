@@ -447,7 +447,7 @@
     padding: 8px 36px 8px 12px;
     color: var(--text-primary);
     font-size: 12px;
-    font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
 
   .icon-toggle {
@@ -603,7 +603,7 @@
       font-size: 14px;
       font-weight: 600;
       color: var(--text-primary);
-      font-family: 'JetBrains Mono', monospace;
+    font-family: var(--font-mono);
   }
   
   .kernel-path {

@@ -490,7 +490,7 @@
     }
 
     .value-text.mono {
-        font-family: var(--font-mono, monospace);
+        font-family: var(--font-mono);
         font-size: 12px;
         color: var(--text-secondary);
         font-variant-numeric: tabular-nums;
@@ -537,7 +537,7 @@
         display: flex;
         align-items: center;
         gap: 12px;
-        padding: 10px 12px !important;
+        padding: 10px 12px;
     }
 
     .identity-main {
@@ -679,8 +679,8 @@
         display: flex;
         align-items: center;
         gap: 16px;
-        padding: 4px 12px !important;
-        min-height: 40px !important;
+        padding: 4px 12px;
+        min-height: 40px;
         overflow-x: auto;
         -ms-overflow-style: none;
         scrollbar-width: none;
@@ -706,9 +706,9 @@
     }
 
     .error-reason-box {
-        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent) !important;
-        border-color: color-mix(in srgb, var(--semantic-danger) 28%, transparent) !important;
-        padding: 10px 12px !important;
+        background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 28%, transparent);
+        padding: 10px 12px;
     }
 
     .error-icon {
@@ -717,7 +717,7 @@
     }
 
     .error-msg {
-        color: var(--semantic-danger) !important;
+        color: var(--semantic-danger);
         font-weight: 500;
         font-size: 12px;
     }

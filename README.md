@@ -93,12 +93,12 @@ pnpm tauri:dev
 | **Linux** | - | ⚠️ 需手动集成 | 需自行准备 Linux 静态二进制 |
 
 > [!TIP]
-> 如需自行编译或集成 Sidecar，请查看 [CONTRIBUTING.md](./docs/CONTRIBUTING.md#多平台支持与-sidecar-集成)。
+> 如需自行编译或集成 Sidecar，请查看 [contributing.md](./docs/contributing.md#多平台支持与-sidecar-集成)。
 
 ## 🧱 项目文档 (Project Docs)
 
-- [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)：贡献流程、开发环境与 Sidecar 指南
-- [docs/DEVELOPMENT_STANDARDS.md](./docs/DEVELOPMENT_STANDARDS.md)：Service-First 开发规范与质量门禁
+- [docs/contributing.md](./docs/contributing.md)：贡献流程、开发环境与 Sidecar 指南
+- [docs/development-standards.md](./docs/development-standards.md)：Service-First 开发规范与质量门禁
 - [docs/design-system.md](./docs/design-system.md)：UI 设计系统规范与落地清单
 
 ## 🔐 自定义内核安全模型 (Custom Kernel Security Model)
@@ -133,7 +133,7 @@ AI 产出会经过人工审阅，但仍可能存在边界场景问题。欢迎�
 
 ## 🤝 参与贡献 (Contributing)
 
-欢迎任何形式的贡献。在开始之前，请阅读 [贡献指南](./docs/CONTRIBUTING.md)。
+欢迎任何形式的贡献。在开始之前，请阅读 [贡献指南](./docs/contributing.md)。
 
 ## 💬 交流与反馈 (Feedback)
 

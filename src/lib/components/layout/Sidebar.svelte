@@ -172,7 +172,7 @@
 	}
 
 	.sidebar.blurred {
-		filter: blur(4px);
+		filter: blur(2px);
 	}
 
 	.logo-section {
@@ -265,7 +265,7 @@
 		color: var(--text-primary);
 		transform: translateY(-0.5px);
 		box-shadow:
-			0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+			var(--hover-ring-medium),
 			0 10px 18px -14px color-mix(in srgb, var(--accent-glow) 56%, transparent);
 	}
 
@@ -513,6 +513,6 @@
 		color: var(--text-primary);
 		transform: none;
 		box-shadow:
-			0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
+			var(--hover-ring-soft);
 	}
 </style>

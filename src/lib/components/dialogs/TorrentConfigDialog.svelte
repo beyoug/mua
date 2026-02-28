@@ -396,7 +396,7 @@
     }
 
     .path-selector:hover {
-        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 14%, transparent);
+        box-shadow: var(--hover-ring-medium);
     }
 
     .path-text {

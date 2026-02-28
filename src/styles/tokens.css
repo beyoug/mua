@@ -4,13 +4,16 @@
    ============================================ */
 
 :root {
-  /* ===== 布局尺寸 ===== */
-  --sidebar-width: 200px;
-  --layout-gap: 12px;
-  --sidebar-total-width: calc(var(--sidebar-width) + var(--layout-gap) * 2);
+	/* ===== 布局尺寸 ===== */
+	--sidebar-width: 200px;
+	--layout-gap: 12px;
+	--sidebar-total-width: calc(var(--sidebar-width) + var(--layout-gap) * 2);
 
-  /* ===== 字体 ===== */
-  --font-base: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
-  /* 兼容旧变量 */
-  --font-mono: var(--font-base);
+	/* ===== 字体 ===== */
+	--font-base:
+		-apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto,
+		sans-serif;
+	--font-mono:
+		"JetBrains Mono", "SF Mono", "SFMono-Regular", ui-monospace, Menlo, Monaco,
+		Consolas, monospace;
 }

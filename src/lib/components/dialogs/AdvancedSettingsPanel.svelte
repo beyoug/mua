@@ -179,7 +179,7 @@
         font-size: 13px;
         resize: vertical;
         min-height: 88px;
-        font-family: var(--font-mono, monospace);
+        font-family: var(--font-mono);
         line-height: 1.5;
     }
 
