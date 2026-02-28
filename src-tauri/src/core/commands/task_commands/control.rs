@@ -67,9 +67,6 @@ pub async fn cancel_tasks(
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
 ) -> AppResult<()> {
-    state.update_batch_state(&gids, TaskState::Removed);
-    state.save();
-
     let futures: Vec<_> = gids
         .iter()
         .map(|gid| aria2_client::remove(gid.clone()))
@@ -95,7 +92,11 @@ pub async fn cancel_tasks(
             "cancel_batch_partial_failure",
             json!({ "failed_gids": failed })
         );
+        return Err(AppError::aria2(format!("批量取消失败，任务未完全取消: {}", failed.join(","))));
     }
+
+    state.update_batch_state(&gids, TaskState::Removed);
+    state.save();
 
     Ok(())
 }

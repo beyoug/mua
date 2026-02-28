@@ -442,7 +442,7 @@ class DownloadService {
         deleteFile: boolean
     ): Promise<void> {
         if (itemToDelete) {
-            this.removeTask(itemToDelete, deleteFile);
+            await this.removeTask(itemToDelete, deleteFile);
             return;
         }
 
@@ -454,28 +454,29 @@ class DownloadService {
         await this.removeTasks(selectedIds, deleteFile);
     }
 
-    removeTask(id: string, deleteFile: boolean = false): void {
-        this.updateTasks((tasks) => {
-            const existing = tasks.find((task) => task.id === id);
-            if (!existing) return tasks;
+    async removeTask(id: string, deleteFile: boolean = false): Promise<void> {
+        const snapshot = this.snapshotTasks();
+        const existing = snapshot.find((task) => task.id === id);
+        if (!existing) return;
 
-            if (isActiveTask(existing.state)) {
-                this.addPendingLock(id);
-            }
+        if (isActiveTask(existing.state)) {
+            this.addPendingLock(id);
+        }
 
-            removeTaskRecord(id, deleteFile).catch((e) => {
-                this.logger.error('Failed to remove task record', { taskId: id, deleteFile, error: e });
-                this.clearPendingLock(id);
-                this.forceResync().catch((resyncError) => {
-                    this.logger.error('Failed to resync after remove task record failure', {
-                        taskId: id,
-                        error: resyncError
-                    });
+        try {
+            await removeTaskRecord(id, deleteFile);
+            this.updateTasks((tasks) => tasks.filter((task) => task.id !== id));
+        } catch (e) {
+            this.logger.error('Failed to remove task record', { taskId: id, deleteFile, error: e });
+            this.clearPendingLock(id);
+            await this.forceResync().catch((resyncError) => {
+                this.logger.error('Failed to resync after remove task record failure', {
+                    taskId: id,
+                    error: resyncError
                 });
             });
-
-            return tasks.filter((task) => task.id !== id);
-        });
+            throw e;
+        }
     }
 
     async removeTasks(ids: Set<string>, deleteFile: boolean = false): Promise<void> {
@@ -485,6 +486,7 @@ class DownloadService {
             this.updateTasks((tasks) => tasks.filter((task) => !ids.has(task.id)));
         } catch (e) {
             this.logger.error('Failed to remove tasks batch', { taskIds: idArray, deleteFile, error: e });
+            throw e;
         }
     }
 
@@ -506,6 +508,7 @@ class DownloadService {
             ids.forEach((id) => {
                 this.clearPendingLock(id);
             });
+            throw e;
         }
     }
 

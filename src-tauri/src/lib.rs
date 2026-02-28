@@ -64,6 +64,7 @@ pub fn run() {
             get_aria2_version_info,
             parse_torrent,
             fetch_public_trackers
+            ,get_platform_info
         ])
         .on_window_event(|window, event| {
             if let tauri::WindowEvent::CloseRequested { api, .. } = event {

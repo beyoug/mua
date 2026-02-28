@@ -66,8 +66,8 @@ export async function cancelTask(id: string): Promise<void> {
     await downloadService.cancelTask(id);
 }
 
-export function removeTask(id: string, deleteFile: boolean = false): void {
-    downloadService.removeTask(id, deleteFile);
+export async function removeTask(id: string, deleteFile: boolean = false): Promise<void> {
+    await downloadService.removeTask(id, deleteFile);
 }
 
 export async function removeTasks(ids: Set<string>, deleteFile: boolean = false): Promise<void> {

@@ -6,15 +6,14 @@
  */
 
 import { isPermissionGranted, requestPermission, sendNotification } from '@tauri-apps/plugin-notification';
-import type { DownloadTask } from '$lib/types/download';
-import { allTasks } from '$lib/services/download';
+import { listen } from '@tauri-apps/api/event';
+import type { UnlistenFn } from '@tauri-apps/api/event';
 import { createLogger } from '$lib/utils/logger';
+import { EVENT_TASK_COMPLETED } from '$lib/api/events';
 
 const logger = createLogger('Notifications');
 
-let unsubscribeFn: (() => void) | null = null;
-let previousStates = new Map<string, string>();
-let initialized = false;
+let unsubscribeFn: UnlistenFn | null = null;
 let permissionStatus: 'unknown' | 'granted' | 'denied' = 'unknown';
 let permissionPromptAttempted = false;
 let permissionCheckInFlight: Promise<boolean> | null = null;
@@ -68,32 +67,9 @@ async function ensureNotificationPermission(): Promise<boolean> {
 export async function initNotifications(): Promise<void> {
     if (unsubscribeFn) return;
 
-    unsubscribeFn = allTasks.subscribe((tasks) => {
-        if (!initialized) {
-            // 首次订阅时，初始化状态快照（不触发通知）
-            for (const task of tasks) {
-                previousStates.set(task.id, task.state);
-            }
-            initialized = true;
-            return;
-        }
-
-        // 检测状态变化：非完成 → 完成
-        for (const task of tasks) {
-            const prev = previousStates.get(task.id);
-            if (task.state === 'complete' && prev && prev !== 'complete') {
-                showCompletionNotification(task);
-            }
-            previousStates.set(task.id, task.state);
-        }
-
-        // 清理已移除的任务
-        const currentIds = new Set(tasks.map(t => t.id));
-        for (const id of previousStates.keys()) {
-            if (!currentIds.has(id)) {
-                previousStates.delete(id);
-            }
-        }
+    unsubscribeFn = await listen<{ id: string; filename: string }>(EVENT_TASK_COMPLETED, (event) => {
+        const payload = event.payload;
+        showCompletionNotification(payload.id, payload.filename);
     });
 }
 
@@ -105,8 +81,6 @@ export function cleanupNotifications(): void {
         unsubscribeFn();
         unsubscribeFn = null;
     }
-    previousStates.clear();
-    initialized = false;
     permissionStatus = 'unknown';
     permissionPromptAttempted = false;
     permissionCheckInFlight = null;
@@ -115,17 +89,17 @@ export function cleanupNotifications(): void {
 /**
  * 显示下载完成通知
  */
-async function showCompletionNotification(task: DownloadTask): Promise<void> {
+async function showCompletionNotification(taskId: string, filename: string): Promise<void> {
     try {
         const permissionGranted = await ensureNotificationPermission();
 
         if (permissionGranted) {
             sendNotification({
                 title: '下载完成',
-                body: `${task.filename} 已下载完成`,
+                body: `${filename} 已下载完成`,
             });
         }
     } catch (e) {
-        logger.error('Failed to send completion notification', { taskId: task.id, error: e });
+        logger.error('Failed to send completion notification', { taskId, error: e });
     }
 }

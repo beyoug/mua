@@ -1,6 +1,6 @@
 use crate::aria2::client::{self as aria2_client, Aria2Task};
 use crate::core::error::{AppError, AppResult};
-use crate::core::events::EVENT_TASKS_DELTA;
+use crate::core::events::{EVENT_TASKS_DELTA, EVENT_TASK_COMPLETED};
 use crate::core::store::TaskStore;
 use crate::core::types::TaskState;
 use serde_json::json;
@@ -333,6 +333,7 @@ pub fn start_background_sync(app_handle: AppHandle) {
         let mut revision: u64 = 0;
         let mut seq: u64 = 0;
         let mut emitted_snapshot = false;
+        let mut notified_completed: std::collections::HashSet<String> = std::collections::HashSet::new();
 
         loop {
             let state = app_handle.state::<crate::core::store::TaskStore>();
@@ -367,6 +368,9 @@ pub fn start_background_sync(app_handle: AppHandle) {
                         } else {
                             emitted_snapshot = true;
                             last_snapshot = current_map;
+                            for t in tasks.iter().filter(|t| t.state == "complete") {
+                                notified_completed.insert(t.id.clone());
+                            }
                         }
                     } else {
                         let mut changes: Vec<TaskDeltaChange> = Vec::new();
@@ -404,6 +408,19 @@ pub fn start_background_sync(app_handle: AppHandle) {
                                 );
                             } else {
                                 last_snapshot = current_map;
+                            }
+                        }
+
+                        for task in tasks.iter() {
+                            if task.state == "complete" {
+                                if notified_completed.insert(task.id.clone()) {
+                                    let _ = app_handle.emit(
+                                        EVENT_TASK_COMPLETED,
+                                        json!({ "id": task.id, "filename": task.filename })
+                                    );
+                                }
+                            } else {
+                                notified_completed.remove(&task.id);
                             }
                         }
                     }

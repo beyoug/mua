@@ -7,6 +7,8 @@ import { EVENT_ARIA2_SIDECAR_ERROR } from '$lib/api/events';
 import { showFeedback } from '$lib/services/feedback';
 
 const logger = createLogger('Boot');
+let bootCleanup: (() => void) | null = null;
+let bootInFlight: Promise<() => void> | null = null;
 
 interface Aria2SidecarErrorPayload {
     message?: string;
@@ -20,6 +22,15 @@ interface Aria2SidecarErrorPayload {
  * 官方术语：前端生命周期治理服务
  */
 export async function bootApp() {
+    if (bootCleanup) {
+        return bootCleanup;
+    }
+
+    if (bootInFlight) {
+        return bootInFlight;
+    }
+
+    bootInFlight = (async () => {
 
     try {
         const preventContextMenu = (e: MouseEvent) => {
@@ -59,13 +70,37 @@ export async function bootApp() {
         });
 
         // 返回销毁函数块
-        return () => {
+        const cleanup = () => {
             unlistenSidecar();
             cleanupNotifications();
             document.removeEventListener('contextmenu', preventContextMenu);
         };
+        bootCleanup = cleanup;
+        return cleanup;
     } catch (e) {
         logger.error('Critical failure during frontend initialization', { error: e });
         throw e;
+    } finally {
+        bootInFlight = null;
+    }
+    })();
+
+    return bootInFlight;
+}
+
+export async function recoverAppFromRuntimeFailure(): Promise<void> {
+    try {
+        await loadAppSettings();
+        await downloadService.initializeSync();
+    } catch (e) {
+        logger.error('Recover app failed', { error: e });
+        throw e;
+    }
+}
+
+export function shutdownBootServices(): void {
+    if (bootCleanup) {
+        bootCleanup();
+        bootCleanup = null;
     }
 }

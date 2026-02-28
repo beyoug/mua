@@ -6,6 +6,7 @@
     import { importAria2Binary, getAria2KernelVersionInfo } from '$lib/services/aria2';
     import type { Aria2VersionInfo } from '$lib/types/download';
     import { relaunch } from '@tauri-apps/plugin-process';
+    import { getPlatformInfo } from '$lib/api/platform';
     import { createLogger } from '$lib/utils/logger';
     import { pickSingleFile } from '$lib/utils/dialog';
     import { confirmAction, showErrorFeedback, showSuccessFeedback } from '$lib/services/feedback';
@@ -16,10 +17,22 @@
     let showSecret = $state(false);
     let aria2Version = $state<Aria2VersionInfo | null>(null);
     let isImportingKernel = $state(false);
+    let currentPlatform = $state('');
 
     onMount(() => {
+        detectPlatform();
         loadVersionInfo();
     });
+
+    async function detectPlatform() {
+        try {
+            const info = await getPlatformInfo();
+            currentPlatform = info.os;
+        } catch (e) {
+            logger.warn('Failed to detect platform', { error: e });
+            currentPlatform = '';
+        }
+    }
 
     async function loadVersionInfo() {
         try {
@@ -34,7 +47,7 @@
         try {
             const path = await pickSingleFile('选择 Aria2 内核', [{
                 name: 'Executable',
-                extensions: window.navigator.userAgent.includes('Win') ? ['exe'] : []
+                extensions: currentPlatform === 'windows' ? ['exe'] : []
             }]);
             if (path) {
                 const version = await importAria2Binary(path);

@@ -1,6 +1,7 @@
 import type { DownloadTask, DownloadConfig } from '$lib/types/download';
 import { createLogger } from '$lib/utils/logger';
 import { downloadService, type TaskViewNav } from './index';
+import { showErrorFeedback } from '$lib/services/feedback';
 
 const logger = createLogger('TaskController');
 
@@ -83,7 +84,13 @@ export class TaskController {
 
     // 执行清理（批量或单项）
     async confirmClear(deleteFile: boolean) {
-        await downloadService.executeClear(this.navAsTaskView, this.selectedIds, this.itemToDelete, deleteFile);
+        try {
+            await downloadService.executeClear(this.navAsTaskView, this.selectedIds, this.itemToDelete, deleteFile);
+        } catch (e) {
+            logger.error('Failed to clear tasks', { deleteFile, error: e });
+            await showErrorFeedback('清理失败', e);
+            return;
+        }
 
         if (this.itemToDelete) {
             this.itemToDelete = null;
@@ -98,12 +105,22 @@ export class TaskController {
         const plan = downloadService.planSingleTaskRemoval(task);
 
         if (plan.action === 'cancel') {
-            await downloadService.cancelTask(task.id);
+            try {
+                await downloadService.cancelTask(task.id);
+            } catch (e) {
+                logger.error('Failed to cancel task', { taskId: task.id, error: e });
+                await showErrorFeedback('取消任务失败', e);
+            }
             return;
         }
 
         if (plan.action === 'remove') {
-            downloadService.removeTask(task.id, plan.deleteFile);
+            try {
+                await downloadService.removeTask(task.id, plan.deleteFile);
+            } catch (e) {
+                logger.error('Failed to remove task', { taskId: task.id, deleteFile: plan.deleteFile, error: e });
+                await showErrorFeedback('删除任务失败', e);
+            }
             return;
         }
 

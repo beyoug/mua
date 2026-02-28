@@ -10,7 +10,7 @@
 		particlesEnabled
 	} from "$lib/services/theme";
 	import ParticleBackground from "$lib/components/effects/ParticleBackground.svelte";
-	import { bootApp } from "$lib/services/boot";
+	import { bootApp, shutdownBootServices } from "$lib/services/boot";
 	import { createLogger } from "$lib/utils/logger";
 
 	const logger = createLogger("Layout");
@@ -22,19 +22,14 @@
 		applyThemeToDocument(state);
 	});
 
-	onMount(() => {
-		let cleanup: (() => void) | undefined;
-
+		onMount(() => {
 		bootApp()
-			.then((cb) => {
-				cleanup = cb;
-			})
 			.catch((e) => {
 				logger.error("Core boot failure", { error: e });
 			});
 
 		return () => {
-			if (cleanup) cleanup();
+			shutdownBootServices();
 		};
 	});
 </script>

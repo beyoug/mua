@@ -4,6 +4,7 @@ use crate::core::store::TaskStore;
 use crate::utils;
 use futures::future::join_all;
 use serde_json::json;
+use tauri::AppHandle;
 
 fn log_batch_errors(scope: &str, gids: &[String], results: Vec<Result<String, AppError>>) {
     let mut failed: Vec<String> = Vec::new();
@@ -29,26 +30,49 @@ fn log_batch_errors(scope: &str, gids: &[String], results: Vec<Result<String, Ap
     }
 }
 
-fn delete_task_files(save_path: &str, filename: &str) {
-    let full_path = utils::get_full_path(save_path, filename);
-    let resolved_path = utils::resolve_path(&full_path);
+fn is_not_found(err: &AppError) -> bool {
+    err.is_aria2_not_found()
+}
 
-    if std::path::Path::new(&resolved_path).exists() {
-        if let Err(e) = std::fs::remove_file(&resolved_path) {
-            crate::app_error!(
-                "Core::TaskRemove",
-                "file_delete_failed",
-                json!({ "path": resolved_path, "error": e.to_string() })
-            );
-        }
+fn delete_task_files(save_path: &str, filename: &str) -> AppResult<()> {
+    if !utils::is_safe_filename(filename) {
+        return Err(AppError::validation(format!("非法文件名: {filename}")));
     }
 
-    let aria2_file_path = format!("{}.aria2", resolved_path);
-    let _ = std::fs::remove_file(&aria2_file_path);
+    let resolved_save_path = utils::resolve_path(save_path);
+    let save_dir = std::path::PathBuf::from(resolved_save_path);
+
+    if !save_dir.exists() {
+        return Err(AppError::validation(format!(
+            "保存目录不存在: {}",
+            save_dir.to_string_lossy()
+        )));
+    }
+
+    let save_dir_abs = std::fs::canonicalize(&save_dir).map_err(|e| AppError::Fs(e.to_string()))?;
+    let target = save_dir_abs.join(filename);
+    if !target.starts_with(&save_dir_abs) {
+        return Err(AppError::validation(format!(
+            "非法目标路径: {}",
+            target.to_string_lossy()
+        )));
+    }
+
+    if target.exists() {
+        std::fs::remove_file(&target).map_err(|e| AppError::Fs(e.to_string()))?;
+    }
+
+    let aria2_file_path = std::path::PathBuf::from(format!("{}.aria2", target.to_string_lossy()));
+    if aria2_file_path.exists() {
+        let _ = std::fs::remove_file(aria2_file_path);
+    }
+
+    Ok(())
 }
 
 #[tauri::command]
 pub async fn remove_tasks(
+    _app: AppHandle,
     state: tauri::State<'_, TaskStore>,
     gids: Vec<String>,
     delete_file: bool,
@@ -66,21 +90,49 @@ pub async fn remove_tasks(
         .map(|gid| aria2_client::remove(gid.clone()))
         .collect();
     let active_results = join_all(active_futures).await;
-    log_batch_errors("remove_active_failed", &active_gids, active_results);
+    log_batch_errors("remove_active_failed", &active_gids, active_results.clone());
 
     let purge_futures: Vec<_> = gids
         .iter()
         .map(|gid| aria2_client::purge(gid.clone()))
         .collect();
     let purge_results = join_all(purge_futures).await;
-    log_batch_errors("purge_failed", &gids, purge_results);
+    log_batch_errors("purge_failed", &gids, purge_results.clone());
+
+    let mut failed = Vec::new();
+    for (idx, result) in active_results.into_iter().enumerate() {
+        if let Err(error) = result {
+            if !is_not_found(&error) {
+                let gid = active_gids.get(idx).cloned().unwrap_or_else(|| "unknown".to_string());
+                failed.push(gid);
+            }
+        }
+    }
+
+    for (idx, result) in purge_results.into_iter().enumerate() {
+        if let Err(error) = result {
+            if !is_not_found(&error) {
+                let gid = gids.get(idx).cloned().unwrap_or_else(|| "unknown".to_string());
+                failed.push(gid);
+            }
+        }
+    }
+
+    if !failed.is_empty() {
+        failed.sort();
+        failed.dedup();
+        return Err(AppError::aria2(format!(
+            "批量删除失败，未完成任务: {}",
+            failed.join(",")
+        )));
+    }
 
     state.remove_tasks_batch(&gids);
     state.save();
 
     if delete_file {
         for task in &tasks_info {
-            delete_task_files(&task.save_path, &task.filename);
+            delete_task_files(&task.save_path, &task.filename)?;
         }
     }
 
@@ -89,6 +141,7 @@ pub async fn remove_tasks(
 
 #[tauri::command]
 pub async fn remove_task_record(
+    _app: AppHandle,
     state: tauri::State<'_, TaskStore>,
     gid: String,
     delete_file: bool,
@@ -114,26 +167,20 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
 
     if is_active {
         if let Err(error) = aria2_client::remove(gid.clone()).await {
-            crate::app_warn!(
-                "Core::TaskRemove",
-                "remove_single_active_failed",
-                json!({ "gid": gid, "error": error.to_string() })
-            );
+            if !is_not_found(&error) {
+                return Err(error);
+            }
         }
         if let Err(error) = aria2_client::purge(gid.clone()).await {
-            crate::app_warn!(
-                "Core::TaskRemove",
-                "purge_single_active_failed",
-                json!({ "gid": gid, "error": error.to_string() })
-            );
+            if !is_not_found(&error) {
+                return Err(error);
+            }
         }
     } else {
         if let Err(error) = aria2_client::purge(gid.clone()).await {
-            crate::app_warn!(
-                "Core::TaskRemove",
-                "purge_single_failed",
-                json!({ "gid": gid, "error": error.to_string() })
-            );
+            if !is_not_found(&error) {
+                return Err(error);
+            }
         }
     }
 
@@ -141,7 +188,7 @@ async fn remove_task_inner(state: &TaskStore, gid: String, delete_file: bool) ->
 
     if delete_file {
         if let Some(task) = task_opt {
-            delete_task_files(&task.save_path, &task.filename);
+            delete_task_files(&task.save_path, &task.filename)?;
         }
     }
 

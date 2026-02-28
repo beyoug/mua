@@ -166,3 +166,17 @@ pub fn stop_log_stream(app: AppHandle) {
         state.0.store(false, std::sync::atomic::Ordering::Relaxed);
     }
 }
+
+#[derive(serde::Serialize)]
+pub struct PlatformInfo {
+    pub os: String,
+    pub arch: String,
+}
+
+#[tauri::command]
+pub fn get_platform_info() -> PlatformInfo {
+    PlatformInfo {
+        os: std::env::consts::OS.to_string(),
+        arch: std::env::consts::ARCH.to_string(),
+    }
+}

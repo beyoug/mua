@@ -44,6 +44,28 @@ pub fn get_full_path(save_path: &str, filename: &str) -> String {
     resolved
 }
 
+pub fn is_safe_filename(filename: &str) -> bool {
+    let path = std::path::Path::new(filename);
+    if path.is_absolute() {
+        return false;
+    }
+
+    let mut has_normal_component = false;
+    for comp in path.components() {
+        match comp {
+            std::path::Component::Normal(_) => has_normal_component = true,
+            _ => return false,
+        }
+    }
+
+    has_normal_component
+}
+
+pub fn canonicalize_abs(path_str: &str) -> std::io::Result<std::path::PathBuf> {
+    let resolved = resolve_path(path_str);
+    std::fs::canonicalize(resolved)
+}
+
 pub fn is_valid_url(url: &str) -> bool {
     // Simple basic check for http/https/ftp
     let lower = url.to_lowercase();
