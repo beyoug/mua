@@ -1,6 +1,8 @@
-# Mua 开发规范（Service-First）
+# Mua 开发规范（Service-First Development Standards）
 
 > 目标：统一实现方式、目录结构、命名与技术细节，降低维护成本，避免“临时方案长期化”。
+>
+> 相关文档：项目总览见 [README](../README.md)，贡献流程见 [CONTRIBUTING](./CONTRIBUTING.md)。
 
 ## 1. 核心原则
 

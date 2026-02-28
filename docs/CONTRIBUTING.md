@@ -1,6 +1,8 @@
 # 贡献指南 (Contributing Guide)
 
-感谢你对 Mua 的关注！Mua 是一个开源项目，我们非常欢迎并珍视任何形式的贡献——无论是代码实现、图标设计、文档翻译，还是简单的 Bug 反馈。
+感谢你对 Mua 的关注！Mua 是一个开源项目，我们欢迎并珍视任何形式的贡献——无论是代码实现、图标设计、文档改进，还是 Bug 反馈。
+
+> 建议先阅读 [README](../README.md) 了解项目定位，再参考 [DEVELOPMENT_STANDARDS.md](./DEVELOPMENT_STANDARDS.md) 对齐实现规范。
 
 ## 🛠️ 开发环境搭建
 
@@ -16,7 +18,7 @@ Mua 是基于 Tauri 2.0 开发的，你需要安装以下环境：
 1.  **Fork 并克隆仓库**
 
     ```bash
-    git clone https://github.com/lionly/Mua.git
+    git clone https://github.com/beyoug/mua.git
     cd Mua
     ```
 
@@ -52,7 +54,7 @@ Mua 是基于 Tauri 2.0 开发的，你需要安装以下环境：
 - **前端**: 使用 Prettier 进行格式化。
 - **后端**: 使用 `cargo fmt` 进行格式化。
 
-## 🌍 多平台支持与 Sidecar 集成
+## 多平台支持与 Sidecar 集成
 
 Mua 依赖 `aria2c` 作为下载内核。为了支持跨平台运行，我们需要在 `src-tauri/` 目录下放置对应平台的二进制文件。
 

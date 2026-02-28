@@ -5,7 +5,7 @@
 </p>
 
 <p align="center">
-  <strong>现代化的 Aria2 下载管理器</strong>
+  <strong>Modern Aria2 Download Manager · 现代化 Aria2 下载管理器</strong>
 </p>
 
 <p align="center">
@@ -17,83 +17,62 @@
 </p>
 
 <p align="center">
-  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建的极简下载管理器。
+  基于 Tauri 2.0 + SvelteKit + Svelte 5 构建，专注于性能、可扩展性与清晰交互体验。
 </p>
 
-> **特别说明**：本项目是在与 **Gemini Pro** (DeepMind) 的深度 AI 协作下开发完成的，展示了人类创意与大语言模型协同编写复杂跨平台应用的实践。
-> 由于项目包含大量 AI 生成与优化的逻辑，可能存在未知的 Bug 或不尽完善之处，恳请各位开发者与用户予以宽容。如遇问题，欢迎通过 Issue 诚挚反馈。
+## 概览 (Overview)
 
-## 📸 运行截图
+Mua 是一个跨平台桌面下载管理器，核心基于 aria2c，并通过统一的服务层抽象下载任务管理、配置管理与 UI 状态同步。
 
-<p align="center">
-  <img src="screenshot/c71244eaa77b4b6498a696b7e102b7d6.png" width="80%" alt="Mua Preview">
-</p>
+- 面向日常下载与高并发任务
+- 提供可扩展的 Sidecar 集成能力
+- 采用 Service-First 架构，便于维护与贡献
 
-<p align="center">
-  <img src="screenshot/7182d009a63a4eac9b73eb02f5cd61b8.png" width="80%" alt="Mua Preview">
-</p>
+## ✨ 特性 (Features)
 
-<p align="center">
-  <img src="screenshot/92992fda5cea46918fa5143fbe2a2c58.png" width="80%" alt="Mua Preview">
-</p>
+- 🚀 **高性能下载**：基于 aria2c 多线程能力，支持 EMA 速度平滑算法
+- 🧩 **可扩展内核**：支持自定义 aria2 内核与配置文件
+- 🎨 **现代化界面**：基于 shadcn-svelte + Tailwind CSS v4
+- 📦 **轻量发布**：基于 Tauri 2.0，兼顾体积与性能
+- 💻 **跨平台支持**：默认覆盖 macOS (Intel) / Windows (x64)，并支持手动扩展
 
-<p align="center">
-  <img src="screenshot/47f54c62edba47d9b4ae9ec74d13ae49.png" width="80%" alt="Mua Preview">
-</p>
+## 📸 运行截图 (Screenshots)
 
 <p align="center">
-  <img src="screenshot/c0e2cd4e85724daea7ae28dc6acdd788.png" width="80%" alt="Mua Preview">
+  <img src="docs/images/c71244eaa77b4b6498a696b7e102b7d6.png" width="49%" alt="Mua Screenshot - Dashboard">
+  <img src="docs/images/7182d009a63a4eac9b73eb02f5cd61b8.png" width="49%" alt="Mua Screenshot - Task List">
 </p>
 
 <p align="center">
-  <img src="screenshot/e44e96c70f4a4bbc95fda4188367278f.png" width="80%" alt="Mua Preview">
+  <img src="docs/images/92992fda5cea46918fa5143fbe2a2c58.png" width="49%" alt="Mua Screenshot - Download Details">
+  <img src="docs/images/47f54c62edba47d9b4ae9ec74d13ae49.png" width="49%" alt="Mua Screenshot - Settings">
 </p>
 
----
+<p align="center">
+  <img src="docs/images/c0e2cd4e85724daea7ae28dc6acdd788.png" width="49%" alt="Mua Screenshot - Theme Panel">
+  <img src="docs/images/e44e96c70f4a4bbc95fda4188367278f.png" width="49%" alt="Mua Screenshot - Advanced Configuration">
+</p>
 
-## ✨ 特性
-- 🚀 **高性能下载** - 基于 aria2c 多线程下载引擎，支持 EMA 速度平滑算法
-- 🛠️ **高度可定制** - 支持 **自定义 aria2 内核** 与 **自定义配置文件**
-- 🎨 **现代化 UI** - 基于 shadcn-svelte + Tailwind CSS v4 构建的精美界面
-- 📦 **轻量打包** - 基于 Tauri 2.0，体积小、性能强、资源占用极低
-- 💻 **多平台支持** - 内置 macOS (Intel) 与 Windows (x64) 二进制内核，支持手动扩展
-
-## 🛠️ 技术栈
+## 🛠️ 技术栈 (Tech Stack)
 
 | 层级 | 技术 | 版本 |
 |------|------|------|
-| 构建框架 | Tauri | 2.0 |
+| 桌面框架 | Tauri | 2.0 |
 | 前端框架 | SvelteKit (SPA) | Svelte 5 |
 | 状态管理 | Svelte Store + Service Layer | 内置 |
 | UI 组件 | shadcn-svelte | latest |
-| 样式 | Tailwind CSS | v4 |
-| 后端 | Rust | latest |
+| 样式系统 | Tailwind CSS | v4 |
+| 后端语言 | Rust | latest |
 | 下载引擎 | aria2c | JSON-RPC 2.0 |
 
-## ⬇️ 下载与安装
-
-请前往 [Releases](https://github.com/beyoug/mua/releases) 下载最新版本。
-
-| 平台 | 安装包格式 | 状态 | 说明 |
-|------|-----------|------|------|
-| **macOS** (Intel) | `.dmg` | ✅ 默认内置 | 适用于 Intel 处理器的 Mac |
-| **Windows** (x64) | `.msi` 或 `.exe` | ✅ 默认内置 | 标准 64 位安装包 |
-| **macOS** (Apple Silicon) | - | ⚠️ 需手动集成 | M1/M2/M3 及后续芯片版本 |
-| **Linux** | - | ⚠️ 需手动集成 | 需自行准备 Linux 静态二进制文件 |
-
-> [!TIP]
-> 开发者可以通过 [贡献指南的 Sidecar 集成章节](./CONTRIBUTING.md#🌍-多平台支持与-sidecar-集成) 了解如何自行编译或集成其他平台的二进制内核。
-
----
-
-## 📦 快速开始
+## ⚡ 快速开始 (Quick Start)
 
 ### 环境要求
 
 - **Node.js** >= 20
 - **pnpm** >= 9
 - **Rust** >= 1.77
-- **Tauri 编译环境** (详见 [贡献指南](./CONTRIBUTING.md))
+- **Tauri 编译环境**（参考 [Tauri Prerequisites](https://tauri.app/v2/guides/getting-started/prerequisites)）
 
 ### 安装并运行
 
@@ -101,6 +80,36 @@
 pnpm install
 pnpm tauri:dev
 ```
+
+## ⬇️ 下载与安装 (Releases)
+
+请前往 [GitHub Releases](https://github.com/beyoug/mua/releases) 下载最新版本。
+
+| 平台 | 安装包格式 | 状态 | 说明 |
+|------|-----------|------|------|
+| **macOS** (Intel) | `.dmg` | ✅ 默认内置 | 适用于 Intel 处理器 Mac |
+| **Windows** (x64) | `.msi` / `.exe` | ✅ 默认内置 | 标准 64 位安装包 |
+| **macOS** (Apple Silicon) | - | ⚠️ 需手动集成 | M1/M2/M3 及后续芯片 |
+| **Linux** | - | ⚠️ 需手动集成 | 需自行准备 Linux 静态二进制 |
+
+> [!TIP]
+> 如需自行编译或集成 Sidecar，请查看 [CONTRIBUTING.md](./docs/CONTRIBUTING.md#多平台支持与-sidecar-集成)。
+
+## 🧱 项目文档 (Project Docs)
+
+- [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)：贡献流程、开发环境与 Sidecar 指南
+- [docs/DEVELOPMENT_STANDARDS.md](./docs/DEVELOPMENT_STANDARDS.md)：Service-First 开发规范与质量门禁
+
+## 🤖 AI 协作说明 (AI-assisted Development)
+
+Mua 在开发过程中使用了多种 AI 工具进行代码实现、重构建议与文档协作，包括：
+
+- **OPENCODE**
+- **Gemini**
+- **Claude Code**
+- **GPT-5.x**
+
+AI 产出会经过人工审阅，但仍可能存在边界场景问题。欢迎通过 Issue 提交复现步骤，我们会持续改进。
 
 ## 🗺️ 路线图 (Roadmap)
 
@@ -110,23 +119,22 @@ pnpm tauri:dev
 - [ ] 浏览器扩展集成
 - [ ] 国际化 (i18n)
 
-## 🤝 参与贡献
+## 🤝 参与贡献 (Contributing)
 
-我们欢迎并感谢任何形式的贡献！在开始之前，请阅读我们的 [贡献指南](./CONTRIBUTING.md)。
+欢迎任何形式的贡献。在开始之前，请阅读 [贡献指南](./docs/CONTRIBUTING.md)。
 
-## 💬 交流与反馈
+## 💬 交流与反馈 (Feedback)
 
-- **Issue**: 提交 bug 或功能建议
-- **Discussions**: 参与社区讨论
+- **Issues**：提交 Bug / Feature Request
+- **Discussions**：参与社区讨论
 
-## 📄 许可证
+## 📄 许可证 (License)
 
 本项目基于 [MIT](./LICENSE) 许可证开源。
 
-## 🙏 致谢
+## 🙏 致谢 (Acknowledgements)
 
 - [Tauri](https://tauri.app/) - 跨平台桌面应用框架
 - [SvelteKit](https://kit.svelte.dev/) - 现代 Web 框架
 - [shadcn-svelte](https://www.shadcn-svelte.com/) - 精美的 UI 组件库
 - [aria2](https://aria2.github.io/) - 强大的下载引擎
-- [Gemini Pro](https://deepmind.google/technologies/gemini/) - AI 协作开发伙伴
