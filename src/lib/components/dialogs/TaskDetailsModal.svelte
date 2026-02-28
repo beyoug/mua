@@ -373,10 +373,11 @@
     .modal-tabs {
         display: flex;
         position: relative;
-        background: var(--input-bg, rgba(0, 0, 0, 0.08));
+        background: var(--control-bg);
+        border: none;
         border-radius: 12px;
         padding: 3px;
-        box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.05);
+        box-shadow: var(--control-shadow-rest);
     }
 
     .tab-btn {
@@ -398,7 +399,7 @@
     }
 
     .tab-btn.active {
-        color: var(--accent-primary);
+        color: var(--text-primary);
         font-weight: 600;
     }
 
@@ -410,7 +411,7 @@
         height: 5px;
         background: var(--accent-primary);
         border-radius: 50%;
-        box-shadow: 0 0 8px var(--accent-primary);
+        box-shadow: 0 0 4px color-mix(in srgb, var(--accent-primary) 48%, transparent);
     }
 
     .active-indicator {
@@ -419,12 +420,12 @@
         bottom: 3px;
         left: 3px;
         width: calc((100% - 6px) / 2);
-        background: var(--glass-bg, rgba(255, 255, 255, 0.1));
-        backdrop-filter: blur(8px);
+        background: color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 86%, transparent);
+        backdrop-filter: blur(10px) saturate(120%);
         border-radius: 9px;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        border: 1px solid var(--border-normal, rgba(255, 255, 255, 0.15));
-        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+        border: none;
+        box-shadow: var(--control-shadow-rest);
     }
 
     .details-body {
@@ -462,22 +463,22 @@
         display: flex;
         align-items: center;
         gap: 10px;
-        background: var(--input-bg, rgba(0, 0, 0, 0.05));
+        background: var(--control-bg);
         padding: 8px 12px;
         border-radius: 10px;
-        border: 1px solid var(--border-subtle, rgba(255, 255, 255, 0.05));
+        border: none;
         transition: all 0.2s ease;
         min-height: 36px;
+        box-shadow: var(--control-shadow-rest);
     }
 
     .detail-value-box:hover {
-        border-color: var(--border-normal);
-        background: var(--surface-hover);
+        background: var(--control-bg-hover);
     }
 
     .detail-value-box.error {
         background: color-mix(in srgb, var(--semantic-danger) 8%, transparent);
-        border-color: color-mix(in srgb, var(--semantic-danger) 28%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 28%, transparent);
     }
 
     .value-text {
@@ -515,11 +516,12 @@
         font-weight: 700;
         color: var(--accent-primary);
         background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-        padding: 2px 6px;
-        border-radius: 4px;
+        padding: 3px 8px;
+        border-radius: 999px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
-        border: 1px solid color-mix(in srgb, var(--accent-primary) 20%, transparent);
+        border: none;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent);
         flex-shrink: 0;
         align-self: flex-start;
         margin-top: 1px; /* Optical alignment with text */
@@ -528,7 +530,7 @@
     .extension-badge.unknown {
         color: var(--semantic-warning);
         background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-        border-color: color-mix(in srgb, var(--semantic-warning) 20%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-warning) 20%, transparent);
     }
 
     .identity-box {
@@ -587,6 +589,8 @@
 
     .status-pill {
         font-size: 11px;
+        min-height: 22px;
+        padding: 3px 10px;
     }
 
     .status-dot {
@@ -640,10 +644,10 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 28px;
-        height: 28px;
-        background: var(--surface-hover);
-        border: 1px solid var(--border-color);
+        width: 32px;
+        height: 32px;
+        background: var(--control-bg);
+        border: none;
         border-radius: 8px;
         color: var(--text-tertiary);
         cursor: pointer;
@@ -651,9 +655,8 @@
     }
 
     .item-copy-btn:hover {
-        background: var(--surface-active);
-        color: var(--accent-primary);
-        border-color: var(--accent-primary);
+        background: var(--control-bg-hover);
+        color: var(--text-primary);
     }
 
     .item-copy-btn :global(.success) { color: #10b981; }

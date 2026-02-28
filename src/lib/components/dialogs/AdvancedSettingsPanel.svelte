@@ -133,38 +133,44 @@
 
 <style>
     .advanced-panel {
-        padding: 24px;
+        padding: 16px;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 14px;
         height: 100%;
+        background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 72%, transparent);
+        border-radius: 14px;
     }
 
     .panel-body {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 10px;
         flex: 1;
     }
 
     .form-row {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
+        padding: 10px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--surface-hover) 72%, transparent);
     }
 
     .form-row label {
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 13px;
+        font-size: 12px;
+        font-weight: 500;
         color: var(--text-secondary);
         width: 100%;
     }
 
     .form-row input,
     .form-row textarea {
-        padding: 12px 14px;
+        padding: 11px 12px;
     }
 
     .headers-textarea {
@@ -172,29 +178,30 @@
         padding: 10px 14px;
         font-size: 13px;
         resize: vertical;
-        min-height: 80px;
+        min-height: 88px;
         font-family: var(--font-mono, monospace);
         line-height: 1.5;
     }
 
     .input-group {
         overflow: hidden;
+        box-shadow: var(--control-shadow-rest);
     }
 
     .grouped-input {
         flex: 1;
         background: transparent;
         border: none;
-        padding: 12px 14px;
+        padding: 11px 12px;
         color: var(--text-primary);
-        font-size: 14px;
+        font-size: 13px;
         outline: none;
         min-width: 0;
     }
 
     .input-divider {
         width: 1px;
-        background: var(--border-color, rgba(255, 255, 255, 0.1));
+        background: color-mix(in srgb, var(--border-subtle) 56%, transparent);
         margin: 8px 0;
     }
 
@@ -209,7 +216,7 @@
         background: transparent;
         border: none;
         padding: 0 28px 0 16px;
-        color: var(--text-secondary);
+        color: var(--text-primary);
         font-size: 13px;
         font-weight: 500;
         outline: none;
@@ -223,6 +230,15 @@
 
     .grouped-select:hover {
         color: var(--text-primary);
+    }
+
+    .grouped-select option {
+        color: #0f172a;
+        background: #f8fafc;
+    }
+
+    .grouped-select:focus-visible {
+        outline: none;
     }
 
     .grouped-select:hover + :global(.select-icon) {

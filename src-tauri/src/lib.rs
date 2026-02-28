@@ -61,6 +61,7 @@ pub fn run() {
             start_log_stream,
             stop_log_stream,
             import_custom_binary,
+            trust_custom_aria2_binary,
             get_aria2_version_info,
             parse_torrent,
             fetch_public_trackers

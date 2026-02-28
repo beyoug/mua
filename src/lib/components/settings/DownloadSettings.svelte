@@ -81,9 +81,9 @@
     align-items: center;
     gap: 8px;
     padding: 6px 12px;
-    background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    background: color-mix(in srgb, var(--surface-hover) 88%, transparent);
+    border: none;
+    border-radius: 8px;
     color: var(--text-secondary);
     font-size: 12px;
     cursor: pointer;
@@ -91,7 +91,7 @@
   }
 
   .path-btn:hover {
-    background: var(--surface-active);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     color: var(--text-primary);
   }
 
@@ -109,8 +109,8 @@
   .inner-input input {
     width: 60px;
     background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
-    border-radius: 6px;
+    border: none;
+    border-radius: 8px;
     padding: 4px 8px;
     color: var(--text-primary);
     font-size: 12px;
@@ -129,13 +129,12 @@
   }
 
   .unit {
-    background: var(--surface-active);
-    border: 1px solid var(--border-subtle);
-    border-left: none;
+    background: color-mix(in srgb, var(--surface-active) 86%, transparent);
+    border: none;
     padding: 4px 8px;
     font-size: 11px;
     color: var(--text-muted);
-    border-top-right-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-top-right-radius: 8px;
+    border-bottom-right-radius: 8px;
   }
 </style>

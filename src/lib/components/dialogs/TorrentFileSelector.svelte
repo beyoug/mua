@@ -130,7 +130,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   .torrent-selector {
     background: var(--surface-hover);
     border-radius: 8px;
-    border: 1px solid var(--border-color);
+    border: none;
     margin-top: 12px;
     overflow: hidden;
     display: flex;
@@ -144,7 +144,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
     align-items: center;
     padding: 12px 16px;
     background: var(--surface-active);
-    border-bottom: 1px solid var(--border-color);
+    border-bottom: none;
   }
 
   .info h3 {
@@ -211,7 +211,7 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
     width: 16px;
     height: 16px;
     border-radius: 4px;
-    border: 1px solid var(--border-color);
+    border: none;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -219,7 +219,6 @@ import type { TorrentInfo, TorrentFile } from '$lib/types/torrent';
   }
 
   .file-item.selected .checkbox {
-    border-color: var(--accent-primary);
     background: var(--accent-primary); /* Solid background for better visibility */
   }
 

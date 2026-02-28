@@ -290,7 +290,7 @@
         gap: 16px;
         padding: 12px 14px;
         background: var(--surface-hover);
-        border: 1px solid var(--border-subtle);
+        border: none;
         border-radius: 10px;
     }
 
@@ -311,7 +311,8 @@
     .parse-warning {
         padding: 12px 14px;
         background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-        border: 1px solid color-mix(in srgb, var(--semantic-warning) 30%, transparent);
+        border: none;
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-warning) 30%, transparent);
         border-radius: 10px;
         color: var(--semantic-warning);
         display: flex;
@@ -395,7 +396,7 @@
     }
 
     .path-selector:hover {
-        border-color: var(--accent-primary);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 14%, transparent);
     }
 
     .path-text {
@@ -407,7 +408,8 @@
     /* Tracker 预览 */
     .tracker-preview {
         background: var(--surface-active);
-        border: 1px solid var(--accent-dim);
+        border: none;
+        box-shadow: inset 0 0 0 1px var(--accent-dim);
         border-radius: 8px;
         padding: 10px;
         font-size: 12px;

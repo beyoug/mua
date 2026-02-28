@@ -99,6 +99,18 @@ pnpm tauri:dev
 
 - [docs/CONTRIBUTING.md](./docs/CONTRIBUTING.md)：贡献流程、开发环境与 Sidecar 指南
 - [docs/DEVELOPMENT_STANDARDS.md](./docs/DEVELOPMENT_STANDARDS.md)：Service-First 开发规范与质量门禁
+- [docs/design-system.md](./docs/design-system.md)：UI 设计系统规范与落地清单
+
+## 🔐 自定义内核安全模型 (Custom Kernel Security Model)
+
+Mua 对导入的自定义 aria2 内核采用“导入 → 信任确认 → 启用”的安全流程：
+
+1. 导入后计算并记录二进制 SHA-256 哈希。
+2. 默认不自动信任、不自动启用。
+3. 用户首次启用时需显式确认信任来源。
+4. 启动前会重新校验哈希；若不匹配则自动回退内置内核。
+
+设置页提供统一安全状态：`missing` / `untrusted` / `hash_mismatch` / `trusted`，用于快速判断当前内核可信度。
 
 ## 🤖 AI 协作说明 (AI-assisted Development)
 

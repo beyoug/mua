@@ -112,6 +112,15 @@
 </div>
 
 <style>
+  :global(.setting-item) {
+    border-radius: 10px;
+    transition: background 0.2s ease, transform 0.2s ease;
+  }
+
+  :global(.setting-item:hover:not(.disabled)) {
+    transform: translateX(1px);
+  }
+
   :global(.switch input:focus-visible + .slider) {
     outline: none;
     box-shadow: var(--focus-ring);

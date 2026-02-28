@@ -237,6 +237,19 @@ pub fn init_aria2_sidecar(app: AppHandle) {
 
             let custom_command = if use_custom {
                 if let Ok(config_dir) = app.path().app_config_dir() {
+                    let (expected_hash, trusted) = config_state
+                        .config
+                        .lock()
+                        .map(|c| (c.custom_aria2_hash.clone(), c.custom_aria2_trusted))
+                        .unwrap_or((None, false));
+
+                    if !trusted {
+                        crate::app_warn!(
+                            "Aria2::Sidecar",
+                            "custom_binary_untrusted_fallback_builtin"
+                        );
+                        None
+                    } else {
                     let target_name = if cfg!(windows) {
                         "aria2c.exe"
                     } else {
@@ -244,18 +257,52 @@ pub fn init_aria2_sidecar(app: AppHandle) {
                     };
                     let bin_path = config_dir.join("custom-bin").join(target_name);
                     if bin_path.exists() {
-                        crate::app_info!(
-                            "Aria2::Sidecar",
-                            "custom_binary_selected",
-                            json!({ "path": bin_path.to_string_lossy() })
-                        );
-                        Some(std::process::Command::new(bin_path))
+                        match crate::utils::sha256_hex_of_file(&bin_path) {
+                            Ok(actual_hash) => {
+                                if expected_hash.as_deref() == Some(actual_hash.as_str()) {
+                                    crate::app_info!(
+                                        "Aria2::Sidecar",
+                                        "custom_binary_selected",
+                                        json!({ "path": bin_path.to_string_lossy() })
+                                    );
+                                    Some(std::process::Command::new(bin_path))
+                                } else {
+                                    crate::app_error!(
+                                        "Aria2::Sidecar",
+                                        "custom_binary_hash_mismatch_fallback_builtin",
+                                        json!({
+                                            "expected_hash_exists": expected_hash.is_some(),
+                                            "path": bin_path.to_string_lossy()
+                                        })
+                                    );
+
+                                    if let Some(state) = app.try_state::<crate::core::config::ConfigState>() {
+                                        if let Ok(mut lock) = state.config.lock() {
+                                            lock.use_custom_aria2 = false;
+                                            lock.custom_aria2_trusted = false;
+                                            let _ = crate::core::config::save_config(&app, &lock);
+                                        }
+                                    }
+
+                                    None
+                                }
+                            }
+                            Err(e) => {
+                                crate::app_error!(
+                                    "Aria2::Sidecar",
+                                    "custom_binary_hash_read_failed_fallback_builtin",
+                                    json!({ "error": e.to_string(), "path": bin_path.to_string_lossy() })
+                                );
+                                None
+                            }
+                        }
                     } else {
                         crate::app_warn!(
                             "Aria2::Sidecar",
                             "custom_binary_missing_fallback_builtin"
                         );
                         None
+                    }
                     }
                 } else {
                     None

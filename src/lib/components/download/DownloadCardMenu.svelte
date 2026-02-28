@@ -102,16 +102,15 @@
 		position: absolute;
 		top: calc(100% + 4px);
 		right: 0;
-		width: 140px; /* 稍微窄一点 */
-		background: var(--glass-menu-bg); /* 65% 透明度 */
-		backdrop-filter: blur(20px);
-		-webkit-backdrop-filter: blur(20px);
-		border: 1px solid var(--border-strong);
+		min-width: 164px;
+		width: max-content;
+		max-width: 220px;
+		background: color-mix(in srgb, var(--glass-menu-bg) 95%, transparent);
+		backdrop-filter: blur(22px) saturate(128%);
+		-webkit-backdrop-filter: blur(22px) saturate(128%);
+		border: none;
 		border-radius: 12px;
-		box-shadow: 
-			0 4px 6px -1px rgba(0, 0, 0, 0.1),
-			0 10px 15px -3px rgba(0, 0, 0, 0.1),
-			0 0 0 1px rgba(255, 255, 255, 0.05); /* 更加立体的阴影 */
+		box-shadow: var(--glass-shadow), 0 12px 26px rgba(0, 0, 0, 0.2);
 		padding: 4px;
 		display: flex;
 		flex-direction: column;
@@ -134,16 +133,17 @@
 		background: transparent;
 		border: none;
 		border-radius: 8px;
-		color: var(--text-primary);
+		color: var(--text-secondary);
 		font-size: 13px;
+		white-space: nowrap;
 		cursor: pointer;
 		text-align: left;
 		transition: all 0.15s ease;
 	}
 
 	.menu-item:hover {
-		background: var(--surface-active);
-		color: var(--accent-primary);
+		background: var(--control-bg-hover);
+		color: var(--text-primary);
 	}
 
 	.menu-item:focus-visible {
@@ -161,12 +161,12 @@
 	}
 
 	.menu-item.danger:hover {
-		background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
+		background: color-mix(in srgb, var(--semantic-danger) 12%, transparent);
 	}
 
 	.menu-divider {
 		height: 1px;
-		background: var(--border-subtle);
+		background: var(--control-border);
 		margin: 4px 0;
 	}
 </style>

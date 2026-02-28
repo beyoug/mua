@@ -28,12 +28,17 @@
 
 <div class="settings-container">
   <div class="about-card">
-    <div class="app-logo">
-      <img src="/logo.png" alt="Mua" class="app-logo-img" />
+    <div class="about-header">
+      <div class="app-logo">
+        <img src="/logo.png" alt="Mua" class="app-logo-img" />
+      </div>
+
+      <div class="brand-meta">
+        <h2 class="app-name">Mua</h2>
+        <p class="app-tagline">简洁、现代的轻量级下载工具</p>
+        <div class="app-version">Version {version}</div>
+      </div>
     </div>
-    <h2 class="app-name">Mua</h2>
-    <p class="app-tagline">简洁、现代的轻量级下载工具</p>
-    <div class="app-version">Version {version}</div>
     
     <div class="action-grid">
       <button class="action-tile" onclick={() => openUrl('https://github.com/beyoug/mua')}>
@@ -45,6 +50,7 @@
         <span>官网</span>
       </button>
     </div>
+
   </div>
 
   <section class="settings-section">
@@ -75,77 +81,95 @@
   .settings-container {
     display: flex;
     flex-direction: column;
-    gap: 20px;
-    align-items: center;
-    padding-top: 10px;
+    gap: 16px;
+    align-items: stretch;
+    padding-top: 4px;
   }
 
   .about-card {
     width: 100%;
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: color-mix(in srgb, var(--input-bg) 96%, transparent);
+    border: none;
     border-radius: 16px;
-    padding: 32px 24px;
+    padding: 24px;
     display: flex;
     flex-direction: column;
+    gap: 18px;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+  }
+
+  .about-header {
+    display: flex;
     align-items: center;
-    text-align: center;
+    gap: 14px;
   }
 
   .app-logo {
-    margin-bottom: 16px;
+    flex-shrink: 0;
   }
 
   .app-logo-img {
-    width: 80px;
-    height: 80px;
-    filter: drop-shadow(0 8px 24px var(--accent-glow));
+    width: 72px;
+    height: 72px;
+    filter: drop-shadow(0 6px 14px color-mix(in srgb, var(--accent-glow) 28%, transparent));
     object-fit: contain;
   }
 
+  .brand-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    min-width: 0;
+  }
+
   .app-name {
-    font-size: 24px;
+    font-size: 22px;
     font-weight: 700;
     color: var(--text-primary);
     margin: 0;
+    letter-spacing: -0.02em;
   }
 
   .app-tagline {
     font-size: 13px;
     color: var(--text-secondary);
-    margin: 8px 0 0;
+    margin: 0;
+    line-height: 1.35;
   }
 
   .app-version {
     font-size: 11px;
-    color: var(--text-muted);
+    color: var(--text-tertiary);
     font-family: 'JetBrains Mono', monospace;
-    margin-top: 12px;
+    margin-top: 2px;
     background: var(--surface-hover);
-    padding: 2px 8px;
+    padding: 2px 9px;
     border-radius: 10px;
+    width: fit-content;
   }
 
   .action-grid {
     display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
     width: 100%;
-    margin-top: 32px;
   }
 
   .action-tile {
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: center;
-    gap: 8px;
-    padding: 16px;
+    justify-content: center;
+    gap: 10px;
+    min-height: 42px;
+    padding: 10px 12px;
     background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    border: none;
     border-radius: 12px;
     color: var(--text-secondary);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 44%, transparent);
   }
 
   .action-tile span {
@@ -154,10 +178,12 @@
   }
 
   .action-tile:hover {
-    background: var(--surface-active);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     color: var(--text-primary);
-    border-color: var(--border-strong);
-    transform: translateY(-2px);
+    transform: translateY(-1px);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 24%, transparent),
+      0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 24%, transparent);
   }
 
   .action-tile:focus-visible {
@@ -167,21 +193,29 @@
 
   .settings-section {
     width: 100%;
-    align-self: flex-start;
   }
 
   .credits-list {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: color-mix(in srgb, var(--input-bg) 94%, transparent);
+    border: none;
     border-radius: 12px;
     width: 100%;
+    overflow: hidden;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 44%, transparent);
   }
 
   .credit-item {
     display: flex;
     justify-content: space-between;
+    align-items: center;
+    gap: 12px;
     padding: 12px 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    border-bottom: none;
+    transition: background 0.2s ease;
+  }
+
+  .credit-item:hover {
+    background: var(--surface-hover);
   }
 
   .credit-item:last-child {
@@ -205,11 +239,22 @@
     gap: 6px;
     font-size: 11px;
     color: var(--text-muted);
-    margin-top: 10px;
+    margin-top: 2px;
     opacity: 0.74;
+    padding-left: 2px;
   }
 
   .heart-icon {
     color: var(--semantic-danger);
+  }
+
+  @media (max-width: 620px) {
+    .about-header {
+      align-items: flex-start;
+    }
+
+    .action-grid {
+      grid-template-columns: 1fr;
+    }
   }
 </style>

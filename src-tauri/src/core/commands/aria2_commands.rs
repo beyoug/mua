@@ -78,6 +78,9 @@ pub async fn import_custom_binary(app: AppHandle, file_path: String) -> AppResul
     // 3. 复制文件
     std::fs::copy(source_path, &target_path)?;
 
+    let binary_hash = crate::utils::sha256_hex_of_file(&target_path)
+        .map_err(|e| AppError::validation(format!("读取二进制失败: {}", e)))?;
+
     // 4. 设置权限 (Unix)
     #[cfg(unix)]
     {
@@ -107,6 +110,18 @@ pub async fn import_custom_binary(app: AppHandle, file_path: String) -> AppResul
 
     let version_line = stdout.lines().next().unwrap_or("Unknown");
 
+    let mut config = crate::core::config::load_config(&app);
+    config.custom_aria2_hash = Some(binary_hash);
+    config.custom_aria2_trusted = false;
+    config.use_custom_aria2 = false;
+    crate::core::config::save_config(&app, &config)?;
+
+    if let Some(state) = app.try_state::<crate::core::config::ConfigState>() {
+        if let Ok(mut lock) = state.config.lock() {
+            *lock = config;
+        }
+    }
+
     Ok(version_line.to_string())
 }
 
@@ -117,6 +132,9 @@ pub struct Aria2VersionInfo {
     pub path: String,
     pub custom_binary_exists: bool,
     pub custom_binary_version: Option<String>,
+    pub custom_binary_trusted: bool,
+    pub custom_binary_hash_match: bool,
+    pub custom_binary_security_status: String,
 }
 
 #[tauri::command]
@@ -131,6 +149,10 @@ pub async fn get_aria2_version_info(app: AppHandle) -> AppResult<Aria2VersionInf
         "aria2c"
     };
     let custom_path = config_dir.join("custom-bin").join(target_name);
+
+    let config = crate::core::config::load_config(&app);
+    let expected_hash = config.custom_aria2_hash.clone();
+    let trusted = config.custom_aria2_trusted;
 
     // 检查自定义二进制文件是否存在并获取其版本
     let (has_custom, custom_ver): (bool, Option<String>) = if custom_path.exists() {
@@ -149,16 +171,46 @@ pub async fn get_aria2_version_info(app: AppHandle) -> AppResult<Aria2VersionInf
         (false, None)
     };
 
-    let config = crate::core::config::load_config(&app);
+    let hash_match = if has_custom {
+        if let Some(expected) = expected_hash {
+            if expected.is_empty() {
+                false
+            } else {
+                match crate::utils::sha256_hex_of_file(&custom_path) {
+                    Ok(actual) => actual == expected,
+                    Err(_) => false,
+                }
+            }
+        } else {
+            false
+        }
+    } else {
+        false
+    };
+
+    let effective_trusted = trusted && hash_match;
+    let security_status = if !has_custom {
+        "missing"
+    } else if !trusted {
+        "untrusted"
+    } else if !hash_match {
+        "hash_mismatch"
+    } else {
+        "trusted"
+    }
+    .to_string();
 
     // 确定活跃内核的信息
-    if config.use_custom_aria2 && has_custom {
+    if config.use_custom_aria2 && has_custom && effective_trusted {
         Ok(Aria2VersionInfo {
             version: custom_ver.clone().unwrap_or_default(),
             is_custom: true,
             path: custom_path.to_string_lossy().to_string(),
             custom_binary_exists: true,
             custom_binary_version: custom_ver,
+            custom_binary_trusted: effective_trusted,
+            custom_binary_hash_match: hash_match,
+            custom_binary_security_status: security_status,
         })
     } else {
         Ok(Aria2VersionInfo {
@@ -167,6 +219,44 @@ pub async fn get_aria2_version_info(app: AppHandle) -> AppResult<Aria2VersionInf
             path: "Embedded Sidecar".to_string(),
             custom_binary_exists: has_custom,
             custom_binary_version: custom_ver,
+            custom_binary_trusted: effective_trusted,
+            custom_binary_hash_match: hash_match,
+            custom_binary_security_status: security_status,
         })
     }
+}
+
+#[tauri::command]
+pub async fn trust_custom_aria2_binary(app: AppHandle) -> AppResult<()> {
+    let config_dir = app
+        .path()
+        .app_config_dir()
+        .map_err(|e| AppError::config(e.to_string()))?;
+
+    let target_name = if cfg!(windows) {
+        "aria2c.exe"
+    } else {
+        "aria2c"
+    };
+
+    let custom_path = config_dir.join("custom-bin").join(target_name);
+    if !custom_path.exists() {
+        return Err(AppError::validation("未找到已导入的自定义内核文件"));
+    }
+
+    let actual_hash = crate::utils::sha256_hex_of_file(&custom_path)
+        .map_err(|e| AppError::validation(format!("读取二进制失败: {}", e)))?;
+
+    let mut config = crate::core::config::load_config(&app);
+    config.custom_aria2_hash = Some(actual_hash);
+    config.custom_aria2_trusted = true;
+    crate::core::config::save_config(&app, &config)?;
+
+    if let Some(state) = app.try_state::<crate::core::config::ConfigState>() {
+        if let Ok(mut lock) = state.config.lock() {
+            *lock = config;
+        }
+    }
+
+    Ok(())
 }

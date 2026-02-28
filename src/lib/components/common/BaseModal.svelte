@@ -114,8 +114,8 @@
 		position: fixed;
 		inset: 0;
 		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.4));
-		backdrop-filter: blur(8px);
-		-webkit-backdrop-filter: blur(8px);
+		backdrop-filter: blur(10px) saturate(115%);
+		-webkit-backdrop-filter: blur(10px) saturate(115%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -123,19 +123,19 @@
 	}
 
 	.modal-container {
-		background: var(--dialog-bg);
+		background: color-mix(in srgb, var(--dialog-bg) 96%, transparent);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
+		border: none;
 		border-radius: 18px;
 		overflow: hidden;
-		box-shadow: var(--glass-shadow), 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+		box-shadow: var(--glass-shadow), 0 24px 48px -28px rgba(0, 0, 0, 0.55);
 		display: flex;
 		flex-direction: column;
 		width: 90%;
 		min-height: var(--min-height);
         max-height: var(--max-height);
-		transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+		transition: box-shadow 0.3s ease, background-color 0.3s ease;
 	}
 
     /* 尺寸预设 */
@@ -149,7 +149,8 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		padding: 16px 24px;
-		border-bottom: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+		border-bottom: none;
+		background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 76%, transparent);
 	}
 
 	.modal-title {
@@ -166,7 +167,7 @@
 		justify-content: center;
 		width: 32px;
 		height: 32px;
-		background: transparent;
+		background: var(--control-bg);
 		border: none;
 		border-radius: 8px;
 		color: var(--text-muted);
@@ -177,7 +178,7 @@
 	}
 
 	.close-btn:hover {
-		background: var(--surface-hover, rgba(255, 255, 255, 0.05));
+		background: var(--control-bg-hover);
 		color: var(--text-primary);
 	}
 
@@ -212,10 +213,10 @@
 
 	.modal-footer {
 		padding: 16px 24px;
-		border-top: 1px solid var(--border-color, rgba(255, 255, 255, 0.1));
+		border-top: none;
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
-        background: rgba(255, 255, 255, 0.01);
+        background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 72%, transparent);
 	}
 </style>

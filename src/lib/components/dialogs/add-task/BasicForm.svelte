@@ -128,21 +128,25 @@
     .dialog-body {
         display: flex;
         flex-direction: column;
-        gap: 16px;
+        gap: 12px;
         flex: 1;
     }
 
     .form-group {
         display: flex;
         flex-direction: column;
-        gap: 8px;
+        gap: 7px;
+        padding: 10px;
+        border-radius: 12px;
+        background: color-mix(in srgb, var(--surface-hover) 72%, transparent);
     }
 
     .form-group label {
         display: flex;
         align-items: center;
         gap: 6px;
-        font-size: 13px;
+        font-size: 12px;
+        font-weight: 500;
         color: var(--text-secondary);
         width: 100%;
     }
@@ -157,19 +161,21 @@
         display: flex;
         align-items: center;
         gap: 4px;
-        font-size: 12px;
+        font-size: 11px;
+        line-height: 1.35;
         color: var(--semantic-danger);
+        opacity: 0.95;
     }
 
     textarea,
     input,
     .path-selector {
-        padding: 12px 14px;
-        font-size: 14px;
+        padding: 11px 12px;
+        font-size: 13px;
     }
 
     textarea {
-        height: 100px;
+        height: 108px;
         resize: none;
         white-space: pre-wrap;
         overflow-wrap: anywhere;
@@ -182,7 +188,7 @@
 
     textarea.error:focus {
         border-color: var(--semantic-danger);
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--semantic-danger) 18%, transparent);
+        box-shadow: var(--focus-ring-danger);
     }
 
     .path-selector {
@@ -194,7 +200,8 @@
     }
 
     .path-selector:hover {
-        border-color: var(--accent-primary);
+        background: var(--control-bg-hover);
+        box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 
     .path-selector:focus-visible,
@@ -216,19 +223,19 @@
         align-items: center;
         gap: 4px;
         padding: 4px 8px;
-        background: var(--surface-hover);
-        border: 1px solid var(--border-color);
+        background: color-mix(in srgb, var(--surface-hover) 88%, transparent);
+        border: none;
         color: var(--text-secondary);
-        border-radius: 6px;
+        border-radius: 8px;
         font-size: 12px;
         cursor: pointer;
         transition: all 0.2s;
+        box-shadow: var(--control-shadow-rest);
     }
 
     .btn-xs-secondary:hover {
-        background: var(--bg-hover);
-        color: var(--accent-primary);
-        border-color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+        color: var(--text-primary);
     }
 
     @keyframes spin {

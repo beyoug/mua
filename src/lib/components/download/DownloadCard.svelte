@@ -192,16 +192,15 @@
 <style>
 	.download-card {
 		position: relative;
-		background: var(--glass-bg);
+		background: color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 90%, transparent);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
+		border: none;
 		border-radius: 14px;
 		padding: 14px 16px;
 		transition: 
 			transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 			box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
-			border-color 0.15s ease,
 			z-index 0s;
 		box-shadow: var(--glass-shadow);
 		z-index: 1;
@@ -209,20 +208,16 @@
 
 	.download-card.menu-open {
 		z-index: 100 !important;
-		border-color: var(--accent-primary);
 	}
 
 	.download-card:hover {
 		transform: translateY(-1px);
-		box-shadow: 
-			0 4px 12px rgba(0, 0, 0, 0.1),
-			0 12px 32px rgba(0, 0, 0, 0.15),
-			0 0 8px var(--accent-glow);
+		box-shadow: var(--glass-shadow), 0 6px 18px rgba(2, 16, 42, 0.2);
 		z-index: 10;
 	}
 
 	.download-card.completed {
-		border-color: var(--semantic-success-border);
+		box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--semantic-success) 20%, transparent) inset;
 	}
 
 	.card-header {
@@ -247,7 +242,8 @@
 		justify-content: center;
 		width: 36px;
 		height: 36px;
-		background: var(--border-light);
+		background: var(--control-bg);
+		border: none;
 		border-radius: 10px;
 		color: var(--text-muted);
 	}
@@ -308,8 +304,8 @@
 		justify-content: center;
 		width: 30px;
 		height: 30px;
-		background: var(--surface-hover);
-		border: 1px solid var(--border-subtle);
+		background: var(--control-bg);
+		border: none;
 		border-radius: 8px;
 		color: var(--text-secondary);
 		cursor: pointer;
@@ -317,11 +313,10 @@
 	}
 
 	.action-btn:hover {
-		background: var(--surface-active);
-		border-color: var(--accent-primary);
+		background: var(--control-bg-hover);
 		color: var(--text-primary);
-		transform: scale(1.05);
-		box-shadow: 0 0 8px var(--accent-glow);
+		transform: scale(1.03);
+		box-shadow: var(--control-shadow-elevated);
 	}
 
 	.action-btn:focus-visible {
@@ -332,13 +327,11 @@
 	.action-btn.resume:hover {
 		background: var(--accent-active-bg);
 		color: var(--accent-text);
-		border-color: var(--accent-primary);
 	}
 
 	.action-btn.cancel:hover {
 		background: color-mix(in srgb, var(--semantic-danger) 14%, transparent);
 		color: var(--semantic-danger);
-		border-color: color-mix(in srgb, var(--semantic-danger) 34%, transparent);
 	}
 
 	.card-footer {
@@ -387,8 +380,8 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 6px;
-		border: 1px solid rgba(255, 255, 255, 0.2);
-		background: rgba(0, 0, 0, 0.2);
+		border: none;
+		background: var(--control-bg);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -398,8 +391,7 @@
 	}
 
 	.checkbox:hover {
-		border-color: rgba(255, 255, 255, 0.4);
-        background: rgba(255, 255, 255, 0.05);
+        background: var(--control-bg-hover);
 	}
 
 	.checkbox:focus-visible {
@@ -409,7 +401,6 @@
 
 	.checkbox.checked {
 		background: var(--accent-primary);
-		border-color: var(--accent-primary);
         box-shadow: 0 0 10px var(--accent-glow);
 	}
 

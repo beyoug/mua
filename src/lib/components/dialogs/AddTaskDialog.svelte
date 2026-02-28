@@ -118,6 +118,7 @@
     .header-container {
         display: flex;
         align-items: center;
+        justify-content: space-between;
         width: 100%;
     }
 
@@ -128,12 +129,22 @@
         font-size: 15px;
         font-weight: 600;
         color: var(--text-primary);
+        letter-spacing: -0.01em;
+        padding: 4px 0;
+    }
+
+    .dialog-title :global(svg) {
+        width: 18px;
+        height: 18px;
+        color: var(--accent-primary);
+        filter: drop-shadow(0 0 6px color-mix(in srgb, var(--accent-glow) 46%, transparent));
     }
 
     .advanced-header {
         display: flex;
         align-items: center;
         gap: 12px;
+        width: 100%;
     }
 
     .back-link {
@@ -142,18 +153,20 @@
         justify-content: center;
         width: 32px;
         height: 32px;
-        background: transparent;
+        background: var(--control-bg);
         border: none;
         border-radius: 8px;
         color: var(--text-muted);
         cursor: pointer;
         transition: all 0.2s;
         margin-left: -8px;
+        box-shadow: var(--control-shadow-rest);
     }
 
     .back-link:hover {
-        background: var(--surface-hover);
+        background: var(--control-bg-hover);
         color: var(--text-primary);
+        transform: translateX(-1px);
     }
 
     .back-link:focus-visible {
@@ -164,8 +177,9 @@
     .breadcrumb {
         display: flex;
         align-items: center;
-        gap: 4px;
-        font-size: 14px;
+        gap: 6px;
+        font-size: 12px;
+        line-height: 1;
     }
 
     .crumb-parent { color: var(--text-muted); }
@@ -178,14 +192,18 @@
         grid-template-columns: 1fr;
         flex: 1;
         min-height: 0; /* 防止溢出 */
+        padding: 10px 12px 10px;
     }
 
     .view-main {
         grid-area: 1 / 1;
-        padding: 24px;
+        padding: 14px;
         display: flex;
         flex-direction: column;
-        gap: 20px;
+        gap: 14px;
         height: 100%;
+        background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 72%, transparent);
+        border-radius: 14px;
+        box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
     }
 </style>

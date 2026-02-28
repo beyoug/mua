@@ -6,50 +6,48 @@
 @import "../styles/tokens.css";
 @import "../styles/theme-base.css";
 @import "../styles/glass.css";
-@import "../styles/themes/cyberpunk.css";
 @import "../styles/themes/default.css";
-@import "../styles/themes/nexus.css";
 
 /* noinspection CssInvalidAtRule */
 @custom-variant dark (&:is(.dark *));
 
 @layer base {
-  html {
-    overscroll-behavior: none;
-  }
+	html {
+		overscroll-behavior: none;
+	}
 
-  body {
-    /* 深色模式默认：深空 (Deep Space) 渐变背景 */
-    background:
-      radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
-      radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.3) 0px, transparent 50%),
-      linear-gradient(to bottom, #0f172a, #172554, #1e1b4b);
-    /* Slate-900 -> Blue-950 -> Indigo-950 */
-    color: var(--text-primary);
-    font-family: var(--font-base);
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
-    overscroll-behavior: none;
-    user-select: none;
-    -webkit-user-select: none;
-  }
+	body {
+		/* 深色模式默认：深空 (Deep Space) 渐变背景 */
+		background:
+			radial-gradient(at 0% 0%, rgba(30, 58, 138, 0.25) 0px, transparent 50%),
+			radial-gradient(at 100% 0%, rgba(15, 23, 42, 0.3) 0px, transparent 50%),
+			linear-gradient(to bottom, #0f172a, #172554, #1e1b4b);
+		/* Slate-900 -> Blue-950 -> Indigo-950 */
+		color: var(--text-primary);
+		font-family: var(--font-base);
+		-webkit-font-smoothing: antialiased;
+		-moz-osx-font-smoothing: grayscale;
+		overflow-x: hidden;
+		overscroll-behavior: none;
+		user-select: none;
+		-webkit-user-select: none;
+	}
 
-  /* 浅色模式：默认白色背景（会被主题覆盖） */
-  html.light body {
-    background-color: #ffffff;
-  }
+	/* 浅色模式：默认白色背景（会被主题覆盖） */
+	html.light body {
+		background-color: #ffffff;
+	}
 
-  .no-scroll {
-    overflow: hidden !important;
-    height: 100vh !important;
-    touch-action: none !important;
-    touch-action: none !important;
-  }
+	.no-scroll {
+		overflow: hidden !important;
+		height: 100vh !important;
+		touch-action: none !important;
+		touch-action: none !important;
+	}
 
-  /* 全局内容模糊工具类 */
-  .content-blurred {
-    filter: blur(4px);
-    transition: filter 0.3s ease;
-  }
+	/* 全局内容模糊工具类 */
+	.content-blurred {
+		filter: blur(4px);
+		transition: filter 0.3s ease;
+	}
 }

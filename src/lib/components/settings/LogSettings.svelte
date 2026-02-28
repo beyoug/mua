@@ -1,23 +1,24 @@
 <script lang="ts">
   import { onMount, onDestroy } from 'svelte';
-  import { listen } from '@tauri-apps/api/event';
   import { Eraser } from '@lucide/svelte';
   import { createLogger } from '$lib/utils/logger';
-  import { startAria2LogStream, stopAria2LogStream } from '$lib/services/aria2';
-  import { EVENT_ARIA2_STDOUT } from '$lib/api/events';
+  import { startAria2LogStream, stopAria2LogStream, subscribeAria2Stdout } from '$lib/services/aria2';
 
   const logger = createLogger('LogSettings');
 
   let enabled = $state(false);
   let logs: string[] = $state([]);
   let unlisten: (() => void) | null = null;
+  let transitionInFlight: Promise<void> | null = null;
   let scrollContainer: HTMLDivElement;
 
   async function startStream() {
+    if (unlisten) return;
+
     try {
         await startAria2LogStream();
-        unlisten = await listen<string>(EVENT_ARIA2_STDOUT, (event) => {
-            logs = [...logs, event.payload];
+        unlisten = await subscribeAria2Stdout((line) => {
+            logs = [...logs, line];
             // 限制日志条数，防止内存泄漏
             if (logs.length > 200) {
                 logs = logs.slice(logs.length - 200);
@@ -50,12 +51,17 @@
   }
 
   function handleToggle() {
+      if (transitionInFlight) return;
+
       enabled = !enabled;
-      if (enabled) {
-          startStream();
-      } else {
-          stopStream();
-      }
+      transitionInFlight = (enabled ? startStream() : stopStream())
+        .catch((e) => {
+          logger.error('Log stream toggle failed', { error: e });
+          enabled = !enabled;
+        })
+        .finally(() => {
+          transitionInFlight = null;
+        });
   }
   
   function clearLogs() {
@@ -68,7 +74,7 @@
 
   onDestroy(() => {
       // 组件销毁时强制关闭流
-      stopStream();
+      void stopStream();
   });
 </script>
 
@@ -134,10 +140,6 @@
     .badge {
         font-size: 11px;
         color: var(--semantic-warning);
-        background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-        padding: 2px 6px;
-        border-radius: 4px;
-        border: 1px solid color-mix(in srgb, var(--semantic-warning) 28%, transparent);
     }
 
     .settings-section {
@@ -148,8 +150,9 @@
 
     .description {
         font-size: 12px;
-        color: var(--text-secondary);
+        color: color-mix(in srgb, var(--text-secondary) 92%, transparent);
         margin-bottom: 16px;
+        line-height: 1.45;
     }
 
     .controls {
@@ -159,15 +162,15 @@
     }
 
     .icon-btn {
-        width: 30px;
-        height: 30px;
+        width: 32px;
+        height: 32px;
     }
 
     .terminal-window {
         flex: 1;
-        background: color-mix(in srgb, var(--dialog-bg) 84%, #000000);
+        background: color-mix(in srgb, var(--dialog-bg) 82%, #000000);
         border-radius: 8px;
-        border: 1px solid var(--border-color);
+        border: none;
         padding: 12px;
         font-family: 'JetBrains Mono', 'Fira Code', ui-monospace, SFMono-Regular, monospace;
         font-size: 11px;
@@ -176,7 +179,9 @@
         display: flex;
         flex-direction: column;
         min-height: 200px;
-        box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        box-shadow:
+            inset 0 2px 4px rgba(0,0,0,0.2),
+            inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 10%, transparent);
     }
 
     .terminal-logs {
@@ -203,7 +208,7 @@
     }
 
     .muted {
-        opacity: 0.5;
+        opacity: 0.62;
     }
 
     @keyframes blink {

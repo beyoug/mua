@@ -139,7 +139,7 @@
     position: fixed;
     inset: 0;
     background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.2));
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(10px) saturate(115%);
     z-index: 2000;
   }
 
@@ -149,12 +149,12 @@
     top: 12px;
     right: 12px;
     bottom: 12px;
-    background: var(--dialog-bg);
+    background: color-mix(in srgb, var(--dialog-bg) 96%, transparent);
     backdrop-filter: var(--glass-blur) var(--glass-saturate);
     -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-    border: 1px solid var(--glass-border);
+    border: none;
     border-radius: 18px;
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--glass-shadow), 0 22px 42px -28px rgba(0, 0, 0, 0.52);
     display: flex;
     overflow: hidden;
   }
@@ -162,8 +162,13 @@
   /* 侧边栏样式 */
   .panel-sidebar {
     width: 100px;
-    background: rgba(255, 255, 255, 0.05);
-    border-left: 1px solid var(--border-color);
+    background:
+      linear-gradient(
+        168deg,
+        color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 84%, var(--accent-primary) 8%),
+        color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 92%, transparent)
+      );
+    border-left: none;
     display: flex;
     flex-direction: column;
   }
@@ -184,6 +189,16 @@
     display: flex;
     flex-direction: column;
     gap: 4px;
+    position: relative;
+  }
+
+  .sidebar-nav::before {
+    content: "";
+    position: absolute;
+    inset: 8px;
+    border-radius: 10px;
+    background: color-mix(in srgb, var(--surface-hover) 52%, transparent);
+    pointer-events: none;
   }
 
   .nav-item {
@@ -200,11 +215,33 @@
     cursor: pointer;
     transition: all 0.15s ease;
     text-align: left;
+    position: relative;
+    z-index: 1;
+    overflow: hidden;
+  }
+
+  .nav-item::before {
+    content: "";
+    position: absolute;
+    left: -1px;
+    top: 6px;
+    bottom: 6px;
+    width: 2px;
+    border-radius: 2px;
+    background: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent-secondary) 80%, white),
+      color-mix(in srgb, var(--accent-primary) 80%, transparent)
+    );
+    opacity: 0;
+    transform: scaleY(0.5);
+    transition: opacity 0.16s ease, transform 0.16s ease;
   }
 
   .nav-item:hover {
-    background: var(--surface-hover);
+    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
     color: var(--text-primary);
+    box-shadow: none;
   }
 
   .nav-item:focus-visible {
@@ -213,9 +250,16 @@
   }
 
   .nav-item.active {
-    background: var(--accent-active-bg);
-    color: var(--accent-primary);
-    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+    color: var(--accent-text);
+    box-shadow:
+      inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+  }
+
+  .nav-item.active::before {
+    opacity: 1;
+    transform: scaleY(1);
   }
 
   /* 内容区样式 */
@@ -231,7 +275,8 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    /* border-bottom: 1px solid var(--border-color); */
+    border-bottom: none;
+    background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 70%, transparent);
   }
 
   .content-header h3 {
@@ -247,7 +292,7 @@
     justify-content: center;
     width: 32px;
     height: 32px;
-    background: transparent;
+    background: var(--control-bg);
     border: none;
     border-radius: 8px;
     color: var(--text-muted);
@@ -256,7 +301,7 @@
   }
 
   .close-btn:hover {
-    background: var(--input-bg);
+    background: var(--control-bg-hover);
     color: var(--text-primary);
   }
 
@@ -275,16 +320,26 @@
 
   :global(.settings-section) {
     margin-bottom: 32px;
+    background:
+      linear-gradient(
+        164deg,
+        color-mix(in srgb, var(--glass-elevated-bg, var(--control-bg)) 72%, var(--accent-primary) 4%),
+        color-mix(in srgb, var(--glass-elevated-bg, var(--control-bg)) 78%, transparent)
+      );
+    border-radius: 12px;
+    padding: 12px;
+    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
   }
 
   :global(.section-title) {
     font-size: 11px;
     font-weight: 600;
-    color: var(--text-muted);
+    color: var(--text-tertiary);
     text-transform: uppercase;
-    letter-spacing: 0.05em;
-    margin-bottom: 12px;
-    padding-left: 4px;
+    letter-spacing: 0.055em;
+    margin-bottom: 10px;
+    padding-left: 1px;
+    line-height: 1.2;
   }
 
   /* ── 共享设置布局 ── */
@@ -295,18 +350,19 @@
   }
 
   :global(.setting-list) {
-    background: var(--input-bg);
-    border: 1px solid var(--border-normal);
+    background: color-mix(in srgb, var(--glass-elevated-bg, var(--control-bg)) 88%, transparent);
+    border: none;
     border-radius: 12px;
     overflow: hidden;
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 38%, transparent);
   }
 
   :global(.setting-item) {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px;
-    border-bottom: 1px solid var(--border-subtle);
+    padding: 14px 16px;
+    border-bottom: none;
     transition: background 0.2s;
   }
 
@@ -315,7 +371,7 @@
   }
 
   :global(.setting-item:hover:not(.disabled)) {
-    background: var(--surface-hover);
+    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
   }
 
   :global(.setting-item.vertical) {
@@ -332,13 +388,14 @@
 
   :global(.setting-name) {
     font-size: 13px;
-    font-weight: 500;
+    font-weight: 550;
     color: var(--text-primary);
   }
 
   :global(.setting-desc) {
     font-size: 11px;
-    color: var(--text-muted);
+    color: color-mix(in srgb, var(--text-muted) 92%, transparent);
+    line-height: 1.35;
   }
 
   /* ── 统一 Switch 开关 ── */

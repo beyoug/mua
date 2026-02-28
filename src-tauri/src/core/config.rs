@@ -25,6 +25,10 @@ pub struct AppConfig {
     pub save_session_interval: u64,
     #[serde(rename = "useCustomAria2", default = "default_result_false")]
     pub use_custom_aria2: bool,
+    #[serde(rename = "customAria2Hash")]
+    pub custom_aria2_hash: Option<String>,
+    #[serde(rename = "customAria2Trusted", default = "default_result_false")]
+    pub custom_aria2_trusted: bool,
     #[serde(rename = "autoStart", default = "default_result_false")]
     pub auto_start: bool,
     #[serde(rename = "maxConcurrentDownloads", default = "default_max_downloads")]
@@ -124,6 +128,8 @@ impl Default for AppConfig {
             rpc_secret: None,
             save_session_interval: 30,
             use_custom_aria2: false,
+            custom_aria2_hash: None,
+            custom_aria2_trusted: false,
             auto_start: false,
             max_concurrent_downloads: 3,
             ua_history: Vec::new(),

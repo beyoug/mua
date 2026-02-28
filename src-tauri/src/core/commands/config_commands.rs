@@ -15,8 +15,22 @@ pub async fn get_app_config(app: AppHandle) -> AppResult<crate::core::config::Ap
 #[tauri::command]
 pub async fn save_app_config(
     app: AppHandle,
-    config: crate::core::config::AppConfig,
+    mut config: crate::core::config::AppConfig,
 ) -> AppResult<()> {
+    let has_trusted_custom_binary = config.custom_aria2_trusted
+        && config
+            .custom_aria2_hash
+            .as_deref()
+            .is_some_and(|hash| !hash.is_empty());
+
+    if config.use_custom_aria2 && !has_trusted_custom_binary {
+        config.use_custom_aria2 = false;
+        crate::app_warn!(
+            "Core::Config",
+            "reject_untrusted_custom_binary_enable_attempt"
+        );
+    }
+
     // 1. 保存到磁盘
     crate::core::config::save_config(&app, &config)?;
 

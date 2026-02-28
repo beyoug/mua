@@ -183,7 +183,7 @@
 		flex: 1;
 		min-height: 0;
 		background: var(--glass-bg);
-		border: 1px solid var(--glass-border);
+		border: none;
 		border-radius: 16px;
 		box-shadow: var(--glass-shadow);
 		display: flex;

@@ -24,6 +24,7 @@ log = "0.4"
 serde_bencode = "0.2"
 serde_bytes = "0.11"
 sha1 = "0.10"
+sha2 = "0.10"
 
 hex = "0.4"
 base64 = "0.21"

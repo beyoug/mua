@@ -27,7 +27,7 @@
 {#if !showAdvanced}
     <div class="footer-layout">
         <div class="advanced-btn-wrapper">
-            <button class="btn-ghost" onclick={onOpenAdvanced} disabled={!canUseAdvanced}>
+            <button class="btn-ghost ui-btn-footer ui-btn-secondary ui-btn-focus ui-disabled" onclick={onOpenAdvanced} disabled={!canUseAdvanced}>
                 <Settings size={14} />
                 <span>高级设置</span>
             </button>
@@ -35,7 +35,7 @@
                 <span class="advanced-hint">混合链接不支持自定义设置</span>
             {/if}
         </div>
-        <button class="btn-primary" onclick={onSubmit} disabled={!canSubmitNormal || isSubmitting}>
+        <button class="btn-primary ui-btn-footer ui-btn-primary ui-btn-focus ui-disabled" onclick={onSubmit} disabled={!canSubmitNormal || isSubmitting}>
             {#if isSubmitting}
                 <span>提交中...</span>
             {:else}
@@ -45,7 +45,7 @@
         </button>
     </div>
 {:else}
-    <button class="btn-primary" onclick={onCompleteAdvanced} disabled={isCustomUaInvalid}>
+    <button class="btn-primary ui-btn-footer ui-btn-primary ui-btn-focus ui-disabled" onclick={onCompleteAdvanced} disabled={isCustomUaInvalid}>
         完成设置
     </button>
 {/if}
@@ -57,6 +57,7 @@
         justify-content: space-between;
         align-items: center;
         gap: 12px;
+        padding-top: 2px;
     }
 
     .advanced-btn-wrapper {
@@ -67,7 +68,9 @@
 
     .advanced-hint {
         font-size: 11px;
-        color: var(--text-tertiary);
+        color: color-mix(in srgb, var(--text-tertiary) 92%, transparent);
+        padding-left: 2px;
+        line-height: 1.3;
     }
 
     .btn-primary {
@@ -75,35 +78,25 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 8px 14px;
-        min-height: 34px;
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
-        color: white;
-        border: none;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s;
-        box-shadow: 0 4px 12px var(--accent-glow);
+        min-width: 126px;
+        min-height: 36px;
+        font-weight: 600;
+        box-shadow:
+            0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 34%, transparent),
+            inset 0 1px 0 color-mix(in srgb, #ffffff 22%, transparent);
     }
 
-    .btn-primary:hover:not(:disabled) {
-        transform: translateY(-1px);
-        filter: brightness(1.1);
-    }
-
-    .btn-primary:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
-    }
-
-    .btn-primary:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
+    .btn-primary:hover {
         transform: none;
         filter: none;
-        box-shadow: none;
+        box-shadow:
+            0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+            0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 28%, transparent);
+    }
+
+    .btn-primary:active {
+        transform: translateY(0);
+        filter: brightness(0.99);
     }
 
     .btn-ghost {
@@ -111,32 +104,32 @@
         align-items: center;
         justify-content: center;
         gap: 6px;
-        padding: 8px 14px;
-        min-height: 34px;
+        min-width: 126px;
+        border: 1px dashed color-mix(in srgb, var(--accent-primary) 26%, transparent);
         background: transparent;
-        border: 1px dashed var(--border-color);
-        color: var(--text-muted);
-        border-radius: 8px;
+        color: var(--text-secondary);
         font-size: 13px;
-        cursor: pointer;
-        transition: all 0.2s;
+        min-height: 36px;
+        box-shadow: none;
     }
 
     .btn-ghost:hover {
-        border-color: var(--accent-primary);
-        color: var(--accent-primary);
-        background: color-mix(in srgb, var(--accent-primary) 5%, transparent);
+        background: color-mix(in srgb, var(--accent-primary) 9%, transparent);
+        border-color: color-mix(in srgb, var(--accent-primary) 38%, transparent);
+        color: var(--text-primary);
+        box-shadow:
+            0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+            0 8px 16px -14px color-mix(in srgb, var(--accent-glow) 24%, transparent);
+        transform: none;
     }
 
-    .btn-ghost:focus-visible {
-        outline: none;
-        box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+    .btn-ghost:active {
+        transform: translateY(0);
     }
 
+    .btn-primary:disabled,
     .btn-ghost:disabled {
-        opacity: 0.55;
-        cursor: not-allowed;
-        pointer-events: none;
-        box-shadow: none;
+        transform: none;
+        filter: none;
     }
 </style>

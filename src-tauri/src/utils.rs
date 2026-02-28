@@ -66,6 +66,25 @@ pub fn canonicalize_abs(path_str: &str) -> std::io::Result<std::path::PathBuf> {
     std::fs::canonicalize(resolved)
 }
 
+pub fn sha256_hex_of_file(path: &std::path::Path) -> std::io::Result<String> {
+    use sha2::{Digest, Sha256};
+    use std::io::Read;
+
+    let mut file = std::fs::File::open(path)?;
+    let mut hasher = Sha256::new();
+    let mut buf = [0_u8; 16 * 1024];
+
+    loop {
+        let n = file.read(&mut buf)?;
+        if n == 0 {
+            break;
+        }
+        hasher.update(&buf[..n]);
+    }
+
+    Ok(format!("{:x}", hasher.finalize()))
+}
+
 pub fn is_valid_url(url: &str) -> bool {
     // Simple basic check for http/https/ftp
     let lower = url.to_lowercase();

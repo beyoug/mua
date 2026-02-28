@@ -126,12 +126,20 @@
 	.sidebar {
 		width: var(--sidebar-width);
 		height: calc(100vh - var(--layout-gap) * 2);
-		background: var(--glass-bg);
+		background:
+			linear-gradient(
+				168deg,
+				color-mix(in srgb, var(--glass-bg) 90%, var(--accent-primary) 10%),
+				color-mix(in srgb, var(--glass-bg) 96%, transparent)
+			),
+			var(--glass-bg);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: 1px solid var(--glass-border);
+		border: none;
 		border-radius: 16px;
-		box-shadow: var(--glass-shadow);
+		box-shadow:
+			var(--glass-shadow),
+			inset 0 1px 0 color-mix(in srgb, #ffffff 12%, transparent);
 		display: flex;
 		flex-direction: column;
 		/* 顶部 padding: 红绿灯空间(约28px) + 原有间距 */
@@ -141,6 +149,26 @@
 		top: 12px;
 		z-index: 5;
 		transition: filter 0.3s ease;
+		overflow: hidden;
+	}
+
+	.sidebar::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		pointer-events: none;
+		background:
+			radial-gradient(
+				120% 50% at 12% -8%,
+				color-mix(in srgb, var(--accent-primary) 16%, transparent),
+				transparent 68%
+			),
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--border-subtle) 42%, transparent),
+				transparent 34%
+			);
+		opacity: 0.34;
 	}
 
 	.sidebar.blurred {
@@ -148,10 +176,12 @@
 	}
 
 	.logo-section {
-		/* 红绿灯区域主要由 Sidebar 顶部空间承载，这里保留适当内边距 */
-		padding: 46px 20px 24px;
+		padding: 42px 16px 18px;
 		-webkit-app-region: drag;
 		position: relative; /* 确保 overlay 绝对定位相对于此 */
+		margin: 4px 10px 0;
+		border-radius: 12px;
+		background: transparent;
 	}
 
 	.logo {
@@ -164,10 +194,11 @@
 	}
 
 	.logo-icon-img {
-		width: 54px;
-		height: 54px;
+		width: 48px;
+		height: 48px;
 		border-radius: 8px;
 		object-fit: contain;
+		filter: drop-shadow(0 6px 12px color-mix(in srgb, var(--accent-glow) 20%, transparent));
 	}
 
 	.logo-text-group {
@@ -178,23 +209,24 @@
 	}
 
 	.logo-text {
-		font-size: 24px;
+		font-size: 22px;
 		font-weight: 700;
 		color: var(--text-primary);
-		letter-spacing: -0.02em;
+		letter-spacing: -0.018em;
 		line-height: 1;
 		margin-bottom: 2px;
 	}
 
 	.logo-slogan {
-		font-size: 11px;
+		font-size: 10px;
 		font-weight: 500;
 		color: var(--text-muted);
-		letter-spacing: 0.02em;
+		letter-spacing: 0.04em;
+		text-transform: uppercase;
 	}
 
 	.add-section {
-		padding: 0 12px 12px;
+		padding: 8px 10px 10px;
 	}
 
 	.add-btn {
@@ -203,21 +235,38 @@
 		justify-content: center;
 		gap: 8px;
 		width: 100%;
-		padding: 10px 12px;
+		min-height: 38px;
+		padding: 8px 12px;
 		background: transparent;
-		border: 1px dashed var(--border-color);
-		border-radius: 10px;
-		color: var(--text-muted);
-		font-size: 14px;
-		font-weight: 400;
+		border: 1px dashed color-mix(in srgb, var(--accent-primary) 26%, transparent);
+		border-radius: 11px;
+		color: var(--text-secondary);
+		font-size: 13px;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s ease;
+		transition:
+			background 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+			border-color 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+			color 0.24s ease,
+			box-shadow 0.24s ease,
+			transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+		box-shadow: none;
 	}
 
 	.add-btn:hover {
-		background: var(--surface-hover);
-		border-color: var(--border-strong);
+		background:
+			linear-gradient(
+				122deg,
+				color-mix(in srgb, var(--accent-primary) 14%, transparent),
+				color-mix(in srgb, var(--accent-primary) 6%, transparent)
+			),
+			transparent;
+		border-color: color-mix(in srgb, var(--accent-primary) 38%, transparent);
 		color: var(--text-primary);
+		transform: translateY(-0.5px);
+		box-shadow:
+			0 0 0 2px color-mix(in srgb, var(--accent-primary) 12%, transparent),
+			0 10px 18px -14px color-mix(in srgb, var(--accent-glow) 56%, transparent);
 	}
 
 	.add-btn:focus-visible,
@@ -230,84 +279,177 @@
 	.nav-menu {
 		display: flex;
 		flex-direction: column;
-		gap: 4px;
-		padding: 0 12px;
+		gap: 6px;
+		padding: 0 10px;
 		flex: 1;
+		position: relative;
+		margin-top: 2px;
+	}
+
+	.nav-menu::before {
+		content: "";
+		position: absolute;
+		inset: 0;
+		border-radius: 12px;
+		background: transparent;
+		pointer-events: none;
 	}
 
 	.nav-item {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		padding: 9px 12px;
+		padding: 10px 12px;
 		background: transparent;
 		border: none;
-		border-radius: 10px;
-		border-left: 2px solid transparent;
+		border-radius: 11px;
 		color: var(--text-secondary);
 		font-size: 13px;
-		font-weight: 400;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition:
+			background 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+			color 0.2s ease,
+			box-shadow 0.24s ease,
+			transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
 		text-align: left;
+		position: relative;
+		z-index: 1;
+		overflow: hidden;
+	}
+
+	.nav-item::before {
+		content: "";
+		position: absolute;
+		left: 0;
+		top: 3px;
+		bottom: 3px;
+		width: 3px;
+		border-radius: 999px;
+		background: linear-gradient(
+			180deg,
+			color-mix(in srgb, var(--accent-secondary) 84%, white),
+			color-mix(in srgb, var(--accent-primary) 84%, transparent)
+		);
+		opacity: 0;
+		transform: scaleY(0.45);
+		transition:
+			opacity 0.2s ease,
+			transform 0.2s cubic-bezier(0.22, 1, 0.36, 1);
+	}
+
+	.nav-item :global(svg) {
+		opacity: 0.8;
+		transition: transform 0.18s ease, opacity 0.18s ease;
 	}
 
 	.nav-item:hover {
-		background: var(--surface-hover);
+		background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
 		color: var(--text-primary);
-		border-left-color: var(--border-strong);
+		transform: none;
+		box-shadow:
+			inset 0 1px 0 color-mix(in srgb, #ffffff 7%, transparent);
+	}
+
+	.nav-item:hover :global(svg) {
+		opacity: 1;
+		transform: none;
 	}
 
 	.nav-item.active {
-		background: var(--surface-active);
-		color: var(--accent-primary); /* 使用主题色，深浅模式自适应 */
-		font-weight: 500;
-		border-left-color: var(--accent-primary); /* 活跃状态使用主题色左边框 */
+		background:
+			linear-gradient(
+				110deg,
+				color-mix(in srgb, var(--accent-primary) 26%, transparent),
+				color-mix(in srgb, var(--accent-primary) 10%, transparent)
+			),
+			transparent;
+		color: var(--accent-text);
+		font-weight: 600;
+		box-shadow:
+			inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent),
+			0 8px 14px -16px color-mix(in srgb, var(--accent-glow) 34%, transparent);
+	}
+
+	.nav-item.active::before {
+		opacity: 1;
+		transform: scaleY(1);
+	}
+
+	.nav-item.active :global(svg) {
+		opacity: 1;
+		transform: none;
 	}
 
 	:global(html.light.theme-default) .nav-item.active {
-		background: color-mix(in srgb, var(--accent-primary) 14%, white);
+		background:
+			linear-gradient(
+				110deg,
+				color-mix(in srgb, var(--accent-primary) 20%, white),
+				color-mix(in srgb, var(--accent-primary) 10%, white)
+			),
+			white;
 		color: var(--accent-active);
-		border-left-color: var(--accent-active);
-		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 28%, transparent);
+		box-shadow: inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
 	}
 
 	.divider {
 		height: 1px;
-		background: var(--border-normal); /* 简约细线分割 */
-		margin: 16px 20px;
+		background: color-mix(in srgb, var(--border-subtle) 52%, transparent);
+		margin: 12px 20px 10px;
+		position: relative;
+	}
+
+	.divider::after {
+		content: "";
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		width: 16px;
+		height: 1px;
+		transform: translate(-50%, -50%);
+		background: color-mix(in srgb, var(--accent-primary) 24%, transparent);
+		filter: blur(1px);
+		opacity: 0.26;
 	}
 
 	.stats-panel {
-		padding: 0 20px;
+		margin: 0 10px;
+		padding: 10px 12px;
+		background: color-mix(in srgb, var(--surface-hover) 68%, transparent);
+		border: none;
+		border-radius: 12px;
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
+		gap: 6px;
+		box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent);
 	}
 
 	.stat-item {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		color: var(--text-primary);
-		font-size: 13px;
-		font-weight: 500;
+		color: color-mix(in srgb, var(--text-secondary) 90%, var(--accent-text) 10%);
+		font-size: 12px;
+		font-weight: 560;
 		margin-bottom: 6px;
+		letter-spacing: 0.02em;
 	}
 
 	.stat-value {
 		font-family: var(--font-base);
 		font-variant-numeric: tabular-nums;
-		font-weight: 600;
-		color: var(--text-secondary);
-		font-size: 11px;
+		font-weight: 620;
+		color: color-mix(in srgb, var(--accent-text) 64%, var(--text-primary));
+		font-size: 11.5px;
+		text-shadow: none;
 	}
 
 	.stat-row {
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		font-size: 12px;
+		font-size: 11px;
 		font-weight: 400;
 	}
 
@@ -316,15 +458,30 @@
 	}
 
 	.stat-count {
-		color: var(--accent-text);
-		opacity: 0.7; /* 弱化显示，不过分强调 */
-		font-weight: 500;
+		color: color-mix(in srgb, var(--text-primary) 90%, var(--accent-text) 10%);
+		opacity: 0.88;
+		font-weight: 600;
+		font-variant-numeric: tabular-nums;
+		padding: 2px 8px;
+		border-radius: 999px;
+		background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+		box-shadow: none;
 	}
 
 	.sidebar-footer {
-		padding: 16px 12px 0;
-		border-top: 1px solid var(--border-normal); /* 简约顶部分割线 */
-		margin-top: 16px;
+		padding: 12px 10px 0;
+		margin-top: 12px;
+		position: relative;
+	}
+
+	.sidebar-footer::before {
+		content: "";
+		position: absolute;
+		left: 10px;
+		right: 10px;
+		top: -6px;
+		height: 1px;
+		background: color-mix(in srgb, var(--border-subtle) 42%, transparent);
 	}
 
 	.settings-btn {
@@ -332,19 +489,30 @@
 		align-items: center;
 		gap: 10px;
 		width: 100%;
-		padding: 9px 12px;
+		min-height: 36px;
+		padding: 8px 12px;
 		background: transparent;
-		border: 1px dashed var(--border-color);
-		border-radius: 10px;
+		border: 1px dashed color-mix(in srgb, var(--accent-primary) 24%, transparent);
+		border-radius: 11px;
 		color: var(--text-secondary);
 		font-size: 13px;
-		font-weight: 400;
+		font-weight: 500;
 		cursor: pointer;
-		transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+		transition:
+			background 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+			border-color 0.24s cubic-bezier(0.22, 1, 0.36, 1),
+			color 0.24s ease,
+			box-shadow 0.24s ease,
+			transform 0.24s cubic-bezier(0.22, 1, 0.36, 1);
+		box-shadow: none;
 	}
 
 	.settings-btn:hover {
-		background: var(--surface-hover);
+		background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+		border-color: color-mix(in srgb, var(--accent-primary) 34%, transparent);
 		color: var(--text-primary);
+		transform: none;
+		box-shadow:
+			0 0 0 2px color-mix(in srgb, var(--accent-primary) 10%, transparent);
 	}
 </style>

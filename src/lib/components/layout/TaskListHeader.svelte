@@ -88,7 +88,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 18px 24px;
-		border-bottom: 1px solid var(--border-subtle);
+		border-bottom: none;
 		flex-shrink: 0;
 		-webkit-app-region: drag;
 	}
@@ -131,12 +131,12 @@
 	.icon-btn {
         width: 32px;
         height: 32px;
-        border-color: var(--border-color);
+		border-color: var(--control-border);
     }
 
 	.icon-btn:hover {
-        background: var(--border-light);
-        border-color: var(--text-muted);
+		background: var(--control-bg-hover);
+		border-color: var(--control-border-hover);
     }
 
 	.icon-btn.danger:hover {

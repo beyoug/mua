@@ -208,9 +208,11 @@
 	.empty-icon {
 		width: 96px;
 		height: 96px;
-		background: var(--surface-hover);
-		border: 1px solid var(--border-color);
-		box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+		background: color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 82%, transparent);
+		backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
+		border: none;
+		box-shadow: var(--glass-shadow);
 		border-radius: 32px;
 		display: flex;
 		align-items: center;
@@ -226,7 +228,8 @@
 		width: 100%;
 		height: 100%;
 		border-radius: 32px;
-		border: 1px solid var(--accent-primary);
+		border: none;
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 28%, transparent);
 		opacity: 0;
 		z-index: -1;
 		animation: ripple 3s linear infinite;
@@ -275,10 +278,12 @@
 	}
 
 	.date-divider span {
-		font-size: 13px;
-		font-weight: 600; /* Slightly bolder */
-		color: var(--text-primary); /* Darker text for better readability */
-		opacity: 0.8;
+		font-size: 11px;
+		font-weight: 600;
+		letter-spacing: 0.045em;
+		text-transform: uppercase;
+		color: var(--text-tertiary);
+		opacity: 0.92;
 	}
 
 	.date-divider .line {

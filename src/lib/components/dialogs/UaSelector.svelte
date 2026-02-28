@@ -174,12 +174,14 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         align-items: center;
         justify-content: space-between;
         padding: 10px 14px;
-        background: transparent;
+        background: var(--control-bg);
+        border-color: var(--control-border);
         color: var(--text-primary);
         cursor: pointer;
     }
     .ua-dropdown-trigger:hover {
-        border-color: var(--accent-primary);
+        background: var(--control-bg-hover);
+        border-color: var(--control-border-hover);
     }
 
     .ua-dropdown-trigger:focus-visible {
@@ -199,11 +201,12 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         left: 0;
         right: 0;
         margin-top: 4px;
-        background: var(--glass-menu-bg, var(--dialog-bg));
-        backdrop-filter: blur(20px) saturate(180%);
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.15));
+        background: color-mix(in srgb, var(--glass-menu-bg, var(--dialog-bg)) 94%, transparent);
+        backdrop-filter: blur(22px) saturate(128%);
+        -webkit-backdrop-filter: blur(22px) saturate(128%);
+        border: none;
         border-radius: 12px;
-        box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.3);
+        box-shadow: var(--glass-shadow), 0 12px 26px rgba(0, 0, 0, 0.2);
         z-index: 1000;
         overflow: hidden;
     }
@@ -220,11 +223,11 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
     }
     /* hover 使用 accent 色调提供更明显的视觉反馈 */
     .ua-option:hover {
-        background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
+        background: color-mix(in srgb, var(--accent-primary) 9%, transparent);
     }
     .ua-option.active {
-        color: var(--accent-primary);
-        background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
+        color: var(--text-primary);
+        background: color-mix(in srgb, var(--accent-primary) 13%, transparent);
     }
 
     .ua-select-btn {
@@ -244,7 +247,7 @@ import { appSettings, updateAppSettings } from "$lib/services/settings";
         border: none;
         color: var(--text-tertiary);
         cursor: pointer;
-        border-radius: 4px;
+        border-radius: 6px;
     }
     .ua-delete-btn:hover {
         color: var(--semantic-danger);

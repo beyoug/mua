@@ -132,7 +132,7 @@
         cursor: pointer;
         padding: 10px 14px;
         background: var(--surface-hover, rgba(255, 255, 255, 0.03));
-        border: 1px solid var(--border-color, rgba(255, 255, 255, 0.05));
+        border: none;
         border-radius: 10px;
         transition: all 0.2s;
         width: fit-content;
@@ -140,7 +140,6 @@
 
     .checkbox-label:hover {
         background: var(--surface-active, rgba(255, 255, 255, 0.06));
-        border-color: var(--border-normal);
     }
 
     .checkbox-text {

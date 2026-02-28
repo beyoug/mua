@@ -381,7 +381,7 @@
     width: 100%;
     height: 120px;
     background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    border: none;
     border-radius: 8px;
     padding: 10px;
     color: var(--text-primary);
@@ -395,8 +395,7 @@
 
   textarea:focus {
     background: var(--input-bg);
-    border-color: var(--accent-primary);
-    box-shadow: 0 0 0 2px var(--accent-glow);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 18%, transparent);
   }
 
   textarea:focus-visible {
@@ -406,7 +405,7 @@
 
   .input-wrapper input {
     background: var(--surface-hover);
-    border: 1px solid var(--border-subtle);
+    border: none;
     border-radius: 6px;
     padding: 6px 10px;
     color: var(--text-primary);
@@ -418,9 +417,8 @@
   }
 
   .input-wrapper input:focus {
-    border-color: var(--accent-primary);
     background: var(--input-bg);
-    box-shadow: 0 0 0 2px var(--accent-glow);
+    box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 18%, transparent);
   }
 
   .input-wrapper input:focus-visible {
@@ -448,18 +446,17 @@
       background: var(--surface-hover);
       padding: 2px 4px 2px 8px;
       border-radius: 6px;
-      border: 1px solid transparent;
+      border: none;
       transition: all 0.2s;
   }
 
   .port-input-inline:hover {
-      border-color: var(--border-subtle);
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 70%, transparent);
   }
 
   .port-input-inline:focus-within {
       background: var(--input-bg);
-      border-color: var(--accent-primary);
-      box-shadow: 0 0 0 2px var(--accent-glow);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-primary) 16%, transparent);
   }
 
   .port-input-inline.disabled {
@@ -553,8 +550,7 @@
 
   .unit {
     background: var(--surface-active);
-    border: 1px solid var(--border-subtle);
-    border-left: none;
+    border: none;
     padding: 6px 8px; /* Match input padding height approx */
     font-size: 11px;
     color: var(--text-muted);
@@ -572,7 +568,8 @@
       gap: 8px;
       padding: 12px 14px;
       background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--accent-primary) 22%, transparent);
+      border: none;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 22%, transparent);
       border-radius: 10px;
       color: var(--text-secondary);
       font-size: 12px;
@@ -587,10 +584,12 @@
       margin-top: 8px;
       padding: 6px 10px;
       background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-      border: 1px solid color-mix(in srgb, var(--semantic-warning) 28%, transparent);
+      border: none;
+      box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-warning) 28%, transparent);
       border-radius: 6px;
       color: var(--semantic-warning);
       font-size: 11px;
+      line-height: 1.35;
       width: fit-content;
   }
 
@@ -600,7 +599,7 @@
       border: none;
       padding: 2px 8px;
       border-radius: 4px;
-      font-size: 10px;
+      font-size: 11px;
       font-weight: 600;
       cursor: pointer;
       margin-left: 4px;
@@ -630,10 +629,10 @@
   .tooltip-text {
       visibility: hidden;
       width: 200px;
-      background-color: var(--surface-active);
+      background-color: color-mix(in srgb, var(--glass-menu-bg) 92%, transparent);
       color: var(--text-primary);
       text-align: left;
-      border-radius: 6px;
+      border-radius: 10px;
       padding: 8px 10px;
       position: absolute;
       z-index: 10;
@@ -645,8 +644,8 @@
       font-size: 11px;
       font-weight: normal;
       line-height: 1.4;
-      border: 1px solid var(--border-subtle);
-      box-shadow: 0 8px 18px color-mix(in srgb, var(--shadow-color) 20%, transparent);
+      border: none;
+      box-shadow: var(--glass-shadow), 0 8px 18px rgba(4, 18, 42, 0.2);
       pointer-events: none;
   }
 
@@ -668,7 +667,7 @@
       padding: 6px 12px;
       min-height: 30px;
       background: var(--surface-hover);
-      border: 1px solid var(--border-subtle);
+      border: none;
       border-radius: 8px;
       color: var(--text-secondary);
       font-size: 12px;
@@ -679,7 +678,6 @@
   .action-btn:hover:not(:disabled) {
       background: var(--surface-active);
       color: var(--text-primary);
-      border-color: var(--accent-primary);
   }
 
   .action-btn:disabled {
@@ -694,7 +692,8 @@
   .tracker-preview-box {
       margin-top: 12px;
       background: var(--surface-active);
-      border: 1px solid var(--accent-dim);
+      border: none;
+      box-shadow: inset 0 0 0 1px var(--accent-dim);
       border-radius: 8px;
       padding: 10px;
       font-size: 12px;
