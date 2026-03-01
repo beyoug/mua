@@ -182,10 +182,10 @@
 	.content-panel {
 		flex: 1;
 		min-height: 0;
-		background: var(--glass-bg);
-		border: none;
+		background: var(--panel-glass-bg, var(--glass-bg));
+		border: 1px solid var(--panel-glass-border, var(--glass-border));
 		border-radius: 16px;
-		box-shadow: var(--glass-shadow);
+		box-shadow: var(--panel-glass-shadow, var(--glass-shadow));
 		display: flex;
 		flex-direction: column;
 		overflow: hidden;
@@ -227,5 +227,26 @@
 			transform: scale(1.05);
 			opacity: 1;
 		}
+	}
+
+	:global(html.dark) .content-panel {
+		background:
+			linear-gradient(
+				164deg,
+				color-mix(in srgb, var(--glass-elevated-bg) 86%, var(--accent-primary) 10%),
+				color-mix(in srgb, var(--glass-bg) 96%, transparent)
+			),
+			var(--panel-glass-bg, var(--glass-bg));
+	}
+
+	:global(html.dark) .global-drag-overlay {
+		background: color-mix(in srgb, var(--dialog-overlay-bg) 92%, rgba(2, 8, 20, 0.72));
+		backdrop-filter: blur(12px) saturate(130%);
+		-webkit-backdrop-filter: blur(12px) saturate(130%);
+	}
+
+	:global(html.dark) .drag-hint {
+		color: var(--accent-on-glass, var(--accent-text));
+		text-shadow: 0 6px 18px rgba(1, 7, 18, 0.72);
 	}
 </style>

@@ -55,6 +55,9 @@
 		background: var(--progress-track-bg, var(--border-subtle));
 		border-radius: 2px;
 		overflow: hidden;
+		box-shadow:
+			inset 0 0 0 1px color-mix(in srgb, var(--glass-border, var(--border-normal)) 32%, transparent),
+			inset 0 1px 0 color-mix(in srgb, var(--glass-highlight-soft) 56%, transparent);
 	}
 
 	.progress-fill {
@@ -66,15 +69,22 @@
 	}
 
 	.progress-fill.downloading {
-		background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary));
+		background: linear-gradient(
+			90deg,
+			color-mix(in srgb, var(--accent-primary) 90%, white),
+			var(--accent-secondary)
+		);
+		box-shadow: 0 0 12px color-mix(in srgb, var(--accent-glow) 58%, transparent);
 	}
 
 	.progress-fill.paused {
 		background: var(--semantic-warning);
+		box-shadow: 0 0 10px color-mix(in srgb, var(--semantic-warning) 44%, transparent);
 	}
 
 	.progress-fill.error {
 		background: var(--semantic-danger);
+		box-shadow: 0 0 10px color-mix(in srgb, var(--semantic-danger) 44%, transparent);
 	}
 
 	.stripes {
@@ -116,10 +126,18 @@
 	.progress-percent {
 		font-size: 11px;
 		font-weight: 500;
-		color: var(--accent-text);
+		color: var(--accent-on-glass, var(--accent-text));
 		min-width: 32px;
 		text-align: right;
 		opacity: 0.8;
 		font-variant-numeric: tabular-nums;
+	}
+
+	:global(html.dark) .progress-track {
+		background: color-mix(in srgb, var(--progress-track-bg, var(--border-subtle)) 82%, rgba(6, 12, 24, 0.72));
+	}
+
+	:global(html.dark) .progress-percent {
+		opacity: 0.9;
 	}
 </style>

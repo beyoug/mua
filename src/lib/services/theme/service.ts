@@ -4,7 +4,6 @@ import type { AppConfig } from "$lib/services/settings";
 import { appSettings, updateAppSettings } from "$lib/services/settings";
 
 import {
-	COLOR_MODES,
 	type ColorMode,
 	coerceColorMode,
 	coerceThemeId,

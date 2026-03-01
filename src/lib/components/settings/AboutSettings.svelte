@@ -218,13 +218,9 @@
     background: var(--surface-hover);
   }
 
-  .credit-item:last-child {
-    border-bottom: none;
-  }
-
-  .lib-name {
-    font-size: 12px;
-    font-weight: 600;
+	.lib-name {
+		font-size: 12px;
+		font-weight: 600;
     color: var(--text-primary);
   }
 

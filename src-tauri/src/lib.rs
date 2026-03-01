@@ -53,6 +53,7 @@ pub fn run() {
             update_tray_icon_with_speed,
             get_app_config,
             save_app_config,
+            show_main_window,
             show_task_in_folder,
             pause_all_tasks,
             resume_all_tasks,

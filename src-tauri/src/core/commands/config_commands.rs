@@ -130,6 +130,16 @@ pub async fn save_app_config(
 }
 
 #[tauri::command]
+pub async fn show_main_window(app: AppHandle) -> AppResult<()> {
+    if let Some(window) = app.get_webview_window("main") {
+        let _ = window.show();
+        let _ = window.unminimize();
+        let _ = window.set_focus();
+    }
+    Ok(())
+}
+
+#[tauri::command]
 pub async fn fetch_public_trackers() -> AppResult<Vec<String>> {
     let url = "https://trackerslist.com/best.txt";
     let client = reqwest::Client::builder()

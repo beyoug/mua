@@ -374,7 +374,7 @@
         display: flex;
         position: relative;
         background: var(--control-bg);
-        border: none;
+        border: 1px solid color-mix(in srgb, var(--control-border) 52%, transparent);
         border-radius: 12px;
         padding: 3px;
         box-shadow: var(--control-shadow-rest);
@@ -399,9 +399,15 @@
     }
 
     .tab-btn.active {
-        color: var(--text-primary);
+        color: var(--accent-on-glass, var(--text-primary));
         font-weight: 600;
     }
+
+	.tab-btn:focus-visible {
+		outline: none;
+		box-shadow: var(--focus-ring);
+		border-radius: 8px;
+	}
 
     .tab-btn .dot {
         position: absolute;
@@ -424,7 +430,7 @@
         backdrop-filter: blur(10px) saturate(120%);
         border-radius: 9px;
         transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-        border: none;
+        border: 1px solid color-mix(in srgb, var(--glass-border) 38%, transparent);
         box-shadow: var(--control-shadow-rest);
     }
 
@@ -466,7 +472,7 @@
         background: var(--control-bg);
         padding: 8px 12px;
         border-radius: 10px;
-        border: none;
+        border: 1px solid color-mix(in srgb, var(--control-border) 50%, transparent);
         transition: all 0.2s ease;
         min-height: 36px;
         box-shadow: var(--control-shadow-rest);
@@ -474,11 +480,12 @@
 
     .detail-value-box:hover {
         background: var(--control-bg-hover);
+		border-color: var(--control-border-hover);
     }
 
     .detail-value-box.error {
         background: color-mix(in srgb, var(--semantic-danger) 8%, transparent);
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 28%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 16%, transparent);
     }
 
     .value-text {
@@ -499,7 +506,7 @@
     .value-text.filename {
         font-size: 14px;
         font-weight: 600;
-        color: var(--text-primary);
+        color: color-mix(in srgb, var(--text-primary) 92%, var(--accent-on-glass, var(--accent-text)) 8%);
         line-height: 1.4;
         word-break: break-all;
     }
@@ -514,14 +521,14 @@
     .extension-badge {
         font-size: 10px;
         font-weight: 700;
-        color: var(--accent-primary);
-        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-        padding: 3px 8px;
+        color: var(--accent-on-glass, var(--accent-text));
+        background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+        padding: 3px 9px;
         border-radius: 999px;
         text-transform: uppercase;
         letter-spacing: 0.5px;
         border: none;
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 20%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 11%, transparent);
         flex-shrink: 0;
         align-self: flex-start;
         margin-top: 1px; /* Optical alignment with text */
@@ -530,7 +537,7 @@
     .extension-badge.unknown {
         color: var(--semantic-warning);
         background: color-mix(in srgb, var(--semantic-warning) 10%, transparent);
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-warning) 20%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-warning) 11%, transparent);
     }
 
     .identity-box {
@@ -611,8 +618,8 @@
     }
 
     .status-pill.status-active {
-        background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
-        color: var(--accent-primary);
+        background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
+        color: var(--accent-on-glass, var(--accent-text));
     }
 
     .status-pill.status-complete {
@@ -647,7 +654,7 @@
         width: 32px;
         height: 32px;
         background: var(--control-bg);
-        border: none;
+        border: 1px solid color-mix(in srgb, var(--control-border) 56%, transparent);
         border-radius: 8px;
         color: var(--text-tertiary);
         cursor: pointer;
@@ -656,8 +663,14 @@
 
     .item-copy-btn:hover {
         background: var(--control-bg-hover);
+		border-color: color-mix(in srgb, var(--control-border-hover) 64%, transparent);
         color: var(--text-primary);
     }
+
+	.item-copy-btn:focus-visible {
+		outline: none;
+		box-shadow: var(--focus-ring);
+	}
 
     .item-copy-btn :global(.success) { color: #10b981; }
 
@@ -707,7 +720,7 @@
 
     .error-reason-box {
         background: color-mix(in srgb, var(--semantic-danger) 10%, transparent);
-        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 28%, transparent);
+        box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--semantic-danger) 16%, transparent);
         padding: 10px 12px;
     }
 
@@ -731,5 +744,43 @@
         color: var(--text-tertiary);
         gap: 12px;
     }
+
+	:global(html.dark) .modal-tabs {
+		background: color-mix(in srgb, var(--control-bg) 96%, transparent);
+		box-shadow:
+			var(--control-shadow-rest),
+			inset 0 1px 0 color-mix(in srgb, var(--glass-highlight-soft) 74%, transparent);
+	}
+
+	:global(html.dark) .active-indicator {
+		background:
+			linear-gradient(
+				145deg,
+				color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 92%, var(--accent-primary) 6%),
+				color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 98%, transparent)
+			),
+			color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 92%, transparent);
+	}
+
+	:global(html.dark) .detail-value-box {
+		background: color-mix(in srgb, var(--control-bg) 95%, transparent);
+	}
+
+	:global(html.dark) .detail-value-box:hover {
+		box-shadow: var(--control-shadow-elevated);
+	}
+
+	:global(html.dark) .item-copy-btn {
+		background: color-mix(in srgb, var(--control-bg) 96%, transparent);
+		box-shadow: var(--control-shadow-rest);
+	}
+
+	:global(html.dark) .item-copy-btn:hover {
+		box-shadow: var(--control-shadow-elevated);
+	}
+
+	:global(html.dark) .status-pill.status-active {
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 15%, transparent);
+	}
 
 </style>

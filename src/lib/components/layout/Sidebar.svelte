@@ -238,7 +238,7 @@
 		min-height: 38px;
 		padding: 8px 12px;
 		background: transparent;
-		border: 1px dashed color-mix(in srgb, var(--accent-primary) 26%, transparent);
+		border: 1px dashed color-mix(in srgb, var(--accent-primary) 14%, transparent);
 		border-radius: 11px;
 		color: var(--text-secondary);
 		font-size: 13px;
@@ -261,7 +261,7 @@
 				color-mix(in srgb, var(--accent-primary) 6%, transparent)
 			),
 			transparent;
-		border-color: color-mix(in srgb, var(--accent-primary) 38%, transparent);
+		border-color: color-mix(in srgb, var(--accent-primary) 16%, transparent);
 		color: var(--text-primary);
 		transform: translateY(-0.5px);
 		box-shadow:
@@ -390,7 +390,7 @@
 			),
 			white;
 		color: var(--accent-active);
-		box-shadow: inset 0 1px 0 color-mix(in srgb, white 72%, transparent);
+		box-shadow: none;
 	}
 
 	.divider {
@@ -492,7 +492,7 @@
 		min-height: 36px;
 		padding: 8px 12px;
 		background: transparent;
-		border: 1px dashed color-mix(in srgb, var(--accent-primary) 24%, transparent);
+		border: 1px dashed color-mix(in srgb, var(--accent-primary) 12%, transparent);
 		border-radius: 11px;
 		color: var(--text-secondary);
 		font-size: 13px;
@@ -509,10 +509,90 @@
 
 	.settings-btn:hover {
 		background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-		border-color: color-mix(in srgb, var(--accent-primary) 34%, transparent);
+		border-color: color-mix(in srgb, var(--accent-primary) 14%, transparent);
 		color: var(--text-primary);
 		transform: none;
 		box-shadow:
 			var(--hover-ring-soft);
+	}
+
+	:global(html.dark) .sidebar {
+		background:
+			linear-gradient(
+				170deg,
+				color-mix(in srgb, var(--glass-elevated-bg) 88%, var(--accent-primary) 12%),
+				color-mix(in srgb, var(--glass-bg) 96%, transparent)
+			),
+			var(--panel-glass-bg, var(--glass-bg));
+		border: 1px solid color-mix(in srgb, var(--panel-glass-border, var(--glass-border)) 66%, transparent);
+		box-shadow: var(--panel-glass-shadow, var(--glass-shadow));
+	}
+
+	:global(html.dark) .sidebar::before {
+		opacity: 0.46;
+		background:
+			radial-gradient(
+				120% 58% at 14% -8%,
+				color-mix(in srgb, var(--accent-primary) 24%, transparent),
+				transparent 70%
+			),
+			linear-gradient(
+				180deg,
+				color-mix(in srgb, var(--glass-highlight-soft) 72%, transparent),
+				transparent 42%
+			);
+	}
+
+	:global(html.dark) .add-btn,
+	:global(html.dark) .settings-btn {
+		background: color-mix(in srgb, var(--control-bg) 94%, transparent);
+		border-style: solid;
+		border-color: color-mix(in srgb, var(--control-border) 58%, transparent);
+		box-shadow: var(--control-shadow-rest);
+	}
+
+	:global(html.dark) .add-btn:hover,
+	:global(html.dark) .settings-btn:hover {
+		border-color: color-mix(in srgb, var(--control-border-hover) 60%, transparent);
+		box-shadow: var(--control-shadow-elevated);
+	}
+
+	:global(html.dark) .nav-item:hover {
+		background: color-mix(in srgb, var(--accent-primary) 13%, transparent);
+		box-shadow:
+			inset 0 1px 0 color-mix(in srgb, var(--glass-highlight-soft) 90%, transparent),
+			0 10px 18px -18px color-mix(in srgb, var(--accent-glow) 48%, transparent);
+	}
+
+	:global(html.dark) .nav-item.active {
+		background:
+			linear-gradient(
+				112deg,
+				color-mix(in srgb, var(--accent-primary) 30%, transparent),
+				color-mix(in srgb, var(--accent-primary) 12%, transparent)
+			),
+			color-mix(in srgb, var(--surface-active) 76%, transparent);
+		color: var(--accent-on-glass, var(--accent-text));
+		box-shadow:
+			inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 64%, transparent),
+			0 12px 20px -18px color-mix(in srgb, var(--accent-glow) 52%, transparent);
+	}
+
+	:global(html.dark) .stats-panel {
+		background: color-mix(in srgb, var(--glass-elevated-bg) 74%, transparent);
+		border: 1px solid color-mix(in srgb, var(--glass-border) 44%, transparent);
+		box-shadow:
+			var(--glass-inner-shadow),
+			0 14px 24px -24px rgba(0, 0, 0, 0.9);
+	}
+
+	:global(html.dark) .stat-value {
+		color: color-mix(in srgb, var(--accent-on-glass, var(--accent-text)) 72%, var(--text-primary));
+	}
+
+	:global(html.dark) .stat-count {
+		color: color-mix(in srgb, var(--accent-on-glass, var(--accent-text)) 82%, var(--text-primary));
+		background: color-mix(in srgb, var(--accent-primary) 16%, transparent);
+		box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 14%, transparent);
 	}
 </style>

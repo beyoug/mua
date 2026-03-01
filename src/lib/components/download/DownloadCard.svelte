@@ -192,23 +192,29 @@
 <style>
 	.download-card {
 		position: relative;
-		background: color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 90%, transparent);
+		background: color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 92%, transparent);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--glass-border, var(--border-normal)) 54%, transparent);
 		border-radius: 14px;
 		padding: 14px 16px;
 		transition: 
 			transform 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 			box-shadow 0.25s cubic-bezier(0.4, 0, 0.2, 1),
 			z-index 0s;
-		box-shadow: var(--glass-shadow);
+		box-shadow:
+			var(--glass-shadow),
+			0 1px 0 color-mix(in srgb, var(--glass-highlight-soft) 72%, transparent) inset;
 		z-index: 1;
 	}
 
 	.download-card:hover {
 		transform: translateY(-1px);
-		box-shadow: var(--glass-shadow), 0 6px 18px rgba(2, 16, 42, 0.2);
+		border-color: color-mix(in srgb, var(--glass-border-strong, var(--glass-border)) 56%, transparent);
+		box-shadow:
+			var(--glass-shadow),
+			0 12px 22px -18px color-mix(in srgb, var(--accent-glow) 36%, transparent),
+			0 1px 0 color-mix(in srgb, var(--glass-highlight-soft) 82%, transparent) inset;
 		z-index: 10;
 	}
 
@@ -218,7 +224,10 @@
 	}
 
 	.download-card.completed {
-		box-shadow: var(--glass-shadow), 0 0 0 1px color-mix(in srgb, var(--semantic-success) 20%, transparent) inset;
+		box-shadow:
+			var(--glass-shadow),
+			0 0 0 1px color-mix(in srgb, var(--semantic-success) 26%, transparent) inset,
+			0 12px 20px -20px color-mix(in srgb, var(--semantic-success) 28%, transparent);
 	}
 
 	.card-header {
@@ -244,14 +253,17 @@
 		width: 36px;
 		height: 36px;
 		background: var(--control-bg);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--control-border) 50%, transparent);
 		border-radius: 10px;
 		color: var(--text-muted);
 	}
 
 	.icon-wrapper.active {
 		background: var(--accent-active-bg);
-		color: var(--accent-text);
+		color: var(--accent-on-glass, var(--accent-text));
+		box-shadow:
+			inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 14%, transparent),
+			0 8px 14px -14px color-mix(in srgb, var(--accent-glow) 58%, transparent);
 	}
 
 	.icon-wrapper.completed {
@@ -306,7 +318,7 @@
 		width: 30px;
 		height: 30px;
 		background: var(--control-bg);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--control-border) 58%, transparent);
 		border-radius: 8px;
 		color: var(--text-secondary);
 		cursor: pointer;
@@ -315,6 +327,7 @@
 
 	.action-btn:hover {
 		background: var(--control-bg-hover);
+		border-color: color-mix(in srgb, var(--control-border-hover) 64%, transparent);
 		color: var(--text-primary);
 		transform: scale(1.03);
 		box-shadow: var(--control-shadow-elevated);
@@ -327,7 +340,7 @@
 
 	.action-btn.resume:hover {
 		background: var(--accent-active-bg);
-		color: var(--accent-text);
+		color: var(--accent-on-glass, var(--accent-text));
 	}
 
 	.action-btn.cancel:hover {
@@ -381,7 +394,7 @@
 		width: 20px;
 		height: 20px;
 		border-radius: 6px;
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--control-border) 54%, transparent);
 		background: var(--control-bg);
 		display: flex;
 		align-items: center;
@@ -393,6 +406,7 @@
 
 	.checkbox:hover {
         background: var(--control-bg-hover);
+		border-color: color-mix(in srgb, var(--control-border-hover) 64%, transparent);
 	}
 
 	.checkbox:focus-visible {
@@ -401,13 +415,38 @@
 	}
 
 	.checkbox.checked {
-		background: var(--accent-primary);
-        box-shadow: 0 0 10px var(--accent-glow);
+		background: linear-gradient(
+			136deg,
+			color-mix(in srgb, var(--accent-primary) 92%, white),
+			var(--accent-secondary)
+		);
+		border-color: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+        box-shadow:
+			0 0 12px color-mix(in srgb, var(--accent-glow) 72%, transparent),
+			0 1px 0 color-mix(in srgb, #ffffff 24%, transparent) inset;
 	}
 
 	/* 下拉菜单样式 */
 	.menu-container {
 		position: relative;
+	}
+
+	:global(html.dark) .download-card {
+		background:
+			linear-gradient(
+				160deg,
+				color-mix(in srgb, var(--glass-elevated-bg) 86%, var(--accent-primary) 8%),
+				color-mix(in srgb, var(--glass-elevated-bg) 94%, transparent)
+			),
+			color-mix(in srgb, var(--glass-elevated-bg, var(--glass-bg)) 92%, transparent);
+	}
+
+	:global(html.dark) .filename {
+		color: color-mix(in srgb, var(--text-primary) 94%, var(--accent-on-glass, var(--accent-text)) 6%);
+	}
+
+	:global(html.dark) .size-info {
+		color: color-mix(in srgb, var(--text-secondary) 88%, var(--accent-on-glass, var(--accent-text)) 12%);
 	}
 
 

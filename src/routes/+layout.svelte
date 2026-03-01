@@ -12,6 +12,7 @@
 	import ParticleBackground from "$lib/components/effects/ParticleBackground.svelte";
 	import { bootApp, shutdownBootServices } from "$lib/services/boot";
 	import { createLogger } from "$lib/utils/logger";
+	import { invoke } from "@tauri-apps/api/core";
 
 	const logger = createLogger("Layout");
 
@@ -26,6 +27,11 @@
 		bootApp()
 			.catch((e) => {
 				logger.error("Core boot failure", { error: e });
+			})
+			.finally(() => {
+				void invoke("show_main_window").catch((e) => {
+					logger.warn("show_main_window failed", { error: e });
+				});
 			});
 
 		return () => {

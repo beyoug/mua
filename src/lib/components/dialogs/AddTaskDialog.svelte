@@ -206,4 +206,25 @@
         border-radius: 14px;
         box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
     }
+
+	:global(html.light) .view-main {
+		box-shadow: none;
+	}
+
+	:global(html.light) .modal-content-stack :global(.ui-field),
+	:global(html.light) .modal-content-stack :global(.ui-input-group),
+	:global(html.light) .modal-content-stack :global(.path-selector),
+	:global(html.light) .modal-content-stack :global(.ua-dropdown-trigger),
+	:global(html.light) .modal-content-stack :global(.ua-custom-input),
+	:global(html.light) .modal-content-stack :global(.btn-xs-secondary) {
+		box-shadow: none;
+	}
+
+	:global(html.light) .modal-content-stack :global(.ui-field:hover),
+	:global(html.light) .modal-content-stack :global(.ui-input-group:hover),
+	:global(html.light) .modal-content-stack :global(.path-selector:hover),
+	:global(html.light) .modal-content-stack :global(.ua-dropdown-trigger:hover),
+	:global(html.light) .modal-content-stack :global(.btn-xs-secondary:hover) {
+		box-shadow: none;
+	}
 </style>

@@ -4,6 +4,33 @@
 <head>
 	<meta charset="utf-8" />
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
+	<script>
+		(() => {
+			const APPEARANCE_CACHE_KEY = 'mua:appearance';
+			const root = document.documentElement;
+
+			const safeParse = (raw) => {
+				try {
+					return raw ? JSON.parse(raw) : null;
+				} catch {
+					return null;
+				}
+			};
+
+			const cached = safeParse(window.localStorage.getItem(APPEARANCE_CACHE_KEY));
+			const themeId = cached?.theme === 'default' ? 'default' : 'default';
+			const colorMode =
+				cached?.colorMode === 'light' || cached?.colorMode === 'dark' || cached?.colorMode === 'auto'
+					? cached.colorMode
+					: 'dark';
+
+			const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+			const mode = colorMode === 'auto' ? (prefersDark ? 'dark' : 'light') : colorMode;
+
+			root.classList.add(`theme-${themeId}`, mode);
+			root.style.colorScheme = mode;
+		})();
+	</script>
 	%sveltekit.head%
 </head>
 

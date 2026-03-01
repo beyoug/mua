@@ -6,27 +6,30 @@
 
 /* ===== 深色模式默认 ===== */
 :root {
-	--glass-bg: rgba(12, 18, 30, 0.52);
-	--glass-elevated-bg: rgba(14, 20, 34, 0.66);
-	--glass-border: rgba(255, 255, 255, 0.14);
-	--glass-border-strong: rgba(255, 255, 255, 0.2);
-	--glass-blur: blur(28px);
-	--glass-saturate: saturate(130%);
+	--glass-bg: rgba(11, 17, 29, 0.62);
+	--glass-elevated-bg: rgba(14, 21, 35, 0.76);
+	--glass-border: rgba(229, 240, 255, 0.13);
+	--glass-border-strong: rgba(239, 248, 255, 0.18);
+	--glass-highlight: rgba(255, 255, 255, 0.13);
+	--glass-highlight-soft: rgba(255, 255, 255, 0.055);
+	--glass-blur: blur(34px);
+	--glass-saturate: saturate(156%);
+	--glass-inner-shadow: 0 1px 0 color-mix(in srgb, #ffffff 14%, transparent)
+		inset;
 	--glass-shadow:
-		0 18px 36px -24px rgba(3, 8, 20, 0.9),
-		0 10px 28px -24px rgba(3, 8, 20, 0.8),
-		0 1px 0 rgba(255, 255, 255, 0.08) inset;
+		0 22px 46px -28px rgba(2, 8, 20, 0.92),
+		0 12px 28px -24px rgba(2, 8, 20, 0.82),
+		0 1px 0 color-mix(in srgb, #ffffff 14%, transparent) inset;
 
-	/* 弹窗专用背景 */
-	--dialog-bg: rgba(12, 18, 30, 0.78);
-	/* 遮罩层背景颜色 - 深色模式下更深沉 */
-	--dialog-overlay-bg: rgba(3, 6, 14, 0.52);
-	/* 菜单背景 - 95% 透明度 + 5% 主题色混合 */
+	--dialog-bg: rgba(12, 19, 32, 0.86);
+	--dialog-overlay-bg: rgba(2, 7, 16, 0.62);
 	--glass-menu-bg: color-mix(
 		in srgb,
-		rgba(16, 22, 34, 0.92),
-		var(--accent-primary) 6%
+		rgba(16, 24, 38, 0.92),
+		var(--accent-primary) 10%
 	);
+	--glass-accent-ring: 0 0 0 1px
+		color-mix(in srgb, var(--accent-primary) 14%, transparent);
 }
 
 /* ===== 浅色模式 ===== */
@@ -38,9 +41,9 @@ html.light {
 	--glass-blur: blur(28px);
 	--glass-saturate: saturate(160%);
 	--glass-shadow:
-		0 18px 34px -24px rgba(15, 23, 42, 0.3),
-		0 10px 22px -24px rgba(15, 23, 42, 0.28),
-		0 1px 0 rgba(255, 255, 255, 0.86) inset;
+		0 12px 24px -22px rgba(15, 23, 42, 0.2),
+		0 6px 14px -16px rgba(15, 23, 42, 0.14),
+		0 1px 0 rgba(255, 255, 255, 0.78) inset;
 
 	/* 弹窗专用背景 */
 	--dialog-bg: rgba(255, 255, 255, 0.82);

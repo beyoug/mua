@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { FileCode, FileUp, Key, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
+	import { FileCode, FileUp, RefreshCw, Copy, Eye, EyeOff, AlertCircle, RotateCcw } from '@lucide/svelte';
     import { aria2Config, configPath, isImporting, loadAria2Config, importAria2Config } from '$lib/services/aria2Config';
     import { appSettings, updateAppSettings } from '$lib/services/settings';
     import { onMount } from 'svelte';

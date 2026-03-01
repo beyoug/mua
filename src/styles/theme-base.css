@@ -29,11 +29,10 @@
 	--hover-ring-medium: 0 0 0 2px
 		color-mix(in srgb, var(--accent-primary) 12%, transparent);
 
-	/* 背景层级 - 完全透明 */
-	--bg-base: transparent;
-	--bg-elevated: rgba(24, 24, 27, 0);
-	--bg-surface: rgba(25, 25, 35, 0);
-	--bg-overlay: rgba(15, 15, 20, 0);
+	--bg-base: rgba(6, 10, 18, 0.46);
+	--bg-elevated: rgba(11, 17, 28, 0.58);
+	--bg-surface: rgba(16, 23, 36, 0.66);
+	--bg-overlay: rgba(2, 6, 14, 0.56);
 
 	/* 文本层级 - 纯白字体系统 */
 	--text-primary: rgba(255, 255, 255, 0.96);
@@ -42,15 +41,20 @@
 	--text-disabled: rgba(255, 255, 255, 0.4);
 	--text-muted: var(--text-tertiary);
 
-	/* 边框与分割线 - 简约白色线条 */
-	--border-strong: rgba(255, 255, 255, 0.25);
-	--border-normal: rgba(255, 255, 255, 0.14);
-	--border-subtle: rgba(255, 255, 255, 0.08);
+	--border-strong: rgba(236, 245, 255, 0.23);
+	--border-normal: rgba(220, 233, 252, 0.12);
+	--border-subtle: rgba(205, 223, 247, 0.07);
 	--border-color: var(--border-normal);
+	--glass-highlight: rgba(255, 255, 255, 0.13);
+	--glass-highlight-soft: rgba(255, 255, 255, 0.055);
+	--glass-inner-shadow: 0 1px 0 color-mix(in srgb, #ffffff 16%, transparent)
+		inset;
+	--glass-depth-shadow:
+		0 24px 44px -30px rgba(0, 0, 0, 0.88), 0 10px 24px -22px rgba(0, 0, 0, 0.72);
 
 	/* 交互反馈 */
-	--surface-hover: rgba(255, 255, 255, 0.08);
-	--surface-active: rgba(255, 255, 255, 0.14);
+	--surface-hover: rgba(185, 214, 255, 0.13);
+	--surface-active: rgba(188, 217, 255, 0.2);
 	--bg-hover: var(--surface-hover);
 
 	/* 主题色兜底（防止主题文件缺失 token） */
@@ -58,15 +62,16 @@
 	--accent-secondary: #70b4ff;
 	--accent-hover: #2e7feb;
 	--accent-active: #1d6ad8;
-	--accent-glow: rgba(74, 158, 255, 0.45);
-	--accent-subtle: rgba(74, 158, 255, 0.16);
-	--accent-text: #70b4ff;
+	--accent-glow: rgba(86, 169, 255, 0.52);
+	--accent-subtle: rgba(86, 169, 255, 0.2);
+	--accent-text: #9bd0ff;
+	--accent-on-glass: #b6dcff;
 	--accent-btn-text: #ffffff;
 	--accent-active-bg: var(--accent-subtle);
 	--accent-dim: color-mix(in srgb, var(--accent-primary) 35%, transparent);
 	--progress-track-bg: var(--border-subtle);
 
-	--input-bg: rgba(5, 10, 18, 0.24);
+	--input-bg: rgba(8, 14, 24, 0.44);
 	--control-bg: color-mix(in srgb, var(--input-bg) 88%, transparent);
 	--control-bg-hover: color-mix(
 		in srgb,
@@ -80,12 +85,12 @@
 	);
 	--control-border: color-mix(
 		in srgb,
-		var(--glass-border, var(--border-normal)) 68%,
+		var(--glass-border, var(--border-normal)) 50%,
 		var(--border-normal)
 	);
 	--control-border-hover: color-mix(
 		in srgb,
-		var(--accent-primary) 24%,
+		var(--accent-primary) 15%,
 		var(--control-border)
 	);
 	--control-border-focus: color-mix(
@@ -93,11 +98,25 @@
 		var(--accent-primary) 58%,
 		var(--control-border)
 	);
-	--control-shadow-rest: 0 1px 0 color-mix(in srgb, #ffffff 8%, transparent)
-		inset;
+	--control-shadow-rest:
+		0 1px 0 color-mix(in srgb, #ffffff 14%, transparent) inset,
+		0 10px 16px -16px rgba(2, 10, 24, 0.76);
 	--control-shadow-elevated:
-		0 10px 20px -16px rgba(0, 0, 0, 0.55),
-		0 1px 0 color-mix(in srgb, #ffffff 8%, transparent) inset;
+		0 12px 26px -16px rgba(0, 0, 0, 0.65),
+		0 1px 0 color-mix(in srgb, #ffffff 15%, transparent) inset;
+	--panel-glass-bg: color-mix(
+		in srgb,
+		var(--glass-elevated-bg, var(--bg-surface)) 92%,
+		transparent
+	);
+	--panel-glass-border: color-mix(
+		in srgb,
+		var(--glass-border, var(--border-normal)) 64%,
+		var(--border-normal)
+	);
+	--panel-glass-shadow:
+		var(--glass-shadow), var(--glass-depth-shadow),
+		0 1px 0 color-mix(in srgb, #ffffff 12%, transparent) inset;
 
 	/* 语义化颜色 */
 	--semantic-danger: #ef4444;
@@ -219,6 +238,18 @@ html.light {
 	--control-shadow-elevated:
 		0 10px 20px -18px rgba(15, 23, 42, 0.24),
 		0 1px 0 rgba(255, 255, 255, 0.66) inset;
+	--glass-depth-shadow:
+		0 8px 18px -20px rgba(15, 23, 42, 0.14),
+		0 3px 8px -12px rgba(15, 23, 42, 0.08);
+	--panel-glass-bg: color-mix(
+		in srgb,
+		var(--glass-elevated-bg, var(--bg-surface)) 90%,
+		transparent
+	);
+	--panel-glass-border: transparent;
+	--panel-glass-shadow:
+		var(--glass-shadow), var(--glass-depth-shadow),
+		0 1px 0 rgba(255, 255, 255, 0.62) inset;
 
 	/* 语义化颜色 - 浅色模式优化 */
 	--semantic-danger: #dc2626;

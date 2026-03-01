@@ -4,10 +4,9 @@
 -->
 <script lang="ts">
   import { X, Palette, Settings2, Download, Cpu, Info, Terminal, Network } from '@lucide/svelte';
-  import { fade, scale } from 'svelte/transition';
+	import { fade, scale } from 'svelte/transition';
 	import { loadAria2Config } from '$lib/services/aria2Config';
-	import { loadAppSettings } from '$lib/services/settings';
-  import { createScrollLockEffect } from '$lib';
+	import { createScrollLockEffect } from '$lib';
   
   import AppearanceSettings from './AppearanceSettings.svelte';
   import GeneralSettings from './GeneralSettings.svelte';
@@ -149,12 +148,12 @@
     top: 12px;
     right: 12px;
     bottom: 12px;
-    background: color-mix(in srgb, var(--dialog-bg) 96%, transparent);
+    background: color-mix(in srgb, var(--dialog-bg) 97%, transparent);
     backdrop-filter: var(--glass-blur) var(--glass-saturate);
     -webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-    border: none;
+    border: 1px solid color-mix(in srgb, var(--panel-glass-border, var(--glass-border)) 68%, transparent);
     border-radius: 18px;
-    box-shadow: var(--glass-shadow), 0 22px 42px -28px rgba(0, 0, 0, 0.52);
+    box-shadow: var(--panel-glass-shadow, var(--glass-shadow));
     display: flex;
     overflow: hidden;
   }
@@ -168,7 +167,7 @@
         color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 84%, var(--accent-primary) 8%),
         color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 92%, transparent)
       );
-    border-left: none;
+    border-left: 1px solid color-mix(in srgb, var(--glass-border) 34%, transparent);
     display: flex;
     flex-direction: column;
   }
@@ -197,7 +196,8 @@
     position: absolute;
     inset: 8px;
     border-radius: 10px;
-    background: color-mix(in srgb, var(--surface-hover) 52%, transparent);
+    background: color-mix(in srgb, var(--surface-hover) 58%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glass-border) 32%, transparent);
     pointer-events: none;
   }
 
@@ -239,9 +239,9 @@
   }
 
   .nav-item:hover {
-    background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+    background: color-mix(in srgb, var(--accent-primary) 12%, transparent);
     color: var(--text-primary);
-    box-shadow: none;
+    box-shadow: var(--control-shadow-rest);
   }
 
   .nav-item:focus-visible {
@@ -250,11 +250,12 @@
   }
 
   .nav-item.active {
-    background: color-mix(in srgb, var(--accent-primary) 14%, transparent);
-    color: var(--accent-text);
+    background: color-mix(in srgb, var(--accent-primary) 18%, transparent);
+    color: var(--accent-on-glass, var(--accent-text));
     box-shadow:
-      inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent),
-      0 0 0 1px color-mix(in srgb, var(--accent-primary) 22%, transparent);
+      inset 0 1px 0 color-mix(in srgb, var(--glass-highlight) 72%, transparent),
+      0 0 0 1px color-mix(in srgb, var(--accent-primary) 14%, transparent),
+      0 10px 18px -16px color-mix(in srgb, var(--accent-glow) 46%, transparent);
   }
 
   .nav-item.active::before {
@@ -275,7 +276,7 @@
     align-items: center;
     justify-content: space-between;
     padding: 16px 24px;
-    border-bottom: none;
+    border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 32%, transparent);
     background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 70%, transparent);
   }
 
@@ -293,7 +294,7 @@
     width: 32px;
     height: 32px;
     background: var(--control-bg);
-    border: none;
+    border: 1px solid color-mix(in srgb, var(--control-border) 60%, transparent);
     border-radius: 8px;
     color: var(--text-muted);
     cursor: pointer;
@@ -302,6 +303,7 @@
 
   .close-btn:hover {
     background: var(--control-bg-hover);
+    border-color: color-mix(in srgb, var(--control-border-hover) 66%, transparent);
     color: var(--text-primary);
   }
 
@@ -328,7 +330,10 @@
       );
     border-radius: 12px;
     padding: 12px;
-    box-shadow: inset 0 1px 0 color-mix(in srgb, #ffffff 10%, transparent);
+    border: 1px solid color-mix(in srgb, var(--glass-border) 34%, transparent);
+    box-shadow:
+      var(--glass-inner-shadow),
+      0 12px 20px -20px rgba(0, 0, 0, 0.78);
   }
 
   :global(.section-title) {
@@ -354,7 +359,9 @@
     border: none;
     border-radius: 12px;
     overflow: hidden;
-    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 38%, transparent);
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--border-subtle) 30%, transparent),
+      0 10px 18px -20px rgba(0, 0, 0, 0.72);
   }
 
   :global(.setting-item) {
@@ -366,13 +373,9 @@
     transition: background 0.2s;
   }
 
-  :global(.setting-item:last-child) {
-    border-bottom: none;
-  }
-
-  :global(.setting-item:hover:not(.disabled)) {
-    background: color-mix(in srgb, var(--accent-primary) 8%, transparent);
-  }
+	:global(.setting-item:hover:not(.disabled)) {
+		background: color-mix(in srgb, var(--accent-primary) 10%, transparent);
+	}
 
   :global(.setting-item.vertical) {
     flex-direction: column;
@@ -420,7 +423,10 @@
     left: 0;
     right: 0;
     bottom: 0;
-    background-color: rgba(120, 120, 128, 0.36);
+    background-color: color-mix(in srgb, var(--control-bg) 96%, rgba(120, 120, 128, 0.42));
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--control-border) 46%, transparent),
+      var(--control-shadow-rest);
     transition: .3s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: 20px;
   }
@@ -439,7 +445,14 @@
   }
 
   :global(input:checked + .slider) {
-    background-color: var(--accent-primary);
+    background: linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--accent-primary) 92%, white),
+      var(--accent-secondary)
+    );
+    box-shadow:
+      inset 0 0 0 1px color-mix(in srgb, var(--accent-primary) 18%, transparent),
+      0 8px 14px -10px color-mix(in srgb, var(--accent-glow) 62%, transparent);
   }
 
   :global(input:checked + .slider:before) {
@@ -450,4 +463,54 @@
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-primary) 20%, transparent);
   }
+
+	:global(html.dark) .panel-overlay {
+		background: color-mix(in srgb, var(--dialog-overlay-bg) 94%, rgba(1, 5, 12, 0.66));
+		backdrop-filter: blur(14px) saturate(132%);
+		-webkit-backdrop-filter: blur(14px) saturate(132%);
+	}
+
+	:global(html.dark) .panel {
+		background:
+			linear-gradient(
+				162deg,
+				color-mix(in srgb, var(--dialog-bg) 90%, var(--accent-primary) 10%),
+				color-mix(in srgb, var(--dialog-bg) 97%, transparent)
+			),
+			color-mix(in srgb, var(--dialog-bg) 98%, transparent);
+	}
+
+	:global(html.dark) .close-btn {
+		box-shadow: var(--control-shadow-rest);
+	}
+
+	:global(html.dark) .close-btn:hover {
+		box-shadow: var(--control-shadow-elevated);
+	}
+
+	:global(html.light) .panel,
+	:global(html.light) .panel-content,
+	:global(html.light) :global(.settings-section),
+	:global(html.light) :global(.setting-list),
+	:global(html.light) :global(.setting-item),
+	:global(html.light) :global(.setting-item:hover:not(.disabled)) {
+		box-shadow: none;
+	}
+
+	:global(html.light) :global(.settings-section),
+	:global(html.light) :global(.setting-list) {
+		border: none;
+	}
+
+	:global(html.light) .content-header,
+	:global(html.light) .sidebar-nav::before,
+	:global(html.light) .panel-sidebar {
+		border: none;
+	}
+
+	:global(html.light) .close-btn,
+	:global(html.light) :global(.slider),
+	:global(html.light) :global(input:checked + .slider) {
+		box-shadow: none;
+	}
 </style>

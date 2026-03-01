@@ -10,7 +10,6 @@ use std::sync::Mutex;
 use tauri::{App, Manager};
 
 /// 运行应用启动链路
-/// 官方术语：生命周期流水线核心执行器
 pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
     let handle = app.handle().clone();
 
@@ -72,14 +71,7 @@ pub fn run(app: &mut App) -> Result<(), Box<dyn std::error::Error>> {
 
     // --- L4: 视图管理层 ---
     // 8. 应用窗口启动显隐策略
-    if !config.start_minimized {
-        if let Some(window) = app.get_webview_window("main") {
-            crate::app_info!("Core::Boot", "window_show_default");
-            let _ = window.show();
-            let _ = window.unminimize();
-            let _ = window.set_focus();
-        }
-    } else {
+    if config.start_minimized {
         if let Some(window) = app.get_webview_window("main") {
             crate::app_info!("Core::Boot", "window_start_minimized");
             let _ = window.hide();

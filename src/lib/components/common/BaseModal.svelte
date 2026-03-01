@@ -114,8 +114,8 @@
 		position: fixed;
 		inset: 0;
 		background: var(--dialog-overlay-bg, rgba(0, 0, 0, 0.4));
-		backdrop-filter: blur(10px) saturate(115%);
-		-webkit-backdrop-filter: blur(10px) saturate(115%);
+		backdrop-filter: blur(11px) saturate(122%);
+		-webkit-backdrop-filter: blur(11px) saturate(122%);
 		display: flex;
 		align-items: center;
 		justify-content: center;
@@ -123,13 +123,13 @@
 	}
 
 	.modal-container {
-		background: color-mix(in srgb, var(--dialog-bg) 96%, transparent);
+		background: color-mix(in srgb, var(--dialog-bg) 97%, transparent);
 		backdrop-filter: var(--glass-blur) var(--glass-saturate);
 		-webkit-backdrop-filter: var(--glass-blur) var(--glass-saturate);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--panel-glass-border, var(--glass-border)) 70%, transparent);
 		border-radius: 18px;
 		overflow: hidden;
-		box-shadow: var(--glass-shadow), 0 24px 48px -28px rgba(0, 0, 0, 0.55);
+		box-shadow: var(--panel-glass-shadow, var(--glass-shadow));
 		display: flex;
 		flex-direction: column;
 		width: 90%;
@@ -149,7 +149,7 @@
 		align-items: flex-start;
 		justify-content: space-between;
 		padding: 16px 24px;
-		border-bottom: none;
+		border-bottom: 1px solid color-mix(in srgb, var(--glass-border) 38%, transparent);
 		background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 76%, transparent);
 	}
 
@@ -168,7 +168,7 @@
 		width: 32px;
 		height: 32px;
 		background: var(--control-bg);
-		border: none;
+		border: 1px solid color-mix(in srgb, var(--control-border) 62%, transparent);
 		border-radius: 8px;
 		color: var(--text-muted);
 		cursor: pointer;
@@ -179,6 +179,7 @@
 
 	.close-btn:hover {
 		background: var(--control-bg-hover);
+		border-color: color-mix(in srgb, var(--control-border-hover) 66%, transparent);
 		color: var(--text-primary);
 	}
 
@@ -213,10 +214,40 @@
 
 	.modal-footer {
 		padding: 16px 24px;
-		border-top: none;
+		border-top: 1px solid color-mix(in srgb, var(--glass-border) 34%, transparent);
 		display: flex;
 		justify-content: flex-end;
 		gap: 12px;
         background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 72%, transparent);
+	}
+
+	:global(html.dark) .modal-overlay {
+		background: color-mix(in srgb, var(--dialog-overlay-bg) 94%, rgba(1, 5, 12, 0.66));
+		backdrop-filter: blur(14px) saturate(132%);
+		-webkit-backdrop-filter: blur(14px) saturate(132%);
+	}
+
+	:global(html.dark) .modal-container {
+		background:
+			linear-gradient(
+				164deg,
+				color-mix(in srgb, var(--dialog-bg) 88%, var(--accent-primary) 10%),
+				color-mix(in srgb, var(--dialog-bg) 96%, transparent)
+			),
+			color-mix(in srgb, var(--dialog-bg) 98%, transparent);
+	}
+
+	:global(html.dark) .modal-header,
+	:global(html.dark) .modal-footer {
+		background: color-mix(in srgb, var(--glass-elevated-bg, var(--dialog-bg)) 78%, transparent);
+	}
+
+	:global(html.dark) .close-btn {
+		background: color-mix(in srgb, var(--control-bg) 94%, transparent);
+		box-shadow: var(--control-shadow-rest);
+	}
+
+	:global(html.dark) .close-btn:hover {
+		box-shadow: var(--control-shadow-elevated);
 	}
 </style>
